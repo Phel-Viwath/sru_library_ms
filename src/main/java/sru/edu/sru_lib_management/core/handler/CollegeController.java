@@ -32,8 +32,12 @@ public class CollegeController {
     }
 
     @GetMapping
+    @ResponseBody
     public Flux<College> getAllCollege(){
-        return collegeService.findAll();
+        return collegeService.findAll().onErrorResume(e -> {
+            e.printStackTrace();
+            return Flux.error(new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()));
+        });
     }
 
     @GetMapping("/{id}")

@@ -22,4 +22,5 @@ public class College {
     public String getCollegeName(){
         return this.collegeName;
     }
+
 }

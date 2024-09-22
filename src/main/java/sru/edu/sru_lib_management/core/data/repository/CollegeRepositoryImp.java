@@ -25,7 +25,7 @@ public class CollegeRepositoryImp implements CollegeRepository {
     private static final String SAVE_QR = "INSERT INTO colleges(college_id, college_name) VALUES (:collegeId, :collegeName)";
     private static final String UPDATE_QR = "Update colleges set college_id = :collegeId ,college_name = :collegeName WHERE college_id =:id;";
     private static final String DELETE_QR = "DELETE FROM colleges WHERE college_id = :id";
-    private static final String FIND_ALL_QR = "SELECT * FROM colleges;";
+    private static final String FIND_ALL_QR = "SELECT * FROM colleges";
     private static final String FIND_BY_ID_QR = "SELECT * FROM colleges WHERE college_id = :id";
 
 

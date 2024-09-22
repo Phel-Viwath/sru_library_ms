@@ -5,8 +5,9 @@
 
 package sru.edu.sru_lib_management.core.handler
 
-import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.reactive.awaitFirst
 import org.slf4j.LoggerFactory
@@ -14,7 +15,6 @@ import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.*
 import sru.edu.sru_lib_management.common.CoreResult
 import sru.edu.sru_lib_management.core.domain.dto.BookDto
-import sru.edu.sru_lib_management.core.domain.service.AttendService
 import sru.edu.sru_lib_management.core.domain.service.BookService
 import sru.edu.sru_lib_management.utils.ResponseStatus.ACCEPTED
 import sru.edu.sru_lib_management.utils.ResponseStatus.BAD_REQUEST
@@ -26,7 +26,6 @@ import java.time.YearMonth
 @Component
 class BookHandler(
     private val bookService: BookService,
-    private val attendService: AttendService
 ) {
 
     private val logger = LoggerFactory.getLogger(BookHandler::class.java)
@@ -67,7 +66,7 @@ class BookHandler(
         request: ServerRequest
     ): ServerResponse = coroutineScope{
         val bookAvailable = bookService.currentAvailableBook()
-        ServerResponse.ok().bodyValueAndAwait(bookAvailable)
+        ServerResponse.ok().bodyAndAwait(bookAvailable)
     }
 
     /*
@@ -181,22 +180,23 @@ class BookHandler(
         ServerResponse.ok().bodyAndAwait(bookInTrash)
     }
 
-    suspend fun getBookIncome(
-        request: ServerRequest
-    ): ServerResponse{
+    suspend fun getBookIncome(request: ServerRequest): ServerResponse{
         val sYearMonth = request.queryParam("sYearMonth")
             .map { YearMonth.parse(it) }
             .orElse(null)
         val eYearMonth = request.queryParam("eYearMonth")
             .map { YearMonth.parse(it) }
             .orElse(null)
-
         val bookIncomes = bookService.getBookIncome(sYearMonth, eYearMonth).asFlow()
         return ServerResponse.ok().bodyAndAwait(bookIncomes)
     }
 
-    suspend fun aboutBookData(request: ServerRequest): ServerResponse {
-        val data: Map<String, Int> = bookService.aboutBookData()
-        return ServerResponse.ok().bodyValueAndAwait(data)
+    @OptIn(DelicateCoroutinesApi::class)
+    suspend fun aboutBookData(
+        request: ServerRequest
+    ): ServerResponse {
+        val data =  GlobalScope.async { bookService.aboutBookData()}.await()
+        return ServerResponse.ok().json().bodyValueAndAwait(data)
     }
+
 }

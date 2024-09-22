@@ -68,19 +68,19 @@ class SecurityConfig (
             .exceptionHandling()
             .authenticationEntryPoint { exchange, _ ->
                 Mono.fromRunnable {
-                    exchange.response.statusCode = HttpStatus.UNAUTHORIZED
+                    //exchange.response.statusCode = HttpStatus.UNAUTHORIZED
                     exchange.response.headers.set(HttpHeaders.WWW_AUTHENTICATE, "Bearer")
                 }
             }
             .and()
-            .authorizeExchange()
-            .pathMatchers(
-                "api/v1/auth/**",
-                "/api/v1/**",
-                "api/v1/entry/check",
-            ).permitAll()
-            .anyExchange().authenticated()
-            .and()
+            .authorizeExchange{ exchange ->
+                exchange
+                    .pathMatchers("/api/v1/auth/**").permitAll()
+                    .pathMatchers("/api/v1/**").permitAll()
+                    .pathMatchers("/api/v1/book/about").permitAll()
+                    .pathMatchers("/api/v1/book/**").permitAll()
+                    .anyExchange().authenticated() // Secure all other routes
+            }
             .addFilterAt(filter, SecurityWebFiltersOrder.AUTHENTICATION)
             .httpBasic().disable()
             .formLogin().disable()

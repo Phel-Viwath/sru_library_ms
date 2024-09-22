@@ -5,10 +5,9 @@
 
 package sru.edu.sru_lib_management.core.domain.service.implementation
 
-import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactive.awaitSingle
-import kotlinx.coroutines.runBlocking
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
@@ -344,7 +343,7 @@ class BookServiceImp(
         }
     }
 
-    override suspend fun aboutBookData(): Map<String, Int> {
+    override suspend fun aboutBookData(): Map<String, Int>{
         return try {
             val booksList = bookRepository.getAll().toList()
             val donationList = donationRepository.getDonationDetail().toList()
