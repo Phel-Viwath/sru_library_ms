@@ -82,8 +82,6 @@ class RouteConfig {
             GET("/current-book", bookHandler::currentAvailableBook)
             GET("/{bookId}", bookHandler::getBookById)
             DELETE("/{bookId}", bookHandler::deleteBook)
-
-
         }
     }
 

@@ -190,3 +190,6 @@ create table if not exists staff_major(
    FOREIGN KEY (staff_id) REFERENCES library_staff(staff_id) on delete cascade on update cascade ,
    FOREIGN KEY (major_id) REFERENCES majors(major_id) on delete cascade on update cascade
 );
+
+
+call CheckTrash('2024-09-24')

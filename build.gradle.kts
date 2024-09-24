@@ -34,7 +34,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-webflux")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-mail")
-
+    implementation("org.springframework.boot:spring-boot-starter-reactor-netty")
 
     // Kotlin and Reactor
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
@@ -47,8 +47,8 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
     // websocket
-//    implementation("org.springframework.boot:spring-boot-starter-websocket")
-//    implementation("jakarta.websocket:jakarta.websocket-api:2.1.1")
+    //implementation("org.springframework.boot:spring-boot-starter-websocket")
+    //implementation("jakarta.websocket:jakarta.websocket-api:2.1.1")
 
     // Database
     runtimeOnly("com.mysql:mysql-connector-j")

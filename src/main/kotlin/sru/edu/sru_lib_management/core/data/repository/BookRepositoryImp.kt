@@ -112,6 +112,7 @@ class BookRepositoryImp(
 
     override suspend fun alertTrashMessage(currentDate: LocalDate): List<Books> {
         return client.sql("CALL CheckTrash(:currentDate)")
+            .bind("currentDate", currentDate)
             .map { row: Row, _ ->
                 row.rowMapping()
             }

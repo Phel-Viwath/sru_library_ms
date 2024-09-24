@@ -23,6 +23,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.server.SecurityWebFilterChain
 import org.springframework.security.web.server.authentication.AuthenticationWebFilter
+import org.springframework.web.reactive.socket.server.WebSocketService
 import reactor.core.publisher.Mono
 import sru.edu.sru_lib_management.auth.data.repository.AuthRepositoryImp
 import sru.edu.sru_lib_management.auth.domain.jwt.JwtAuthenticationConverter
@@ -35,8 +36,8 @@ import java.util.*
 @EnableReactiveMethodSecurity
 class SecurityConfig (
     private val repository: AuthRepositoryImp,
-    @Value("\${mail-sender.password}") val mailSenderPassword: String,
-    @Value("\${mail-sender.username}") val mailSenderUsername: String
+    @Value("\${spring.mail.password}") val mailSenderPassword: String,
+    @Value("\${spring.mail.username}") val mailSenderUsername: String,
 ) {
     @Bean
     fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
@@ -68,17 +69,17 @@ class SecurityConfig (
             .exceptionHandling()
             .authenticationEntryPoint { exchange, _ ->
                 Mono.fromRunnable {
-                    //exchange.response.statusCode = HttpStatus.UNAUTHORIZED
+                    exchange.response.statusCode = HttpStatus.UNAUTHORIZED
                     exchange.response.headers.set(HttpHeaders.WWW_AUTHENTICATE, "Bearer")
                 }
             }
             .and()
             .authorizeExchange{ exchange ->
                 exchange
+                    .pathMatchers("/ws/**").permitAll()
+                    .pathMatchers("/notifications").permitAll()
                     .pathMatchers("/api/v1/auth/**").permitAll()
                     .pathMatchers("/api/v1/**").permitAll()
-                    .pathMatchers("/api/v1/book/about").permitAll()
-                    .pathMatchers("/api/v1/book/**").permitAll()
                     .anyExchange().authenticated() // Secure all other routes
             }
             .addFilterAt(filter, SecurityWebFiltersOrder.AUTHENTICATION)

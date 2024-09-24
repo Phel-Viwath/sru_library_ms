@@ -8,6 +8,7 @@ package sru.edu.sru_lib_management.core.handler
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactor.awaitSingle
 import org.slf4j.LoggerFactory
+import org.springframework.stereotype.Component
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -22,13 +23,11 @@ import sru.edu.sru_lib_management.core.domain.service.StaffService
 import sru.edu.sru_lib_management.utils.ResponseStatus.OK
 import java.time.YearMonth
 
-@Controller
-@RequestMapping("/api/v1/report")
+@Component
 class ReportHandler (
     private val bookService: BookService,
     private val reportService: ReportService,
     private val staffService: StaffService,
-    private val donationService: DonationService
 ) {
 
     private val logger = LoggerFactory.getLogger(ReportHandler::class.java)
