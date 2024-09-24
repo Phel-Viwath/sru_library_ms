@@ -3,13 +3,11 @@
  * @Author Phel Viwath
  */
 
-package sru.edu.sru_lib_management.core.domain.service
+package sru.edu.sru_lib_management.utils.schedule
 
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
-import org.springframework.stereotype.Service
 import sru.edu.sru_lib_management.core.domain.repository.BookRepository
 import sru.edu.sru_lib_management.infrastructure.websocket.NotificationService
 import sru.edu.sru_lib_management.utils.IndochinaDateTime.indoChinaDate
