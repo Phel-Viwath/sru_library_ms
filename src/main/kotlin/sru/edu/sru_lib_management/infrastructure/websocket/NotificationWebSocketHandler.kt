@@ -8,6 +8,7 @@ import reactor.core.publisher.Sinks
 
 @Component
 class NotificationWebSocketHandler : WebSocketHandler {
+
     private val sink: Sinks.Many<String> = Sinks.many().multicast().onBackpressureBuffer()
 
     override fun handle(session: WebSocketSession): Mono<Void> {

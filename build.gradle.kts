@@ -46,10 +46,6 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactive:1.8.1")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
 
-    // websocket
-    //implementation("org.springframework.boot:spring-boot-starter-websocket")
-    //implementation("jakarta.websocket:jakarta.websocket-api:2.1.1")
-
     // Database
     runtimeOnly("com.mysql:mysql-connector-j")
     runtimeOnly("io.asyncer:r2dbc-mysql")

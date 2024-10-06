@@ -79,7 +79,6 @@ class SecurityConfig (
                     .pathMatchers("/ws/**").permitAll()
                     .pathMatchers("/notifications").permitAll()
                     .pathMatchers("/api/v1/auth/**").permitAll()
-                    .pathMatchers("/api/v1/**").permitAll()
                     .anyExchange().authenticated() // Secure all other routes
             }
             .addFilterAt(filter, SecurityWebFiltersOrder.AUTHENTICATION)

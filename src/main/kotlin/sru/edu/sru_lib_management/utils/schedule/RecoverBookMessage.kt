@@ -20,7 +20,7 @@ class RecoverBookMessage (
     private val logger = LoggerFactory.getLogger(RecoverBookMessage::class.java)
     private val mutableMapBook: MutableMap<String, String> = mutableMapOf()
 
-    @Scheduled(cron = "0 54 22 * * ?", zone = "Asia/Phnom_Penh")
+    @Scheduled(cron = "0 25 22 * * ?", zone = "Asia/Phnom_Penh")
     suspend fun alertRecoveryBook(){
         val books = bookRepository.alertTrashMessage(indoChinaDate())
         books.forEach { book ->

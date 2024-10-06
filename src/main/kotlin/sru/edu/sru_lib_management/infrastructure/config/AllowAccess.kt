@@ -18,5 +18,7 @@ class AllowAccess : WebFluxConfigurer {
                 "https://react-js-inky-three.vercel.app/"
             )
             .allowedMethods("GET", "POST", "PUT", "DELETE")
+            .allowCredentials(true)
+            .allowPrivateNetwork(true)
     }
 }

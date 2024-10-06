@@ -29,7 +29,7 @@ public class StaffHandler {
 
         return request.bodyToMono(StaffDto.class)
                 .flatMap(staffDto -> {
-                    if (staffDto.getStaffId() == null)
+                    if (staffDto.getStaffName()== null || staffDto.getGender() == null)
                         return ServerResponse.badRequest().build();
                     String majorId = Arrays.stream(staffDto.getMajorId())
                             .collect(Collectors.joining(", "));

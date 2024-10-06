@@ -12,13 +12,23 @@ import org.springframework.http.MediaType.APPLICATION_JSON
 import org.springframework.web.reactive.function.server.RouterFunction
 import org.springframework.web.reactive.function.server.ServerResponse
 import org.springframework.web.reactive.function.server.coRouter
+import org.springframework.web.reactive.function.server.router
 import sru.edu.sru_lib_management.auth.controller.AuthHandler
 import sru.edu.sru_lib_management.core.handler.*
 
 @Configuration
 class RouteConfig {
     // Auth route
-    @FlowPreview
+
+    @Bean
+    fun helloRoute(welcomeHandler: WelcomeHandler) = coRouter {
+        accept(APPLICATION_JSON).nest {
+            "/api/v1/welcome".nest {
+                GET("", welcomeHandler::hello)
+            }
+        }
+    }
+
     @Bean
     fun authRoute(authHandler: AuthHandler) = coRouter {
         accept(APPLICATION_JSON).nest {
