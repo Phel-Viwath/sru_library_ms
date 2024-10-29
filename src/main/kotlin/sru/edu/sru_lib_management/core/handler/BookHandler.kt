@@ -5,12 +5,15 @@
 
 package sru.edu.sru_lib_management.core.handler
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.reactive.awaitFirst
 import org.slf4j.LoggerFactory
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.*
 import sru.edu.sru_lib_management.common.CoreResult
@@ -34,6 +37,7 @@ class BookHandler(
         * -> http://localhost:8090/api/v1/book
         * This Endpoint use to add book to database
         * */
+    @PreAuthorize("hasRole('USER')")
     suspend fun addNewBook(
         request: ServerRequest
     ): ServerResponse = coroutineScope {
@@ -53,6 +57,7 @@ class BookHandler(
    * This Endpoint use to get all book from database
    * */
 
+    @PreAuthorize("hasRole('USER')")
     suspend fun getBooks(request: ServerRequest): ServerResponse = coroutineScope {
         val allBooks = bookService.getAllBooks()
         ServerResponse.ok().bodyAndAwait(allBooks)
@@ -62,6 +67,7 @@ class BookHandler(
    * -> http://localhost:8090/api/v1/book/current-book
    * This Endpoint use to get all book from database
    * */
+    @PreAuthorize("hasRole('USER')")
     suspend fun currentAvailableBook(
         request: ServerRequest
     ): ServerResponse = coroutineScope{
@@ -73,6 +79,7 @@ class BookHandler(
    * -> http://localhost:8090/api/v1/book
    * This Endpoint use to update book in database
    * */
+    @PreAuthorize("hasRole('USER')")
     suspend fun updateBook(
         request: ServerRequest
     ): ServerResponse = coroutineScope {
@@ -93,6 +100,7 @@ class BookHandler(
     * -> http://localhost:8090/api/v1/book/{id}
     * This Endpoint use to update book in database
     * */
+    @PreAuthorize("hasRole('USER')")
     suspend fun getBookById(request: ServerRequest): ServerResponse{
         val bookId = request.pathVariable("bookId")
         return when(val result = bookService.getBook(bookId)){
@@ -109,6 +117,7 @@ class BookHandler(
     * -> http://localhost:8090/api/v1/book/{id}
     * This Endpoint use to update book in database
     * */
+    @PreAuthorize("hasRole('USER')")
     suspend fun deleteBook(request: ServerRequest): ServerResponse{
         val bookId = request.pathVariable("bookId")
         return when(val result = bookService.deleteBook(bookId)){
@@ -126,6 +135,7 @@ class BookHandler(
     * -> http://localhost:8090/api/v1/book/available
     * This Endpoint use to get available book
     * */
+    @PreAuthorize("hasRole('USER')")
     suspend fun availableBook(request: ServerRequest): ServerResponse = coroutineScope {
         when(val result = bookService.getAvailableBook()){
             is CoreResult.Success ->
@@ -138,6 +148,7 @@ class BookHandler(
     }
 
     /////////// Trash http://localhost:8090/api/v1/book/trash
+    @PreAuthorize("hasRole('USER')")
     suspend fun moveToTrash(
         request: ServerRequest
     ): ServerResponse = coroutineScope{
@@ -156,6 +167,7 @@ class BookHandler(
     }
 
     // http://localhost:8090/api/v1/book/recover
+    @PreAuthorize("hasRole('USER')")
     suspend fun recoverBook(
         request: ServerRequest
     ): ServerResponse = coroutineScope{
@@ -173,6 +185,7 @@ class BookHandler(
     }
 
     // http://localhost:8090/api/v1/book/in-trash
+    @PreAuthorize("hasRole('USER')")
     suspend fun getBooksInTrash(request: ServerRequest): ServerResponse = coroutineScope{
         val bookInTrash =  bookService.getBooksInTrash().map {
             it.toBookDto()
@@ -180,6 +193,7 @@ class BookHandler(
         ServerResponse.ok().bodyAndAwait(bookInTrash)
     }
 
+    @PreAuthorize("hasRole('USER')")
     suspend fun getBookIncome(request: ServerRequest): ServerResponse{
         val sYearMonth = request.queryParam("sYearMonth")
             .map { YearMonth.parse(it) }
@@ -192,6 +206,7 @@ class BookHandler(
     }
 
     @OptIn(DelicateCoroutinesApi::class)
+    @PreAuthorize("hasRole('USER')")
     suspend fun aboutBookData(
         request: ServerRequest
     ): ServerResponse {

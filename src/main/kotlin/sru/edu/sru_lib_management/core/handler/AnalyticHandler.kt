@@ -6,6 +6,7 @@
 package sru.edu.sru_lib_management.core.handler
 
 import kotlinx.coroutines.flow.toList
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.ServerRequest
 import org.springframework.web.reactive.function.server.ServerResponse
@@ -24,6 +25,8 @@ class AnalyticHandler(
     private val borrowService: BorrowService,
     private val attendService: AttendService
 ) {
+
+    @PreAuthorize("hasRole('USER')")
     suspend fun analytic(request: ServerRequest): ServerResponse{
 
         val startDate = request.queryParam("startDate")

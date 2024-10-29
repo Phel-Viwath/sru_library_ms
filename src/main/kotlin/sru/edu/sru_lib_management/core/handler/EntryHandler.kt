@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactor.awaitSingle
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.ServerRequest
 import org.springframework.web.reactive.function.server.ServerResponse
@@ -47,6 +48,7 @@ class EntryHandler(
     //  http://localhost:8090/api/v1/entry (path variable)
     //  find student in database when they scan
     ////
+    @PreAuthorize("hasRole('USER')")
     suspend fun getStudentById(request: ServerRequest): ServerResponse{
         val id = request.pathVariable("id").toLong()
         return coroutineScope {
@@ -62,6 +64,7 @@ class EntryHandler(
     //  http://localhost:8090/api/v1/entry (request param)
     //  save new entry when student scan
     ////
+    @PreAuthorize("hasRole('USER')")
     suspend fun newEntry(
         request: ServerRequest
     ): ServerResponse {
@@ -98,7 +101,10 @@ class EntryHandler(
     //  http://localhost:8090/api/v1/entry (request param)
     //  update exiting time when student scan out
     ////
-    suspend fun updateExitingTime(request: ServerRequest): ServerResponse = coroutineScope{
+    @PreAuthorize("hasRole('USER')")
+    suspend fun updateExitingTime(
+        request: ServerRequest
+    ): ServerResponse = coroutineScope{
         val entryId = request.queryParam("entryId").orElse(null)
         when(val result = attendService.updateExitingTime(entryId, indoChinaTime())){
             is CoreResult.ClientError ->
@@ -113,7 +119,10 @@ class EntryHandler(
     //  http://localhost:8090/api/v1/entry
     //  card data and list of attend in entry page
     ////
-    suspend fun recentEntryData(request: ServerRequest): ServerResponse = coroutineScope {
+    @PreAuthorize("hasRole('USER')")
+    suspend fun recentEntryData(
+        request: ServerRequest
+    ): ServerResponse = coroutineScope {
         var totalExiting = 0
         var entry = 0
         val attendDetail = mutableListOf<StudentAttendDetail>()
@@ -153,6 +162,7 @@ class EntryHandler(
     //  http://localhost:8090/api/v1/entry/check
     //  card data and list of attend in entry page
     ////
+    @PreAuthorize("hasRole('USER')")
     suspend fun checkExistingStudent(request: ServerRequest): ServerResponse {
         val entryIdParam = request.queryParam("entryId").orElse(null)
 

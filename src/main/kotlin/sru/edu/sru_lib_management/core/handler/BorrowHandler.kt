@@ -8,6 +8,7 @@ package sru.edu.sru_lib_management.core.handler
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.reactive.awaitFirst
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.reactive.function.server.*
@@ -20,6 +21,7 @@ class BorrowHandler (
     private val borrowService: BorrowService
 ){
 
+    @PreAuthorize("hasRole('USER')")
     suspend fun countBorrowsPerWeek(
         request: ServerRequest
     ): ServerResponse = coroutineScope {
@@ -33,6 +35,7 @@ class BorrowHandler (
         }
     }
 
+    @PreAuthorize("hasRole('USER')")
     suspend fun saveBorrow(
         request: ServerRequest
     ): ServerResponse = coroutineScope {
@@ -49,18 +52,19 @@ class BorrowHandler (
         }
     }
 
-    @GetMapping
+    @PreAuthorize("hasRole('USER')")
     suspend fun getAllBorrow(request: ServerRequest): ServerResponse = coroutineScope {
         val borrowData = borrowService.getBorrows()
         ServerResponse.ok().bodyAndAwait(borrowData)
     }
 
+    @PreAuthorize("hasRole('USER')")
     suspend fun getAllOverDueBooks(request: ServerRequest): ServerResponse = coroutineScope {
         val allOverDue = borrowService.overDueService()
         ServerResponse.ok().bodyAndAwait(allOverDue)
     }
 
-
+    @PreAuthorize("hasRole('USER')")
     suspend fun bookReturned(
         request: ServerRequest
     ): ServerResponse = coroutineScope {
@@ -81,6 +85,7 @@ class BorrowHandler (
         }
     }
 
+    @PreAuthorize("hasRole('USER')")
     suspend fun extendBorrowBook(
         request: ServerRequest
     ): ServerResponse = coroutineScope {

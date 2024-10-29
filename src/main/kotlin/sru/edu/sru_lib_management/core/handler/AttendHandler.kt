@@ -10,9 +10,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactive.awaitFirst
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.reactive.function.server.*
 import sru.edu.sru_lib_management.common.CoreResult
 import sru.edu.sru_lib_management.core.domain.dto.attend.AttendDetail
@@ -20,7 +20,6 @@ import sru.edu.sru_lib_management.core.domain.dto.attend.StudentAttendDetail
 import sru.edu.sru_lib_management.core.domain.model.Attend
 import sru.edu.sru_lib_management.core.domain.service.AttendService
 import sru.edu.sru_lib_management.utils.IndochinaDateTime.indoChinaDate
-import sru.edu.sru_lib_management.utils.ResponseStatus
 import sru.edu.sru_lib_management.utils.ResponseStatus.BAD_REQUEST
 import sru.edu.sru_lib_management.utils.ResponseStatus.CREATED
 import sru.edu.sru_lib_management.utils.ResponseStatus.INTERNAL_SERVER_ERROR
@@ -39,6 +38,7 @@ class AttendHandler(
     * -> http://localhost:8090/api/v1/att
     * Use to update Attend if necessary
     * */
+    @PreAuthorize("hasRole('USER')")
     suspend fun updateAtt(
         request: ServerRequest
     ): ServerResponse = coroutineScope {
@@ -60,6 +60,7 @@ class AttendHandler(
     * ->  http://localhost:8090/api/v1/att
     * Get all attend
     * */
+    @PreAuthorize("hasRole('USER')")
     suspend fun getAllAttend(request: ServerRequest): ServerResponse = coroutineScope {
         when(val result = attendService.getAllAttend()){
             is CoreResult.Success ->
@@ -75,6 +76,7 @@ class AttendHandler(
     * ->  http://localhost:8090/api/v1/att
     * this end point use to update exiting time
     * */
+    @PreAuthorize("hasRole('USER')")
     suspend fun updateExitingTime(
         request: ServerRequest
     ): ServerResponse = coroutineScope{
@@ -99,6 +101,7 @@ class AttendHandler(
     *  Example : Get Last 1 day, 7 days, 1 month or 1 year
     *
     */
+    @PreAuthorize("hasRole('USER')")
     suspend fun getCustomAttend(
         request: ServerRequest
     ): ServerResponse = coroutineScope{
@@ -113,6 +116,7 @@ class AttendHandler(
     * ->  http://localhost:8090/api/v1/att/count
     * Count number of student by custom time
     * */
+    @PreAuthorize("hasRole('USER')")
     suspend fun countCustomAttend(
         request: ServerRequest
     ): ServerResponse = coroutineScope{
@@ -136,6 +140,7 @@ class AttendHandler(
    * ->  http://localhost:8090/api/v1/att/compare
    * Count number of attend by custom time and compare it to the previous time
    * */
+    @PreAuthorize("hasRole('USER')")
     suspend fun countAndCompare(
         request: ServerRequest
     ): ServerResponse = coroutineScope {
@@ -161,6 +166,7 @@ class AttendHandler(
    * ->  http://localhost:8090/api/v1/att/detail
    * Count number of student by custom time
    * */
+    @PreAuthorize("hasRole('USER')")
     suspend fun getDetails(
         request: ServerRequest
     ): ServerResponse = coroutineScope {
@@ -172,6 +178,7 @@ class AttendHandler(
   * ->  http://localhost:8090/api/v1/att/weekly
   * Count weekly visit of student by custom time
   * */
+    @PreAuthorize("hasRole('USER')")
     suspend fun weeklyVisitor(
         request: ServerRequest
     ): ServerResponse = coroutineScope {
@@ -185,7 +192,7 @@ class AttendHandler(
         }
     }
 
-
+    @PreAuthorize("hasRole('USER')")
     suspend fun getDurationSpent(
         request: ServerRequest
     ): ServerResponse = coroutineScope{
@@ -193,6 +200,7 @@ class AttendHandler(
         ServerResponse.ok().bodyAndAwait(durationSpentFlow)
     }
 
+    @PreAuthorize("hasRole('USER')")
     suspend fun getAttendPurpose(
         request: ServerRequest
     ): ServerResponse = coroutineScope{

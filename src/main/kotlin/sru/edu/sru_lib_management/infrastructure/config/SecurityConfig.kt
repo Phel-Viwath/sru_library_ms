@@ -23,7 +23,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.server.SecurityWebFilterChain
 import org.springframework.security.web.server.authentication.AuthenticationWebFilter
-import org.springframework.web.reactive.socket.server.WebSocketService
 import reactor.core.publisher.Mono
 import sru.edu.sru_lib_management.auth.data.repository.AuthRepositoryImp
 import sru.edu.sru_lib_management.auth.domain.jwt.JwtAuthenticationConverter
@@ -76,10 +75,9 @@ class SecurityConfig (
             .and()
             .authorizeExchange{ exchange ->
                 exchange
-                    .pathMatchers("/ws/**").permitAll()
-                    .pathMatchers("/notifications").permitAll()
+                    .pathMatchers("/ws/**", "/notifications").permitAll()
                     .pathMatchers("/api/v1/auth/**").permitAll()
-                    .anyExchange().authenticated() // Secure all other routes
+                    .anyExchange().authenticated()
             }
             .addFilterAt(filter, SecurityWebFiltersOrder.AUTHENTICATION)
             .httpBasic().disable()

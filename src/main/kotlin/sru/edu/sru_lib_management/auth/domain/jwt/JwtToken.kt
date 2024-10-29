@@ -24,10 +24,10 @@ class JwtToken @Autowired constructor(
     private val phaser = Jwts.parserBuilder().setSigningKey(secretKey).build()
 
     fun generateAccessToken(email: String, roles: List<String>): BearerToken{
-        return createToken(email, 120, roles)
+        return createToken(email, 15, roles)
     }
     fun generateRefreshToken(email: String, roles: List<String>): BearerToken{
-        return createToken(email, 20160, roles)
+        return createToken(email, 60, roles)
     }
 
     fun createToken(email: String, minute: Long, roles: List<String>): BearerToken {

@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import okio.IOException
 import org.slf4j.LoggerFactory
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.*
 import sru.edu.sru_lib_management.common.CoreResult
@@ -33,6 +34,7 @@ class StudentHandler(
     /*
      * Add student to database
      */
+    @PreAuthorize("hasRole('USER')")
     suspend fun saveStudent(request: ServerRequest): ServerResponse {
 
         val students = request.bodyToMono(Students::class.java).awaitFirstOrNull()
@@ -53,6 +55,7 @@ class StudentHandler(
     }
 
     // Get all student using flux as flow
+    @PreAuthorize("hasRole('USER')")
     suspend fun getAllStudents(request: ServerRequest): ServerResponse {
        return try {
            logger.info("Get ALL Students")
@@ -67,6 +70,7 @@ class StudentHandler(
      * get student from database by id
      */
 
+    @PreAuthorize("hasRole('USER')")
     suspend fun getStudentById(
         request: ServerRequest
     ): ServerResponse = coroutineScope{
@@ -86,6 +90,7 @@ class StudentHandler(
      * Update student from database
      */
 
+    @PreAuthorize("hasRole('USER')")
     suspend fun updateStudent(
         request: ServerRequest
     ): ServerResponse = coroutineScope {
@@ -108,6 +113,7 @@ class StudentHandler(
     * Delete student from database
      */
 
+    @PreAuthorize("hasRole('USER')")
     suspend fun deleteStudent(request: ServerRequest): ServerResponse {
         val studentId = request.pathVariable("studentId").toLong()
         return when(val result = studentService.deleteStudent(studentId)){

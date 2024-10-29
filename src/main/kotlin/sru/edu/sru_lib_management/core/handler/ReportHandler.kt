@@ -8,6 +8,7 @@ package sru.edu.sru_lib_management.core.handler
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactor.awaitSingle
 import org.slf4j.LoggerFactory
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.GetMapping
@@ -32,6 +33,7 @@ class ReportHandler (
 
     private val logger = LoggerFactory.getLogger(ReportHandler::class.java)
 
+    @PreAuthorize("hasRole('USER')")
     @GetMapping
     suspend fun report(
         request: ServerRequest

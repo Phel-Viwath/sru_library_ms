@@ -7,6 +7,7 @@ package sru.edu.sru_lib_management.core.handler
 
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.reactive.awaitFirstOrNull
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.*
 import sru.edu.sru_lib_management.common.CoreResult
@@ -21,6 +22,7 @@ class DonateHandler(
     private val donationService: DonationService
 ) {
 
+    @PreAuthorize("hasRole('USER')")
     suspend fun saveDonation(
         request: ServerRequest
     ): ServerResponse = coroutineScope{
@@ -36,11 +38,13 @@ class DonateHandler(
         }
     }
 
+    @PreAuthorize("hasRole('USER')")
     suspend fun donationDetailInfo(request: ServerRequest): ServerResponse {
         val donationDetail =  donationService.getDonationDetail()
         return ServerResponse.ok().bodyAndAwait(donationDetail)
     }
 
+    @PreAuthorize("hasRole('USER')")
     suspend fun updateDonation(
         request: ServerRequest
     ): ServerResponse = coroutineScope {
