@@ -38,6 +38,3 @@ out/
 
 ### Kotlin ###
 .kotlin
-
-# Exclude application.yml
-application.yml

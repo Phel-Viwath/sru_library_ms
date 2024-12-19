@@ -1,0 +1,43 @@
+server:
+  port: 8090
+spring:
+  main:
+    allow-circular-references: true
+    allow-bean-definition-overriding: true
+  application:
+    name: sru_lib_management
+  datasource:
+    url: mysql://root:gwboNVIaWJDsleYaIUnuPRmBgYyxCCqC@autorack.proxy.rlwy.net:12163/railway
+    username: root
+    password: gwboNVIaWJDsleYaIUnuPRmBgYyxCCqC
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  sql:
+    init:
+      mode: always
+      continue-on-error: false
+      schema-locations: classpath:sql/schema.sql
+      platform: mysql
+      enabled: false
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: phelviwath@gmail.com
+    password: znmj xktk igop quve
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+hunter:
+  api:
+    key: d748d5a51306e066ecf93d2674d82a5be12c58c0
+jwt:
+  token: 0L3sLtlyKYBAI4e7P1qGWiPbXbAxmgHCpjmdg9AvweWXYZc/WPRhAe4ztjQ75f3FDg/91hKOxcXN7xOuOXYTrczlwf5HgSesjEf05KTGaoV7YRT9WWytTFaMn9gk/cCZAKMtrPv+AzKb2LTqTJEDJJRI7khHHCZ50D0LOTUaKhRp9Z9/WMaQccydK1LNfsodi7svQyi5E2apgZz9w2iEqAStcTnipA7PKGMFw72GTtDqVUhwvUP1f+6TSsBOI+vuFw1zByI731Pix4XScl+U3jcGpy+ZYoVyPgouz+KZjh7qEyo2FtGPoFD8UNaL07GK48GzjmLtFmsuute7S5Jm1u703PF26YrOO3cR4QeP0jw=
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web: INFO
+    #org.springframework: DEBUG
+
