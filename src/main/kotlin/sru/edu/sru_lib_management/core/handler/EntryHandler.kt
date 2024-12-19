@@ -182,15 +182,16 @@ class EntryHandler(
         val morningTime = "07:00:00, 11:00:00"
         val afternoonTime = "14:00:00, 17:00:00"
         val eveningTime = "17:30:00, 19:30:00"
-        //val testTime = "19:30:00, 23:59:59"
+        val testTime = "19:30:00, 23:59:59"
 
         val (entryTime, exitingTime) = when (indoChinaTime()) {
             in SEVEN_AM .. ELEVEN_AM -> morningTime.split(", ")
             in TWO_PM .. FIVE_PM -> afternoonTime.split(", ")
             in FIVE_THIRTY_PM .. SEVEN_THIRTY_PM -> eveningTime.split(", ")
-            else -> return ServerResponse.status(BAD_REQUEST)
-                .bodyValue("Close time.")
-                .awaitSingle()
+            else -> testTime.split(", ")
+//            else -> return ServerResponse.status(BAD_REQUEST)
+//                .bodyValue("Close time.")
+//                .awaitSingle()
         }
 
         logger.info("${indoChinaTime()}")
@@ -205,7 +206,7 @@ class EntryHandler(
 
         // Return
         return ServerResponse.status(OK)
-            .bodyValue(result)
+            .bodyValue(mapOf("status" to result))
             .awaitSingle()
     }
 

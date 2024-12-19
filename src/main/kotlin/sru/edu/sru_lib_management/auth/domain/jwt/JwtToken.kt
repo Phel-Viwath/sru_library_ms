@@ -26,8 +26,9 @@ class JwtToken @Autowired constructor(
     fun generateAccessToken(email: String, roles: List<String>): BearerToken{
         return createToken(email, 15, roles)
     }
+
     fun generateRefreshToken(email: String, roles: List<String>): BearerToken{
-        return createToken(email, 60, roles)
+        return createToken(email, 43200, roles)
     }
 
     fun createToken(email: String, minute: Long, roles: List<String>): BearerToken {
@@ -60,7 +61,7 @@ class JwtToken @Autowired constructor(
         val issueAt = claims.issuedAt.toInstant()
         val expiration = claims.expiration.toInstant()
         val duration = ChronoUnit.MINUTES.between(issueAt, expiration)
-        duration == 20160L
+        duration == 43200L
     }catch (e: Exception){ false }
 
 

@@ -16,9 +16,11 @@ import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Component
-import org.springframework.web.bind.annotation.*
 import org.springframework.web.reactive.function.server.*
-import sru.edu.sru_lib_management.auth.domain.dto.*
+import sru.edu.sru_lib_management.auth.domain.dto.AuthResponse
+import sru.edu.sru_lib_management.auth.domain.dto.LoginRequest
+import sru.edu.sru_lib_management.auth.domain.dto.RefreshTokenRequest
+import sru.edu.sru_lib_management.auth.domain.dto.RegisterRequest
 import sru.edu.sru_lib_management.auth.domain.model.Role
 import sru.edu.sru_lib_management.auth.domain.service.AuthService
 import sru.edu.sru_lib_management.auth.domain.service.HunterService
@@ -29,6 +31,7 @@ import sru.edu.sru_lib_management.utils.ResponseStatus.BAD_REQUEST
 import sru.edu.sru_lib_management.utils.ResponseStatus.CREATED
 import sru.edu.sru_lib_management.utils.ResponseStatus.INTERNAL_SERVER_ERROR
 import sru.edu.sru_lib_management.utils.ResponseStatus.OK
+import java.util.*
 
 @Component
 @Slf4j
@@ -178,7 +181,7 @@ class AuthHandler(
             ?: return ServerResponse.badRequest().buildAndAwait()
         val role = request.queryParam("role").orElse(null)
         val roles = try {
-            Role.valueOf(role.toUpperCase())
+            Role.valueOf(role.uppercase(Locale.getDefault()))
         } catch (e: IllegalArgumentException) {
             return ServerResponse.badRequest().bodyValueAndAwait("Invalid role parameter")
         }

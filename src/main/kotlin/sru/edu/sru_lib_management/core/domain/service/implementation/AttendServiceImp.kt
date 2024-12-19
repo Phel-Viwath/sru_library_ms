@@ -62,8 +62,8 @@ class AttendServiceImp(
                 attendDto.entryTimes !in (SEVEN_AM..ELEVEN_AM ) &&
                         attendDto.entryTimes !in TWO_PM ..FIVE_PM &&
                         attendDto.entryTimes !in FIVE_THIRTY_PM..SEVEN_THIRTY_PM
-            if (checkEntryTime)
-                return CoreResult.ClientError("Closing time.")
+//            if (checkEntryTime)
+//                return CoreResult.ClientError("Closing time.")
             if(entryId.all { it.isDigit() }){
                 studentId = entryId.toLong()
             }else{

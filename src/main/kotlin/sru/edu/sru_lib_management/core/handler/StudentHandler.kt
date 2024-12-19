@@ -82,7 +82,7 @@ class StudentHandler(
             is CoreResult.Failure ->
                 ServerResponse.status(INTERNAL_SERVER_ERROR).bodyValueAndAwait(result.errorMsg)
             is CoreResult.ClientError ->
-                ServerResponse.status(INTERNAL_SERVER_ERROR).bodyValueAndAwait(result.clientErrMsg)
+                ServerResponse.status(BAD_REQUEST).bodyValueAndAwait(result.clientErrMsg)
         }
     }
 

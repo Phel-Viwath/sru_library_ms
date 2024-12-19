@@ -120,7 +120,7 @@ class AuthService(
     suspend fun updatePassword(email: String, password: String): AuthResult<String>{
         return try {
             var role: Role = Role.USER
-            var username: String = ""
+            var username = ""
             if (password.length < 8) AuthResult.InputError("Password too sort.")
 
             // find user in database
@@ -156,7 +156,6 @@ class AuthService(
             roleUpdated
         }catch (e: Exception){
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, e.message)
-            false
         }
     }
     suspend fun getAllUser(): List<UserDto>{

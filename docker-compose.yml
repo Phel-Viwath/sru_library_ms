@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: . # Path to the directory containing the Dockerfile
+      dockerfile: Dockerfile
+    ports:
+      - "8090:8090"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://host.docker.internal:3306/sru_library
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: viwath@261102
+    depends_on:
+      - database
+  database:
+    image: mysql:8.0
+    container_name: mysql-db
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: 261102
+      MYSQL_DATABASE: sru_library
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+volumes:
+  mysql-data:

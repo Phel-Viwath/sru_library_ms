@@ -32,7 +32,6 @@ class BookHandler(
 ) {
 
     private val logger = LoggerFactory.getLogger(BookHandler::class.java)
-
     /*
         * -> http://localhost:8090/api/v1/book
         * This Endpoint use to add book to database
@@ -98,7 +97,7 @@ class BookHandler(
 
     /*
     * -> http://localhost:8090/api/v1/book/{id}
-    * This Endpoint use to update book in database
+    * This Endpoint use to get book in database
     * */
     @PreAuthorize("hasRole('USER')")
     suspend fun getBookById(request: ServerRequest): ServerResponse{

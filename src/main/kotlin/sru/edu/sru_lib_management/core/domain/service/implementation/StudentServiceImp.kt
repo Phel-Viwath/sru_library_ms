@@ -82,16 +82,14 @@ class StudentServiceImp(
     }
 
     override suspend fun getStudent(studentId: Long): CoreResult<StudentDto?> {
-        return runCatching{
-            studentRepository.getStudentDetailById(studentId)
-        }.fold(
-            onSuccess = {
-                CoreResult.Success(it)
-            },
-            onFailure = {
-                CoreResult.Failure(it.message ?: "Unknown error occurred.")
-            }
-        )
+        return try{
+            val student = studentRepository.getStudentDetailById(studentId)
+            if (student != null)
+                return CoreResult.Success(student)
+            else return CoreResult.ClientError("Incorrect ID")
+        }catch (e: Exception){
+            CoreResult.Failure(e.message ?: "Unknown error occurred.")
+        }
     }
 
     override fun getAllStudentDetail(): Flow<StudentDto> {
