@@ -51,6 +51,7 @@ class AuthService(
             },
             onFailure = {
                 AuthResult.Failure("${it.message}")
+                throw Exception("${it.message}")
             }
         )
     }

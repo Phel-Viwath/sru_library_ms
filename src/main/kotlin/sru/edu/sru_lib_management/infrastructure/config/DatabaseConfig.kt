@@ -27,22 +27,41 @@ class DatabaseConfig(
     @Bean
     override fun connectionFactory(): ConnectionFactory {
 
-        //jdbc:mysql://localhost:3306/sru_library
-        val mySqlUrl = url.removePrefix("jdbc:mysql://")
-        // mySqlUrl will equal to localhost:3306/sru_library
-        val (dbHost, dbPortAndDbName) = mySqlUrl.split(":") // we spit it at :
-        // so dbHost will be equal localhost and dbPortAndDbName will equal to  3306/sru_library
-        val (dbPort, dbName) = dbPortAndDbName.split("/") // we spit it at /
+//        //jdbc:mysql://localhost:3306/sru_library
+//        val mySqlUrl = url.removePrefix("jdbc:mysql://")
+//        // mySqlUrl will equal to localhost:3306/sru_library
+//        val (dbHost, dbPortAndDbName) = mySqlUrl.split(":") // we spit it at :
+//        // so dbHost will be equal localhost and dbPortAndDbName will equal to  3306/sru_library
+//        val (dbPort, dbName) = dbPortAndDbName.split("/") // we spit it at /
+
+//        return MySqlConnectionFactory.from(
+//            MySqlConnectionConfiguration.builder()
+//                .host(dbHost)
+//                .port(dbPort.toInt())
+//                .database(dbName)
+//                .username(username)
+//                .password(password)
+//                .build()
+//        )
+
+        val r2dbcUrl = url.removePrefix("mysql://")
+        val (credentials, hostAndDatabase) = r2dbcUrl.split("@")
+        val (hostAndPort, database) = hostAndDatabase.split("/")
+        val (username, password) = credentials.split(":")
+
+        val (host, port) = hostAndPort.split(":")
 
         return MySqlConnectionFactory.from(
             MySqlConnectionConfiguration.builder()
-                .host(dbHost)
-                .port(dbPort.toInt())
-                .database(dbName)
+                .host(host)
+                .port(port.toInt())
+                .database(database)
                 .username(username)
                 .password(password)
                 .build()
         )
+
+
     }
 
     @Bean

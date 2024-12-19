@@ -8,11 +8,21 @@ ENV APP_HOME=/usr/app \
 # Set the working directory using APP_HOME
 WORKDIR $APP_HOME
 
-# Copy the project files into the container
-COPY . $APP_HOME
+# Copy only Gradle wrapper and project configuration files first
+COPY gradlew gradlew
+COPY gradle gradle
+COPY build.gradle.kts build.gradle.kts
+COPY settings.gradle.kts settings.gradle.kts
+
+# Cache dependencies by resolving them first
+RUN gradle dependencies --no-daemon || true
+
+# Copy the rest of the project files
+COPY . .
 
 # Build the application using Gradle
-RUN gradle bootJar
+RUN gradle bootJar --no-daemon
+RUN curl -I https://repo.maven.apache.org/maven2/
 
 # Use a lightweight JDK image for runtime
 FROM openjdk:17-jdk-slim
