@@ -14,7 +14,6 @@ import lombok.extern.slf4j.Slf4j
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
-import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.*
 import sru.edu.sru_lib_management.auth.domain.dto.AuthResponse
@@ -66,7 +65,7 @@ class AuthHandler(
         if (alreadyInUse)
             return ServerResponse.status(HttpStatus.CONFLICT).bodyValueAndAwait("User already exist")
 
-        return runBlocking {
+        return coroutineScope {
             when (val result = service.register(registerRequest)) {
                 is AuthResult.Success ->
                     ServerResponse.status(CREATED).bodyValueAndAwait(result.data)
@@ -127,24 +126,26 @@ class AuthHandler(
 
     suspend fun generateOtp(
         request: ServerRequest
-    ): ServerResponse = coroutineScope{
+    ): ServerResponse{
         val email = request.queryParamOrNull("email")
-            ?: return@coroutineScope ServerResponse.badRequest().buildAndAwait()
+            ?: return ServerResponse.badRequest().buildAndAwait()
         val validEmail = hunterService.verifyEmail(email)
         if (validEmail == "undeliverable")
-            return@coroutineScope ServerResponse.badRequest().bodyValueAndAwait("Invalid username")
+            return ServerResponse.badRequest().bodyValueAndAwait("Invalid username")
 
-        val alreadyInUse = runBlocking(Dispatchers.IO) { service.existEmail(email) }
-        if (!alreadyInUse) ResponseEntity.badRequest().body("Incorrect username.")
+        val alreadyInUse = service.existEmail(email)
+        logger.info("$alreadyInUse")
+        if (!alreadyInUse) {
+            return ServerResponse.badRequest().bodyValueAndAwait("Incorrect username.")
+        }
 
         val processOtp = otpService.generateAndSent(email)
-        ServerResponse.ok().bodyValueAndAwait(processOtp)
+        return ServerResponse.ok().bodyValueAndAwait(processOtp)
     }
 
     suspend fun verifyOtp(
         request: ServerRequest
     ): ServerResponse {
-
         val otp = request.queryParamOrNull("otp")
             ?: return ServerResponse.badRequest().buildAndAwait()
         val email = request.queryParamOrNull("email")
@@ -161,6 +162,9 @@ class AuthHandler(
         request: ServerRequest
     ): ServerResponse = coroutineScope {
         val loginRequest = request.bodyToMono<LoginRequest>().awaitSingle()
+        if (loginRequest.password.length < 8){
+            return@coroutineScope ServerResponse.badRequest().bodyValueAndAwait("Password is too short.")
+        }
         when(val result = service.updatePassword(loginRequest.email, loginRequest.password)){
             is AuthResult.Success ->
                 ServerResponse.ok().bodyValueAndAwait(result.data)

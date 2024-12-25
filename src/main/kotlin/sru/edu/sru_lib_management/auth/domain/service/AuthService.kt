@@ -30,7 +30,6 @@ class AuthService(
     private val jwtSupport: JwtToken,
     private val encoder: PasswordEncoder
 ){
-
     private val logger = LoggerFactory.getLogger(AuthService::class.java)
 
     suspend fun register(request: RegisterRequest): AuthResult<String> {
@@ -122,7 +121,6 @@ class AuthService(
         return try {
             var role: Role = Role.USER
             var username = ""
-            if (password.length < 8) AuthResult.InputError("Password too sort.")
 
             // find user in database
             repository.findByEmail(email)?.let { user ->

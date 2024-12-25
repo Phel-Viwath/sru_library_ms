@@ -10,15 +10,18 @@ import org.springframework.web.reactive.config.CorsRegistry
 import org.springframework.web.reactive.config.WebFluxConfigurer
 
 @Configuration
-class AllowAccess : WebFluxConfigurer {
+open class AllowAccess : WebFluxConfigurer {
     override fun addCorsMappings(registry: CorsRegistry) {
         registry.addMapping("/**")
             .allowedOrigins(
                 "http://localhost:5173/",
+                "http://localhost:5174/",
                 "https://react-js-inky-three.vercel.app/"
             )
             .allowedMethods("GET", "POST", "PUT", "DELETE")
+            .allowedHeaders("*")
             .allowCredentials(true)
             .allowPrivateNetwork(true)
+
     }
 }

@@ -16,11 +16,11 @@ import sru.edu.sru_lib_management.auth.controller.AuthHandler
 import sru.edu.sru_lib_management.core.handler.*
 
 @Configuration
-class RouteConfig {
+open class RouteConfig {
     // Auth route
 
     @Bean
-    fun helloRoute(welcomeHandler: WelcomeHandler) = coRouter {
+    open fun helloRoute(welcomeHandler: WelcomeHandler) = coRouter {
         accept(APPLICATION_JSON).nest {
             "/api/v1/welcome".nest {
                 GET("", welcomeHandler::hello)
@@ -29,7 +29,7 @@ class RouteConfig {
     }
 
     @Bean
-    fun authRoute(authHandler: AuthHandler) = coRouter {
+    open fun authRoute(authHandler: AuthHandler) = coRouter {
         accept(APPLICATION_JSON).nest {
             "/api/v1/auth".nest {
                 POST("/register", authHandler::register)
@@ -48,7 +48,7 @@ class RouteConfig {
     ///
     @FlowPreview
     @Bean
-    fun analyticRoute(analyticHandler: AnalyticHandler) = coRouter {
+    open fun analyticRoute(analyticHandler: AnalyticHandler) = coRouter {
         (accept(APPLICATION_JSON) and "/api/v1/analytic").nest {
             GET("", analyticHandler::analytic)
         }
@@ -56,7 +56,7 @@ class RouteConfig {
 
     @Bean
     @FlowPreview
-    fun attendRoute(attendHandler: AttendHandler) = coRouter {
+    open fun attendRoute(attendHandler: AttendHandler) = coRouter {
         accept(APPLICATION_JSON).nest {
             "api/v1/att".nest {
                 GET("/purpose", attendHandler::getAttendPurpose)
@@ -75,7 +75,7 @@ class RouteConfig {
 
     @Bean
     @FlowPreview
-    fun bookRouter(bookHandler: BookHandler): RouterFunction<ServerResponse> = coRouter {
+    open fun bookRouter(bookHandler: BookHandler): RouterFunction<ServerResponse> = coRouter {
         (accept(APPLICATION_JSON) and "/api/v1/book").nest {
             POST("", bookHandler::addNewBook)
             GET("", bookHandler::getBooks)
@@ -97,7 +97,7 @@ class RouteConfig {
 
     @Bean
     @FlowPreview
-    fun borrowRoute(borrowHandler: BorrowHandler) = coRouter {
+    open fun borrowRoute(borrowHandler: BorrowHandler) = coRouter {
         accept(APPLICATION_JSON).nest {
             "/api/v1/borrow".nest {
                 GET("/week-count", borrowHandler::countBorrowsPerWeek)
@@ -112,7 +112,7 @@ class RouteConfig {
 
     @Bean
     @FlowPreview
-    fun dashboardRoute(dashboardHandler: DashboardHandler): RouterFunction<ServerResponse> =  coRouter {
+    open fun dashboardRoute(dashboardHandler: DashboardHandler): RouterFunction<ServerResponse> =  coRouter {
         accept(APPLICATION_JSON).nest{
             "/api/v1/dashboard".nest {
                 GET("", dashboardHandler::dashboard)
@@ -122,7 +122,7 @@ class RouteConfig {
 
     @Bean
     @FlowPreview
-    fun donationRoute(donateHandler: DonateHandler): RouterFunction<ServerResponse> {
+    open fun donationRoute(donateHandler: DonateHandler): RouterFunction<ServerResponse> {
         return coRouter {
             accept(APPLICATION_JSON).nest {
                 "/api/v1/donation".nest {
@@ -136,7 +136,7 @@ class RouteConfig {
 
     @Bean
     @FlowPreview
-    fun entryRoute(entryHandler: EntryHandler): RouterFunction<ServerResponse> = coRouter {
+    open fun entryRoute(entryHandler: EntryHandler): RouterFunction<ServerResponse> = coRouter {
         accept(APPLICATION_JSON).nest {
             "/api/v1/entry".nest {
                 GET("", entryHandler::recentEntryData)
@@ -150,7 +150,7 @@ class RouteConfig {
 
     @Bean
     @FlowPreview
-    fun studentRoute(studentHandler: StudentHandler): RouterFunction<ServerResponse> = coRouter {
+    open fun studentRoute(studentHandler: StudentHandler): RouterFunction<ServerResponse> = coRouter {
         accept(APPLICATION_JSON).nest {
             "api/v1/student".nest {
                 GET("", studentHandler::getAllStudents)
@@ -163,7 +163,7 @@ class RouteConfig {
     }
     @Bean
     @FlowPreview
-    fun reportRoute(reportHandler: ReportHandler): RouterFunction<ServerResponse> = coRouter {
+    open fun reportRoute(reportHandler: ReportHandler): RouterFunction<ServerResponse> = coRouter {
         accept(APPLICATION_JSON).nest {
             "/api/v1/report".nest {
                 GET("", reportHandler::report)

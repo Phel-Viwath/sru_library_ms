@@ -23,6 +23,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.server.SecurityWebFilterChain
 import org.springframework.security.web.server.authentication.AuthenticationWebFilter
+import org.springframework.web.cors.CorsConfiguration
 import reactor.core.publisher.Mono
 import sru.edu.sru_lib_management.auth.data.repository.AuthRepositoryImp
 import sru.edu.sru_lib_management.auth.domain.jwt.JwtAuthenticationConverter
@@ -33,16 +34,16 @@ import java.util.*
 @Configuration
 @EnableWebFluxSecurity
 @EnableReactiveMethodSecurity
-class SecurityConfig (
+open class SecurityConfig (
     private val repository: AuthRepositoryImp,
     @Value("\${spring.mail.password}") val mailSenderPassword: String,
     @Value("\${spring.mail.username}") val mailSenderUsername: String,
 ) {
     @Bean
-    fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
+    open fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
     @Bean
-    fun userDetailServices(
+    open fun userDetailServices(
         encoder: PasswordEncoder
     ): ReactiveUserDetailsService = ReactiveUserDetailsService { email ->
         mono {
@@ -57,7 +58,7 @@ class SecurityConfig (
     }
     @Bean
     @Suppress("removal", "DEPRECATION")
-    fun springSecurityFilterChain(
+    open fun springSecurityFilterChain(
         http: ServerHttpSecurity,
         converter: JwtAuthenticationConverter,
         authManager: JwtAuthenticationManager
@@ -82,13 +83,26 @@ class SecurityConfig (
             .addFilterAt(filter, SecurityWebFiltersOrder.AUTHENTICATION)
             .httpBasic().disable()
             .formLogin().disable()
-            .cors().disable()
             .csrf().disable()
+            .cors { corsSpec ->
+                corsSpec.configurationSource {
+                    CorsConfiguration().apply {
+                        allowedOrigins = listOf(
+                            "http://localhost:5173",
+                            "http://localhost:5175/",
+                            "https://react-js-inky-three.vercel.app"
+                        )
+                        allowedMethods = listOf("GET", "POST", "PUT", "DELETE")
+                        allowCredentials = true
+                        addAllowedHeader("*")
+                    }
+                }
+            }
         return http.build()
     }
 
     @Bean
-    fun javaMailSender(): JavaMailSender {
+    open fun javaMailSender(): JavaMailSender {
         val mailSender = JavaMailSenderImpl()
         mailSender.host = "smtp.gmail.com"
         mailSender.port = 587
