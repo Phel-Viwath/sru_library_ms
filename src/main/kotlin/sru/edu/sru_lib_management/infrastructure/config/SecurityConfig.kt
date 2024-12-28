@@ -70,7 +70,7 @@ open class SecurityConfig (
             .authenticationEntryPoint { exchange, _ ->
                 Mono.fromRunnable {
                     exchange.response.statusCode = HttpStatus.UNAUTHORIZED
-                    exchange.response.headers.set(HttpHeaders.WWW_AUTHENTICATE, "Bearer")
+                    exchange.response.headers.remove(HttpHeaders.WWW_AUTHENTICATE)
                 }
             }
             .and()
