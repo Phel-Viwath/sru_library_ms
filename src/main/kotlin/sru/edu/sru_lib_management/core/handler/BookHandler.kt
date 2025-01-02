@@ -11,10 +11,16 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.awaitFirst
+import kotlinx.coroutines.reactive.awaitFirstOrNull
+import org.apache.poi.ss.usermodel.DateUtil
+import org.apache.poi.ss.usermodel.WorkbookFactory
 import org.slf4j.LoggerFactory
+import org.springframework.http.codec.multipart.FilePart
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
+import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.reactive.function.server.*
 import sru.edu.sru_lib_management.common.CoreResult
 import sru.edu.sru_lib_management.core.domain.dto.BookDto
@@ -24,6 +30,9 @@ import sru.edu.sru_lib_management.utils.ResponseStatus.BAD_REQUEST
 import sru.edu.sru_lib_management.utils.ResponseStatus.INTERNAL_SERVER_ERROR
 import sru.edu.sru_lib_management.utils.ResponseStatus.OK
 import sru.edu.sru_lib_management.utils.toBookDto
+import java.io.File
+import java.io.InputStream
+import java.time.LocalDate
 import java.time.YearMonth
 
 @Component
@@ -48,6 +57,37 @@ class BookHandler(
                 ServerResponse.badRequest().bodyValueAndAwait(result.clientErrMsg)
             is CoreResult.Failure ->
                 ServerResponse.status(500).bodyValueAndAwait(result.errorMsg)
+        }
+    }
+
+    @PreAuthorize("hasRole('USER')")
+    suspend fun uploadBook(
+        request: ServerRequest
+    ): ServerResponse = coroutineScope {
+        val multipartData = request.awaitMultipartData()
+        println("Multipart keys received: ${multipartData.keys}")
+
+        val filePart = multipartData["book_file"]?.firstOrNull() as? FilePart
+        if (filePart == null) {
+            println("FilePart is null or invalid.")
+            return@coroutineScope ServerResponse.badRequest().bodyValueAndAwait("File is missing or invalid.")
+        }
+
+        //Save the file to a temporary location or process it directly
+        val tempFile = File.createTempFile("upload", ".xlsx")
+        filePart.transferTo(tempFile).awaitFirstOrNull()
+        //val tempFile = File.createTempFile("upload", ".xlsx")
+        val inputStream = tempFile.inputStream()
+
+        val book = parseExcelFile(inputStream)
+
+        when(val result = bookService.saveBook(book.asFlow().toList())){
+            is CoreResult.Success ->
+                ServerResponse.ok().bodyValueAndAwait(result.data)
+            is CoreResult.Failure ->
+                ServerResponse.status(500).bodyValueAndAwait(result.errorMsg)
+            is CoreResult.ClientError ->
+                ServerResponse.badRequest().bodyValueAndAwait(result.clientErrMsg)
         }
     }
 
@@ -211,6 +251,63 @@ class BookHandler(
     ): ServerResponse {
         val data =  GlobalScope.async { bookService.aboutBookData()}.await()
         return ServerResponse.ok().json().bodyValueAndAwait(data)
+    }
+
+    private fun parseExcelFile(inputStream: InputStream): List<BookDto> {
+        val workBook = WorkbookFactory.create(inputStream)
+        val sheet = workBook.getSheetAt(0)
+        val books = mutableListOf<BookDto>()
+
+        for (row in sheet.drop(1)){
+            val bookId = row.getCell(0).stringValue()
+            val bookTitle = row.getCell(1).stringValue()
+            val bookQuan = row.getCell(2).numericValue()?.toInt() ?: 0
+            val languageId = row.getCell(3).stringValue()
+            val collegeId = row.getCell(4).stringValue()
+            val author = row.getCell(5)?.stringValue() ?: ""
+            val publicationYear = row.getCell(6)?.numericValue()?.toInt() ?: 0
+            val genre = row.getCell(7).stringValue()
+            val receiveDate = row.getCell(8)?.dateValue()
+
+            books.add(
+                BookDto(
+                    bookId = bookId,
+                    bookTitle = bookTitle,
+                    bookQuan = bookQuan,
+                    languageId = languageId,
+                    collegeId = collegeId,
+                    author = author,
+                    publicationYear = publicationYear,
+                    genre = genre,
+                    receiveDate = receiveDate
+                )
+            )
+        }
+        workBook.close()
+        return books
+    }
+    // Extension functions to handle cell types dynamically
+    private fun org.apache.poi.ss.usermodel.Cell.stringValue(): String {
+        return when (cellType) {
+            org.apache.poi.ss.usermodel.CellType.STRING -> stringCellValue
+            org.apache.poi.ss.usermodel.CellType.NUMERIC -> numericCellValue.toInt().toString()
+            else -> ""
+        }
+    }
+
+    private fun org.apache.poi.ss.usermodel.Cell.numericValue(): Double? {
+        return when (cellType) {
+            org.apache.poi.ss.usermodel.CellType.NUMERIC -> numericCellValue
+            org.apache.poi.ss.usermodel.CellType.STRING -> stringCellValue.toDoubleOrNull()
+            else -> null
+        }
+    }
+    private fun org.apache.poi.ss.usermodel.Cell.dateValue(): LocalDate? {
+        return if (cellType == org.apache.poi.ss.usermodel.CellType.NUMERIC && DateUtil.isCellDateFormatted(this)) {
+            DateUtil.getJavaDate(numericCellValue).toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+        } else {
+            stringValue().let { LocalDate.parse(it) }
+        }
     }
 
 }

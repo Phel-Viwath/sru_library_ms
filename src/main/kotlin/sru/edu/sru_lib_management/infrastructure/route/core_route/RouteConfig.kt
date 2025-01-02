@@ -8,6 +8,7 @@ package sru.edu.sru_lib_management.infrastructure.route.core_route
 import kotlinx.coroutines.FlowPreview
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.MediaType
 import org.springframework.http.MediaType.APPLICATION_JSON
 import org.springframework.web.reactive.function.server.RouterFunction
 import org.springframework.web.reactive.function.server.ServerResponse
@@ -16,11 +17,11 @@ import sru.edu.sru_lib_management.auth.controller.AuthHandler
 import sru.edu.sru_lib_management.core.handler.*
 
 @Configuration
-open class RouteConfig {
+class RouteConfig {
     // Auth route
 
     @Bean
-    open fun helloRoute(welcomeHandler: WelcomeHandler) = coRouter {
+    fun helloRoute(welcomeHandler: WelcomeHandler) = coRouter {
         accept(APPLICATION_JSON).nest {
             "/api/v1/welcome".nest {
                 GET("", welcomeHandler::hello)
@@ -29,7 +30,7 @@ open class RouteConfig {
     }
 
     @Bean
-    open fun authRoute(authHandler: AuthHandler) = coRouter {
+    fun authRoute(authHandler: AuthHandler) = coRouter {
         accept(APPLICATION_JSON).nest {
             "/api/v1/auth".nest {
                 POST("/register", authHandler::register)
@@ -48,7 +49,7 @@ open class RouteConfig {
     ///
     @FlowPreview
     @Bean
-    open fun analyticRoute(analyticHandler: AnalyticHandler) = coRouter {
+    fun analyticRoute(analyticHandler: AnalyticHandler) = coRouter {
         (accept(APPLICATION_JSON) and "/api/v1/analytic").nest {
             GET("", analyticHandler::analytic)
         }
@@ -56,7 +57,7 @@ open class RouteConfig {
 
     @Bean
     @FlowPreview
-    open fun attendRoute(attendHandler: AttendHandler) = coRouter {
+    fun attendRoute(attendHandler: AttendHandler) = coRouter {
         accept(APPLICATION_JSON).nest {
             "api/v1/att".nest {
                 GET("/purpose", attendHandler::getAttendPurpose)
@@ -75,7 +76,7 @@ open class RouteConfig {
 
     @Bean
     @FlowPreview
-    open fun bookRouter(bookHandler: BookHandler): RouterFunction<ServerResponse> = coRouter {
+    fun bookRouter(bookHandler: BookHandler): RouterFunction<ServerResponse> = coRouter {
         (accept(APPLICATION_JSON) and "/api/v1/book").nest {
             POST("", bookHandler::addNewBook)
             GET("", bookHandler::getBooks)
@@ -97,7 +98,7 @@ open class RouteConfig {
 
     @Bean
     @FlowPreview
-    open fun borrowRoute(borrowHandler: BorrowHandler) = coRouter {
+    fun borrowRoute(borrowHandler: BorrowHandler) = coRouter {
         accept(APPLICATION_JSON).nest {
             "/api/v1/borrow".nest {
                 GET("/week-count", borrowHandler::countBorrowsPerWeek)
@@ -112,7 +113,7 @@ open class RouteConfig {
 
     @Bean
     @FlowPreview
-    open fun dashboardRoute(dashboardHandler: DashboardHandler): RouterFunction<ServerResponse> =  coRouter {
+    fun dashboardRoute(dashboardHandler: DashboardHandler): RouterFunction<ServerResponse> =  coRouter {
         accept(APPLICATION_JSON).nest{
             "/api/v1/dashboard".nest {
                 GET("", dashboardHandler::dashboard)
@@ -122,7 +123,7 @@ open class RouteConfig {
 
     @Bean
     @FlowPreview
-    open fun donationRoute(donateHandler: DonateHandler): RouterFunction<ServerResponse> {
+    fun donationRoute(donateHandler: DonateHandler): RouterFunction<ServerResponse> {
         return coRouter {
             accept(APPLICATION_JSON).nest {
                 "/api/v1/donation".nest {
@@ -136,7 +137,7 @@ open class RouteConfig {
 
     @Bean
     @FlowPreview
-    open fun entryRoute(entryHandler: EntryHandler): RouterFunction<ServerResponse> = coRouter {
+    fun entryRoute(entryHandler: EntryHandler): RouterFunction<ServerResponse> = coRouter {
         accept(APPLICATION_JSON).nest {
             "/api/v1/entry".nest {
                 GET("", entryHandler::recentEntryData)
@@ -150,7 +151,7 @@ open class RouteConfig {
 
     @Bean
     @FlowPreview
-    open fun studentRoute(studentHandler: StudentHandler): RouterFunction<ServerResponse> = coRouter {
+    fun studentRoute(studentHandler: StudentHandler): RouterFunction<ServerResponse> = coRouter {
         accept(APPLICATION_JSON).nest {
             "api/v1/student".nest {
                 GET("", studentHandler::getAllStudents)
@@ -163,7 +164,7 @@ open class RouteConfig {
     }
     @Bean
     @FlowPreview
-    open fun reportRoute(reportHandler: ReportHandler): RouterFunction<ServerResponse> = coRouter {
+    fun reportRoute(reportHandler: ReportHandler): RouterFunction<ServerResponse> = coRouter {
         accept(APPLICATION_JSON).nest {
             "/api/v1/report".nest {
                 GET("", reportHandler::report)
@@ -171,6 +172,13 @@ open class RouteConfig {
         }
     }
 
-
+    @Bean
+    fun uploadRoute(bookHandler: BookHandler): RouterFunction<ServerResponse> = coRouter {
+        accept(MediaType.MULTIPART_FORM_DATA).nest{
+            "/api/v1/upload".nest {
+                POST("/book", bookHandler::uploadBook)
+            }
+        }
+    }
 
 }

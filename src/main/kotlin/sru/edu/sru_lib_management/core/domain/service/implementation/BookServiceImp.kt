@@ -141,8 +141,7 @@ class BookServiceImp(
         }
     }
 
-    override suspend fun getAvailableBook(): CoreResult<List<BookAvailableDto>>
-    = runCatching {
+    override suspend fun getAvailableBook(): CoreResult<List<BookAvailableDto>> = runCatching {
         bookRepository.bookAvailable()
     }.fold(
         onSuccess = {data ->
