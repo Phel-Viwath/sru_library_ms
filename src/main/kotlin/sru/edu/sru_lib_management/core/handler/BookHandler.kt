@@ -78,8 +78,8 @@ class BookHandler(
         filePart.transferTo(tempFile).awaitFirstOrNull()
         //val tempFile = File.createTempFile("upload", ".xlsx")
         val inputStream = tempFile.inputStream()
-
         val book = parseExcelFile(inputStream)
+        tempFile.delete()
 
         when(val result = bookService.saveBook(book.asFlow().toList())){
             is CoreResult.Success ->
