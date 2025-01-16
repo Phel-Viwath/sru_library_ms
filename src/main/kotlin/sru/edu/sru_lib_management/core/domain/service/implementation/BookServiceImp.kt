@@ -44,13 +44,9 @@ class BookServiceImp(
     private val logger = LoggerFactory.getLogger(BookServiceImp::class.java)
     private val allBook = bookRepository.getAll()
 
-    override fun getAllBooks(): Flow<BookDto> {
+    override fun getAllBooks(): Flow<Books> {
         return try {
-            val book = bookRepository.getAll()
-            val bookDtoFlow = runBlocking {
-                book.toFlowBookDto<BookDto>()
-            }
-            bookDtoFlow
+            bookRepository.getAll()
         }catch (e: Exception){
             throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.message)
         }

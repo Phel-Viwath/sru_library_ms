@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.JavaMailSenderImpl
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity
@@ -34,16 +35,16 @@ import java.util.*
 @Configuration
 @EnableWebFluxSecurity
 @EnableReactiveMethodSecurity
-open class SecurityConfig (
+class SecurityConfig (
     private val repository: AuthRepositoryImp,
     @Value("\${spring.mail.password}") val mailSenderPassword: String,
     @Value("\${spring.mail.username}") val mailSenderUsername: String,
 ) {
     @Bean
-    open fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
+    fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
     @Bean
-    open fun userDetailServices(
+    fun userDetailServices(
         encoder: PasswordEncoder
     ): ReactiveUserDetailsService = ReactiveUserDetailsService { email ->
         mono {
@@ -58,7 +59,7 @@ open class SecurityConfig (
     }
     @Bean
     @Suppress("removal", "DEPRECATION")
-    open fun springSecurityFilterChain(
+    fun springSecurityFilterChain(
         http: ServerHttpSecurity,
         converter: JwtAuthenticationConverter,
         authManager: JwtAuthenticationManager
@@ -89,7 +90,8 @@ open class SecurityConfig (
                     CorsConfiguration().apply {
                         allowedOrigins = listOf(
                             "http://localhost:5173",
-                            "http://localhost:5175/",
+                            "http://localhost:5174",
+                            "http://localhost:5175",
                             "https://react-js-inky-three.vercel.app"
                         )
                         allowedMethods = listOf("GET", "POST", "PUT", "DELETE")
@@ -102,7 +104,7 @@ open class SecurityConfig (
     }
 
     @Bean
-    open fun javaMailSender(): JavaMailSender {
+    fun javaMailSender(): JavaMailSender {
         val mailSender = JavaMailSenderImpl()
         mailSender.host = "smtp.gmail.com"
         mailSender.port = 587
