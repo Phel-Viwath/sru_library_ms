@@ -17,11 +17,9 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
 import org.apache.poi.ss.usermodel.DateUtil
 import org.apache.poi.ss.usermodel.WorkbookFactory
 import org.slf4j.LoggerFactory
-import org.springframework.http.MediaType
 import org.springframework.http.codec.multipart.FilePart
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
-import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.reactive.function.server.*
 import sru.edu.sru_lib_management.common.CoreResult
 import sru.edu.sru_lib_management.core.domain.dto.BookDto
@@ -98,7 +96,7 @@ class BookHandler(
    * */
 
     @PreAuthorize("hasRole('USER')")
-    suspend fun getBooks(request: ServerRequest): ServerResponse = coroutineScope {
+    suspend fun getBooks(): ServerResponse = coroutineScope {
         val allBooks = bookService.getAllBooks()
         ServerResponse.ok().bodyAndAwait(allBooks)
     }
@@ -108,9 +106,7 @@ class BookHandler(
    * This Endpoint use to get all book from database
    * */
     @PreAuthorize("hasRole('USER')")
-    suspend fun currentAvailableBook(
-        request: ServerRequest
-    ): ServerResponse = coroutineScope{
+    suspend fun currentAvailableBook(): ServerResponse = coroutineScope{
         val bookAvailable = bookService.currentAvailableBook().asFlow()
         ServerResponse.ok().bodyAndAwait(bookAvailable)
     }
@@ -176,7 +172,7 @@ class BookHandler(
     * This Endpoint use to get available book
     * */
     @PreAuthorize("hasRole('USER')")
-    suspend fun availableBook(request: ServerRequest): ServerResponse = coroutineScope {
+    suspend fun availableBook(): ServerResponse = coroutineScope {
         when(val result = bookService.getAvailableBook()){
             is CoreResult.Success ->
                 ServerResponse.status(OK).bodyValueAndAwait(result.data)
@@ -226,7 +222,7 @@ class BookHandler(
 
     // http://localhost:8090/api/v1/book/in-trash
     @PreAuthorize("hasRole('USER')")
-    suspend fun getBooksInTrash(request: ServerRequest): ServerResponse = coroutineScope{
+    suspend fun getBooksInTrash(): ServerResponse = coroutineScope{
         val bookInTrash =  bookService.getBooksInTrash().map {
             it.toBookDto()
         }
@@ -247,9 +243,7 @@ class BookHandler(
 
     @OptIn(DelicateCoroutinesApi::class)
     @PreAuthorize("hasRole('USER')")
-    suspend fun aboutBookData(
-        request: ServerRequest
-    ): ServerResponse {
+    suspend fun aboutBookData(): ServerResponse {
         val data =  GlobalScope.async { bookService.aboutBookData()}.await()
         return ServerResponse.ok().json().bodyValueAndAwait(data)
     }

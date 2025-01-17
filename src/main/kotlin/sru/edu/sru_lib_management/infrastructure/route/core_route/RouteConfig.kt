@@ -79,17 +79,17 @@ class RouteConfig {
     fun bookRouter(bookHandler: BookHandler): RouterFunction<ServerResponse> = coRouter {
         (accept(APPLICATION_JSON) and "/api/v1/book").nest {
             POST("", bookHandler::addNewBook)
-            GET("", bookHandler::getBooks)
+            GET(""){bookHandler.getBooks()}
             PUT("", bookHandler::updateBook)
 
-            GET("/available", bookHandler::availableBook)
+            GET("/available"){bookHandler.availableBook()}
             PUT("/trash", bookHandler::moveToTrash)
             PUT("/recover", bookHandler::recoverBook)
-            GET("/in-trash", bookHandler::getBooksInTrash)
+            GET("/in-trash"){bookHandler.getBooksInTrash()}
             GET("/income", bookHandler::getBookIncome)
-            GET("/about-book-data",bookHandler::aboutBookData)
+            GET("/about-book-data"){bookHandler.aboutBookData()}
 
-            GET("/current-book", bookHandler::currentAvailableBook)
+            GET("/current-book"){ bookHandler.currentAvailableBook() }
             GET("/{bookId}", bookHandler::getBookById)
             DELETE("/{bookId}", bookHandler::deleteBook)
         }

@@ -60,9 +60,12 @@ class JwtToken @Autowired constructor(
         val claims = phaser.parseClaimsJws(token.value).body
         val issueAt = claims.issuedAt.toInstant()
         val expiration = claims.expiration.toInstant()
-        val duration = ChronoUnit.SECONDS.between(issueAt, expiration)
+        val duration = ChronoUnit.MINUTES.between(issueAt, expiration)
         duration == 43200L
-    }catch (e: Exception){ false }
+    }catch (e: Exception){
+        e.printStackTrace()
+        false
+    }
 
 
 }
