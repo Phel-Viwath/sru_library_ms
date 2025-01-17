@@ -3,7 +3,7 @@
  * @Author Phel Viwath
  */
 
-USE sru_library;
+#USE sru_library;
 #Count number of student that attend library custom by date
 CREATE PROCEDURE if not exists CountTotalAttend()
 BEGIN

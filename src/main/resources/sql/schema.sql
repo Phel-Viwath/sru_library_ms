@@ -191,3 +191,4 @@ create table if not exists staff_major(
    FOREIGN KEY (major_id) REFERENCES majors(major_id) on delete cascade on update cascade
 );
 
+

@@ -25,7 +25,7 @@ interface BookService {
     suspend fun getBook(bookId: String): CoreResult<BookDto>
     suspend fun deleteBook(bookId: String): CoreResult<Boolean>
     suspend fun getAvailableBook(): CoreResult<List<BookAvailableDto>>
-    fun currentAvailableBook(): Flow<Books>
+    suspend fun currentAvailableBook(): List<Books>
 
     /// Trash
     suspend fun moveToTrash(bookId: List<String>): CoreResult<String>

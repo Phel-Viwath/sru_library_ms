@@ -17,6 +17,7 @@ import kotlinx.coroutines.reactive.awaitFirstOrNull
 import org.apache.poi.ss.usermodel.DateUtil
 import org.apache.poi.ss.usermodel.WorkbookFactory
 import org.slf4j.LoggerFactory
+import org.springframework.http.MediaType
 import org.springframework.http.codec.multipart.FilePart
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
@@ -110,7 +111,7 @@ class BookHandler(
     suspend fun currentAvailableBook(
         request: ServerRequest
     ): ServerResponse = coroutineScope{
-        val bookAvailable = bookService.currentAvailableBook()
+        val bookAvailable = bookService.currentAvailableBook().asFlow()
         ServerResponse.ok().bodyAndAwait(bookAvailable)
     }
 

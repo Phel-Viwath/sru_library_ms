@@ -5,8 +5,10 @@
 
 package sru.edu.sru_lib_management.core.domain.service.implementation
 
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.awaitSingle
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -28,7 +30,6 @@ import sru.edu.sru_lib_management.core.domain.service.CollegeService
 import sru.edu.sru_lib_management.core.domain.service.LanguageService
 import sru.edu.sru_lib_management.utils.IndochinaDateTime.indoChinaDate
 import sru.edu.sru_lib_management.utils.toBookDto
-import sru.edu.sru_lib_management.utils.toFlowBookDto
 import java.time.YearMonth
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -149,46 +150,9 @@ class BookServiceImp(
         }
     )
 
-    override fun currentAvailableBook(): Flow<Books> {
+    override suspend fun currentAvailableBook(): List<Books>  {
         return try {
-            val allBorrowed = borrowRepository.getAll()
-            val allBooks = bookRepository.getAll()
-
-            allBooks.flatMapConcat { book ->
-                allBorrowed
-                    .filter { borrowed ->
-                        val bool = borrowed.bookId == book.bookId
-                        bool
-                    }
-                    .fold(book.bookQuan){ availableBook, borrowed ->
-                        val adjustment = if (borrowed.isBringBack){
-                            0
-                        }else{ -borrowed.bookQuan }
-                        val b = availableBook + adjustment
-                        b
-                    }
-                    .let {availableQuan ->
-                        if (availableQuan > 0){
-                            flowOf(
-                                Books(
-                                    bookId = book.bookId,
-                                    bookTitle = book.bookTitle,
-                                    bookQuan = availableQuan,
-                                    languageId = book.languageId,
-                                    collegeId = book.collegeId,
-                                    author = book.author,
-                                    publicationYear = book.publicationYear,
-                                    genre = book.genre,
-                                    isActive = book.isActive,
-                                    inactiveDate = book.inactiveDate,
-                                    receiveDate = book.receiveDate
-                                )
-                            )
-                        }else{
-                            emptyFlow()
-                        }
-                    }
-            }
+            bookRepository.getCurrentAvailableBook()
         }catch (e: Exception){
             throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.message)
         }

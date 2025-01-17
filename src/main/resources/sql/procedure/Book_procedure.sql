@@ -3,7 +3,11 @@
  * @Author Phel Viwath
  */
 
-USE sru_library;
+/*
+* Note if you want to use local database please use sru_library
+*/
+
+#USE sru_library;
 
 #Get available book
 CREATE PROCEDURE if not exists GetAvailableBook()

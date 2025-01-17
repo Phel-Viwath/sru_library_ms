@@ -14,6 +14,7 @@ import org.springframework.r2dbc.core.*
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import sru.edu.sru_lib_management.core.data.query.BookQuery.DELETE_BOOK_QUERY
+import sru.edu.sru_lib_management.core.data.query.BookQuery.GET_AVAILABLE_BOOK_QUERY
 import sru.edu.sru_lib_management.core.data.query.BookQuery.GET_BOOKS_QUERY
 import sru.edu.sru_lib_management.core.data.query.BookQuery.GET_BOOK_QUERY
 import sru.edu.sru_lib_management.core.data.query.BookQuery.SAVE_BOOK_QUERY
@@ -149,6 +150,15 @@ class BookRepositoryImp(
                 )
             }
             .all()
+            .collectList()
+            .awaitSingle()
+    }
+
+    override suspend fun getCurrentAvailableBook(): List<Books> {
+        return client.sql(GET_AVAILABLE_BOOK_QUERY)
+            .map { row: Row, _ ->
+                row.rowMapping()
+            }.all()
             .collectList()
             .awaitSingle()
     }

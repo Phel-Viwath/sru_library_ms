@@ -28,4 +28,5 @@ interface BookRepository : ICrudRepository<Books, String>{
 
     suspend fun universityFunding(): List<FundCount>
     suspend fun allBookDonation(): List<FundCount>
+    suspend fun getCurrentAvailableBook(): List<Books>
 }

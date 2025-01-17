@@ -27,6 +27,31 @@ object BookQuery {
 
     const val SEARCH_BOOK_QUERY = "SELECT * FROM books WHERE 1=1"
 
+    const val GET_AVAILABLE_BOOK_QUERY = """
+        SELECT
+            b.book_id,
+            b.book_title,
+            b.bookQuan - COALESCE(SUM(bb.book_quan), 0) AS bookQuan,
+            b.language_id,
+            b.college_id,
+            b.author,
+            b.publication_year,
+            b.genre,
+            b.received_date,
+            b.isActive,
+            b.inactiveDate
+        FROM
+            books b
+                LEFT JOIN
+            borrow_books bb ON b.book_id = bb.book_id AND bb.is_bring_back = FALSE
+        GROUP BY
+            b.book_id, b.book_title, b.bookQuan
+        HAVING
+            b.bookQuan - COALESCE(SUM(bb.book_quan), 0) > 0
+        ORDER BY
+            b.book_title;
+    """
+
 
     // ======== ================== =================================
     // Sponsor query
