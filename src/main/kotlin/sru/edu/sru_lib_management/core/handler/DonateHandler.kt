@@ -39,7 +39,7 @@ class DonateHandler(
     }
 
     @PreAuthorize("hasRole('USER')")
-    suspend fun donationDetailInfo(request: ServerRequest): ServerResponse {
+    suspend fun donationDetailInfo(): ServerResponse {
         val donationDetail =  donationService.getDonationDetail()
         return ServerResponse.ok().bodyAndAwait(donationDetail)
     }

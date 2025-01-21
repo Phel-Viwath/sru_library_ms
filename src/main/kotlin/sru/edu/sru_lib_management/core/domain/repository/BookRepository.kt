@@ -18,6 +18,7 @@ import java.time.YearMonth
 
 @Repository
 interface BookRepository : ICrudRepository<Books, String>{
+    fun searchBook(keyword: String): Flow<Books>
     suspend fun bookAvailable(): List<BookAvailableDto>
     suspend fun bookTrash(bookId: String, date: LocalDate): String
     suspend fun recoveryBook(bookId: String): String

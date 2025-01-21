@@ -20,6 +20,7 @@ import java.time.YearMonth
 @Service
 interface BookService {
     fun getAllBooks(): Flow<Books>
+    fun searchBooks(keyword: String): Flow<BookDto>
     suspend fun saveBook(books: List<BookDto>): CoreResult<List<BookDto>>
     suspend fun updateBook(books: BookDto): CoreResult<BookDto>
     suspend fun getBook(bookId: String): CoreResult<BookDto>

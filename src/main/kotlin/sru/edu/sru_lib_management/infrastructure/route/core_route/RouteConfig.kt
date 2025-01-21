@@ -24,7 +24,7 @@ class RouteConfig {
     fun helloRoute(welcomeHandler: WelcomeHandler) = coRouter {
         accept(APPLICATION_JSON).nest {
             "/api/v1/welcome".nest {
-                GET("", welcomeHandler::hello)
+                GET(""){welcomeHandler.hello()}
             }
         }
     }
@@ -61,13 +61,13 @@ class RouteConfig {
         accept(APPLICATION_JSON).nest {
             "api/v1/att".nest {
                 GET("/purpose", attendHandler::getAttendPurpose)
-                GET("/time-spent", attendHandler::getDurationSpent)
-                GET("/weekly", attendHandler::weeklyVisitor)
-                GET("/detail", attendHandler::getDetails)
+                GET("/time-spent"){attendHandler.getDurationSpent()}
+                GET("/weekly"){attendHandler.weeklyVisitor()}
+                GET("/detail"){attendHandler.getDetails()}
                 GET("/compare", attendHandler::countAndCompare)
                 GET("/count", attendHandler::countCustomAttend)
                 GET("/custom", attendHandler::getCustomAttend)
-                GET("", attendHandler::getAllAttend)
+                GET(""){attendHandler.getAllAttend()}
                 PUT("", attendHandler::updateExitingTime)
                 PUT("/{attId}", attendHandler::updateAtt)
             }
@@ -89,6 +89,7 @@ class RouteConfig {
             GET("/income", bookHandler::getBookIncome)
             GET("/about-book-data"){bookHandler.aboutBookData()}
 
+            GET("/search"){ bookHandler.searchBook(it) }
             GET("/current-book"){ bookHandler.currentAvailableBook() }
             GET("/{bookId}", bookHandler::getBookById)
             DELETE("/{bookId}", bookHandler::deleteBook)
@@ -101,12 +102,13 @@ class RouteConfig {
     fun borrowRoute(borrowHandler: BorrowHandler) = coRouter {
         accept(APPLICATION_JSON).nest {
             "/api/v1/borrow".nest {
-                GET("/week-count", borrowHandler::countBorrowsPerWeek)
+                GET("/week-count"){borrowHandler.countBorrowsPerWeek()}
                 POST("", borrowHandler::saveBorrow)
-                GET("", borrowHandler::getAllBorrow)
-                GET("/over-due", borrowHandler::getAllOverDueBooks)
+                GET(""){borrowHandler.getAllBorrow()}
+                GET("/over-due"){borrowHandler.getAllOverDueBooks()}
                 PUT("", borrowHandler::bookReturned)
                 PUT("/extend-borrow", borrowHandler::extendBorrowBook)
+                GET("/borrow-restrict", borrowHandler::checkBorrowNotReturn)
             }
         }
     }
@@ -116,7 +118,7 @@ class RouteConfig {
     fun dashboardRoute(dashboardHandler: DashboardHandler): RouterFunction<ServerResponse> =  coRouter {
         accept(APPLICATION_JSON).nest{
             "/api/v1/dashboard".nest {
-                GET("", dashboardHandler::dashboard)
+                GET(""){dashboardHandler.dashboard()}
             }
         }
     }
@@ -128,7 +130,7 @@ class RouteConfig {
             accept(APPLICATION_JSON).nest {
                 "/api/v1/donation".nest {
                     POST("", donateHandler::saveDonation)
-                    GET("", donateHandler::donationDetailInfo)
+                    GET(""){donateHandler.donationDetailInfo()}
                     PUT("", donateHandler::updateDonation)
                 }
             }
@@ -140,7 +142,7 @@ class RouteConfig {
     fun entryRoute(entryHandler: EntryHandler): RouterFunction<ServerResponse> = coRouter {
         accept(APPLICATION_JSON).nest {
             "/api/v1/entry".nest {
-                GET("", entryHandler::recentEntryData)
+                GET(""){entryHandler.recentEntryData()}
                 GET("/check", entryHandler::checkExistingStudent)
                 GET("/{id}", entryHandler::getStudentById)
                 POST("", entryHandler::newEntry)
@@ -154,7 +156,7 @@ class RouteConfig {
     fun studentRoute(studentHandler: StudentHandler): RouterFunction<ServerResponse> = coRouter {
         accept(APPLICATION_JSON).nest {
             "api/v1/student".nest {
-                GET("", studentHandler::getAllStudents)
+                GET(""){studentHandler.getAllStudents()}
                 GET("/{studentId}", studentHandler::getStudentById)
                 POST("", studentHandler::saveStudent)
                 DELETE("/delete/{studentId}", studentHandler::deleteStudent)

@@ -16,7 +16,6 @@ import kotlinx.coroutines.reactive.awaitFirst
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import org.apache.poi.ss.usermodel.DateUtil
 import org.apache.poi.ss.usermodel.WorkbookFactory
-import org.slf4j.LoggerFactory
 import org.springframework.http.codec.multipart.FilePart
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
@@ -39,11 +38,18 @@ class BookHandler(
     private val bookService: BookService,
 ) {
 
-    private val logger = LoggerFactory.getLogger(BookHandler::class.java)
+    //private val logger = LoggerFactory.getLogger(BookHandler::class.java)
     /*
         * -> http://localhost:8090/api/v1/book
         * This Endpoint use to add book to database
         * */
+    suspend fun searchBook(request: ServerRequest): ServerResponse = coroutineScope{
+        val keyword = request.queryParams()["keyword"]?.firstOrNull()
+            ?: return@coroutineScope ServerResponse.badRequest().buildAndAwait()
+        val books = bookService.searchBooks(keyword)
+        ServerResponse.ok().bodyAndAwait(books)
+    }
+
     @PreAuthorize("hasRole('USER')")
     suspend fun addNewBook(
         request: ServerRequest

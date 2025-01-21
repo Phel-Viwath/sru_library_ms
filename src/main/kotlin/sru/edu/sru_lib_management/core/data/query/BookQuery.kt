@@ -25,8 +25,6 @@ object BookQuery {
 
     const val GET_BOOKS_QUERY = "SELECT * FROM books;"
 
-    const val SEARCH_BOOK_QUERY = "SELECT * FROM books WHERE 1=1"
-
     const val GET_AVAILABLE_BOOK_QUERY = """
         SELECT
             b.book_id,

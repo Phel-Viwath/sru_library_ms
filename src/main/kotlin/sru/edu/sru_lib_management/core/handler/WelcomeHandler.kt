@@ -8,7 +8,7 @@ import org.springframework.web.reactive.function.server.json
 
 @Component
 class WelcomeHandler {
-    suspend fun hello(request: ServerRequest): ServerResponse{
+    suspend fun hello(): ServerResponse{
         return ServerResponse.ok().json().bodyValueAndAwait("Hello")
     }
 }

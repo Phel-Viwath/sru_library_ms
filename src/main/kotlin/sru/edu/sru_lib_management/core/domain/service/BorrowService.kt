@@ -41,5 +41,6 @@ interface BorrowService {
     fun mostBorrow(startDate: LocalDate, endDate: LocalDate): Flow<MostBorrow>
 
     suspend fun getBorrowAndReturn(startDate: LocalDate?, endDate: LocalDate?): List<BorrowReturn>
+    suspend fun getNotBringBackByStudentId(studentId: Long): CoreResult<String>
 
 }

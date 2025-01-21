@@ -270,4 +270,20 @@ class BorrowServiceImp(
         }
     }
 
+    override suspend fun getNotBringBackByStudentId(studentId: Long): CoreResult<String> {
+        return try {
+            studentRepository.getById(studentId)
+                ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Not found student with ID: $studentId")
+            val borrowed = borrowRepository.getNotBringBackByStudentId(studentId)
+            return if (borrowed.isEmpty())
+                CoreResult.Success("You can borrow two books")
+            else if (borrowed.size == 1)
+                CoreResult.Success("You can borrow only one book")
+            else
+                CoreResult.ClientError("You can not borrow more than two book in two weeks.")
+        }catch (e: Exception){
+            CoreResult.Failure(e.message.toString())
+        }
+    }
+
 }

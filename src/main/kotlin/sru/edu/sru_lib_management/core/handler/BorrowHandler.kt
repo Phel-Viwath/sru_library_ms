@@ -10,7 +10,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.reactive.awaitFirst
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
-import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.reactive.function.server.*
 import sru.edu.sru_lib_management.common.CoreResult
 import sru.edu.sru_lib_management.core.domain.dto.BorrowDto
@@ -22,9 +21,7 @@ class BorrowHandler (
 ){
 
     @PreAuthorize("hasRole('USER')")
-    suspend fun countBorrowsPerWeek(
-        request: ServerRequest
-    ): ServerResponse = coroutineScope {
+    suspend fun countBorrowsPerWeek(): ServerResponse = coroutineScope {
         when(val result = borrowService.countBorrowPerWeek()){
             is CoreResult.Success ->
                 ServerResponse.ok().bodyValueAndAwait(result.data)
@@ -36,9 +33,7 @@ class BorrowHandler (
     }
 
     @PreAuthorize("hasRole('USER')")
-    suspend fun saveBorrow(
-        request: ServerRequest
-    ): ServerResponse = coroutineScope {
+    suspend fun saveBorrow(request: ServerRequest): ServerResponse = coroutineScope {
 
         val borrowDto = request.bodyToMono<BorrowDto>().awaitFirst()
 
@@ -53,13 +48,13 @@ class BorrowHandler (
     }
 
     @PreAuthorize("hasRole('USER')")
-    suspend fun getAllBorrow(request: ServerRequest): ServerResponse = coroutineScope {
+    suspend fun getAllBorrow(): ServerResponse = coroutineScope {
         val borrowData = borrowService.getBorrows()
         ServerResponse.ok().bodyAndAwait(borrowData)
     }
 
     @PreAuthorize("hasRole('USER')")
-    suspend fun getAllOverDueBooks(request: ServerRequest): ServerResponse = coroutineScope {
+    suspend fun getAllOverDueBooks(): ServerResponse = coroutineScope {
         val allOverDue = borrowService.overDueService()
         ServerResponse.ok().bodyAndAwait(allOverDue)
     }
@@ -93,6 +88,19 @@ class BorrowHandler (
             ?: return@coroutineScope ServerResponse.badRequest().buildAndAwait()
 
         when(val result = borrowService.extendBorrow(id)){
+            is CoreResult.Success ->
+                ServerResponse.ok().bodyValueAndAwait(result.data)
+            is CoreResult.Failure ->
+                ServerResponse.ok().bodyValueAndAwait(result.errorMsg)
+            is CoreResult.ClientError ->
+                ServerResponse.ok().bodyValueAndAwait(result.clientErrMsg)
+        }
+    }
+
+    suspend fun checkBorrowNotReturn(request: ServerRequest): ServerResponse = coroutineScope {
+        val id = request.queryParamOrNull("studentId")?.toLong()
+            ?: return@coroutineScope ServerResponse.badRequest().buildAndAwait()
+        when(val result = borrowService.getNotBringBackByStudentId(id)){
             is CoreResult.Success ->
                 ServerResponse.ok().bodyValueAndAwait(result.data)
             is CoreResult.Failure ->

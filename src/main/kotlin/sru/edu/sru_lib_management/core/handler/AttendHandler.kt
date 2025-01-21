@@ -11,12 +11,10 @@ import kotlinx.coroutines.reactive.awaitFirst
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.security.access.prepost.PreAuthorize
-import org.springframework.stereotype.Controller
-import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.*
 import sru.edu.sru_lib_management.common.CoreResult
 import sru.edu.sru_lib_management.core.domain.dto.attend.AttendDetail
-import sru.edu.sru_lib_management.core.domain.dto.attend.StudentAttendDetail
 import sru.edu.sru_lib_management.core.domain.model.Attend
 import sru.edu.sru_lib_management.core.domain.service.AttendService
 import sru.edu.sru_lib_management.utils.IndochinaDateTime.indoChinaDate
@@ -26,8 +24,7 @@ import sru.edu.sru_lib_management.utils.ResponseStatus.INTERNAL_SERVER_ERROR
 import java.time.LocalDate
 import java.time.LocalTime
 
-@Controller
-@RequestMapping("api/v1/att")
+@Component
 class AttendHandler(
     private val attendService: AttendService,
 ) {
@@ -61,7 +58,7 @@ class AttendHandler(
     * Get all attend
     * */
     @PreAuthorize("hasRole('USER')")
-    suspend fun getAllAttend(request: ServerRequest): ServerResponse = coroutineScope {
+    suspend fun getAllAttend(): ServerResponse = coroutineScope {
         when(val result = attendService.getAllAttend()){
             is CoreResult.Success ->
                 ServerResponse.ok().bodyValueAndAwait(result.data)
@@ -167,9 +164,7 @@ class AttendHandler(
    * Count number of student by custom time
    * */
     @PreAuthorize("hasRole('USER')")
-    suspend fun getDetails(
-        request: ServerRequest
-    ): ServerResponse = coroutineScope {
+    suspend fun getDetails(): ServerResponse = coroutineScope {
         val result: Flow<AttendDetail> = attendService.getAttendDetails(indoChinaDate())
         ServerResponse.ok().bodyAndAwait(result)
     }
@@ -179,9 +174,7 @@ class AttendHandler(
   * Count weekly visit of student by custom time
   * */
     @PreAuthorize("hasRole('USER')")
-    suspend fun weeklyVisitor(
-        request: ServerRequest
-    ): ServerResponse = coroutineScope {
+    suspend fun weeklyVisitor(): ServerResponse = coroutineScope {
         when(val result = attendService.getWeeklyVisit()){
             is CoreResult.Success ->
                 ServerResponse.ok().bodyValueAndAwait(result.data)
@@ -193,9 +186,7 @@ class AttendHandler(
     }
 
     @PreAuthorize("hasRole('USER')")
-    suspend fun getDurationSpent(
-        request: ServerRequest
-    ): ServerResponse = coroutineScope{
+    suspend fun getDurationSpent(): ServerResponse = coroutineScope{
         val durationSpentFlow = attendService.countDuration(null, null)
         ServerResponse.ok().bodyAndAwait(durationSpentFlow)
     }
@@ -214,10 +205,6 @@ class AttendHandler(
 
         val data = attendService.getPurposes(major, startDate, endDate)
         ServerResponse.ok().bodyValueAndAwait(data)
-    }
-
-    fun getSd(): Flow<StudentAttendDetail>{
-        return attendService.getAllStudentAttendDetail(indoChinaDate())
     }
 
 }

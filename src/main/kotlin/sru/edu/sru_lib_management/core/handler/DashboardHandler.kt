@@ -8,10 +8,8 @@ package sru.edu.sru_lib_management.core.handler
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactor.awaitSingle
-import org.slf4j.LoggerFactory
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
-import org.springframework.web.reactive.function.server.ServerRequest
 import org.springframework.web.reactive.function.server.ServerResponse
 import sru.edu.sru_lib_management.common.CoreResult
 import sru.edu.sru_lib_management.core.domain.dto.Analyze
@@ -33,11 +31,11 @@ class DashboardHandler(
 ){
     private var card: List<CardData>? = null
 
-    private val logger = LoggerFactory.getLogger(DashboardHandler::class.java)
+    //private val logger = LoggerFactory.getLogger(DashboardHandler::class.java)
 
     //http://localhost:8090/api/v1/dashboard
     @PreAuthorize("hasRole('USER')")
-    suspend fun dashboard(request: ServerRequest): ServerResponse {
+    suspend fun dashboard(): ServerResponse {
         return coroutineScope {
             val entryToday: Analyze = when(val result = attendService.analyticAttend(indoChinaDate(), 1)){
                 is CoreResult.Success -> result.data

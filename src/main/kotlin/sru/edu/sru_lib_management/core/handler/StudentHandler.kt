@@ -56,7 +56,7 @@ class StudentHandler(
 
     // Get all student using flux as flow
     @PreAuthorize("hasRole('USER')")
-    suspend fun getAllStudents(request: ServerRequest): ServerResponse {
+    suspend fun getAllStudents(): ServerResponse {
        return try {
            logger.info("Get ALL Students")
            val list: Flow<StudentDto> = studentService.getAllStudentDetail()

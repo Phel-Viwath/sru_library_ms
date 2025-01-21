@@ -29,4 +29,5 @@ interface BorrowRepository : ICrudRepository<BorrowBook, Long> {
     suspend fun getAllBorrowForEachMajor(startDate: LocalDate, endDate: LocalDate): Flow<Map<String, Int>>
 
     fun getMostBorrow(startDate: LocalDate, endDate: LocalDate): Flow<MostBorrow>
+    suspend fun getNotBringBackByStudentId(studentId: Long): List<BorrowBook?>
 }

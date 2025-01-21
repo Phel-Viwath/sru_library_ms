@@ -203,6 +203,16 @@ class BorrowRepositoryImp(
             }.flow()
     }
 
+    override suspend fun getNotBringBackByStudentId(studentId: Long): List<BorrowBook?> {
+        return client.sql("Select * from borrow_books where student_id = :studentId and is_bring_back = false;")
+            .bind("studentId", studentId)
+            .map { row: Row, _ ->
+                row.rowMapping()
+            }
+            .all().collectList()
+            .awaitSingle()
+    }
+
     private fun Row.rowMapping(): BorrowBook = BorrowBook(
         borrowId = this.get("borrow_id", Long::class.java)!!,
         bookId = this.get("book_id", String::class.java)!!,

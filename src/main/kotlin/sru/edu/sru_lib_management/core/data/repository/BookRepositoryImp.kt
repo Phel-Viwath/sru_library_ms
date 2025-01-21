@@ -18,7 +18,6 @@ import sru.edu.sru_lib_management.core.data.query.BookQuery.GET_AVAILABLE_BOOK_Q
 import sru.edu.sru_lib_management.core.data.query.BookQuery.GET_BOOKS_QUERY
 import sru.edu.sru_lib_management.core.data.query.BookQuery.GET_BOOK_QUERY
 import sru.edu.sru_lib_management.core.data.query.BookQuery.SAVE_BOOK_QUERY
-import sru.edu.sru_lib_management.core.data.query.BookQuery.SEARCH_BOOK_QUERY
 import sru.edu.sru_lib_management.core.data.query.BookQuery.UPDATE_BOOK_QUERY
 import sru.edu.sru_lib_management.core.domain.dto.BookAvailableDto
 import sru.edu.sru_lib_management.core.domain.dto.FundCount
@@ -35,24 +34,14 @@ class BookRepositoryImp(
 ) : BookRepository {
 
     private val logger = LoggerFactory.getLogger(BookRepositoryImp::class.java)
-
-    suspend fun searchBooks(criteria: Map<String, Any?>): List<Books> {
-        val query = StringBuilder(SEARCH_BOOK_QUERY)
-        val params = mutableMapOf<String, Any?>()
-
-        criteria.forEach { (k, v) ->
-            if (v != null){
-                query.append("AND $k = :$k")
-                params[k] = v
+    override fun searchBook(keyword: String): Flow<Books> {
+        return client.sql("SELECT * FROM books WHERE LOWER(book_id) like :keyword OR LOWER(book_title) like :keyword")
+            .bind("keyword", "%${keyword.lowercase()}%")
+            .map {row, _ ->
+                row.rowMapping()
             }
-        }
-        val execute = client.sql(query.toString())
-        params.forEach {(k,v) ->
-            execute.bind(k, v)
-        }
-        return execute.map { row: Row, _ ->
-            row.rowMapping()
-        }.all().collectList().awaitSingle()
+            .all()
+            .asFlow()
     }
 
     override suspend fun bookAvailable(): List<BookAvailableDto> {

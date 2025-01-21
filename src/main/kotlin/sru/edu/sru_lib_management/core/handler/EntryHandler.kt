@@ -120,9 +120,7 @@ class EntryHandler(
     //  card data and list of attend in entry page
     ////
     @PreAuthorize("hasRole('USER')")
-    suspend fun recentEntryData(
-        request: ServerRequest
-    ): ServerResponse = coroutineScope {
+    suspend fun recentEntryData(): ServerResponse = coroutineScope {
         var totalExiting = 0
         var entry = 0
         val attendDetail = mutableListOf<StudentAttendDetail>()

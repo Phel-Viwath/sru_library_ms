@@ -5,9 +5,9 @@
 
 package sru.edu.sru_lib_management.core.domain.service.implementation
 
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.awaitSingle
 import org.slf4j.LoggerFactory
@@ -32,7 +32,6 @@ import sru.edu.sru_lib_management.utils.IndochinaDateTime.indoChinaDate
 import sru.edu.sru_lib_management.utils.toBookDto
 import java.time.YearMonth
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @Component
 class BookServiceImp(
     private val bookRepository: BookRepository,
@@ -44,6 +43,15 @@ class BookServiceImp(
 
     private val logger = LoggerFactory.getLogger(BookServiceImp::class.java)
     private val allBook = bookRepository.getAll()
+
+    override fun searchBooks(keyword: String): Flow<BookDto>{
+        return try {
+            val result = bookRepository.searchBook(keyword).map { it.toBookDto() }
+            result
+        }catch (e: Exception){
+            throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.message)
+        }
+    }
 
     override fun getAllBooks(): Flow<Books> {
         return try {
