@@ -97,16 +97,4 @@ class BorrowHandler (
         }
     }
 
-    suspend fun checkBorrowNotReturn(request: ServerRequest): ServerResponse = coroutineScope {
-        val id = request.queryParamOrNull("studentId")?.toLong()
-            ?: return@coroutineScope ServerResponse.badRequest().buildAndAwait()
-        when(val result = borrowService.getNotBringBackByStudentId(id)){
-            is CoreResult.Success ->
-                ServerResponse.ok().bodyValueAndAwait(result.data)
-            is CoreResult.Failure ->
-                ServerResponse.ok().bodyValueAndAwait(result.errorMsg)
-            is CoreResult.ClientError ->
-                ServerResponse.ok().bodyValueAndAwait(result.clientErrMsg)
-        }
-    }
 }

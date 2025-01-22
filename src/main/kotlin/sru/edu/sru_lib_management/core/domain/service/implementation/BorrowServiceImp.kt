@@ -41,7 +41,7 @@ class BorrowServiceImp(
     override suspend fun saveBorrow(
         borrowDto: BorrowDto
     ): CoreResult<BorrowBook> = runCatching {
-        if (borrowDto.bookId.isBlank()){
+        if (borrowDto.bookId.isBlank() || borrowDto.bookQuan <= 0 || borrowDto.studentId <= 0){
             return CoreResult.ClientError("Field cannot be blank.")
         }
         val book = bookRepository.getById(borrowDto.bookId)
@@ -50,6 +50,11 @@ class BorrowServiceImp(
             return CoreResult.ClientError("Please check book quan!.")
         studentRepository.getById(borrowDto.studentId)
             ?: return CoreResult.ClientError("Not found student with this ID: ${borrowDto.studentId}.")
+        val borrowed = borrowRepository.getNotBringBackByStudentId(borrowDto.studentId)
+        if (borrowed.size >= 2)
+            return CoreResult.ClientError("You can not borrow more than two book in two weeks.")
+        if (borrowed.size == 1 && borrowDto.bookQuan > 1)
+            return CoreResult.ClientError("You can borrow only one book.")
         val borrow = BorrowBook(
             borrowId = null,
             bookId = borrowDto.bookId,
@@ -267,22 +272,6 @@ class BorrowServiceImp(
             result
         }catch (e: Exception){
             throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.message)
-        }
-    }
-
-    override suspend fun getNotBringBackByStudentId(studentId: Long): CoreResult<String> {
-        return try {
-            studentRepository.getById(studentId)
-                ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Not found student with ID: $studentId")
-            val borrowed = borrowRepository.getNotBringBackByStudentId(studentId)
-            return if (borrowed.isEmpty())
-                CoreResult.Success("You can borrow two books")
-            else if (borrowed.size == 1)
-                CoreResult.Success("You can borrow only one book")
-            else
-                CoreResult.ClientError("You can not borrow more than two book in two weeks.")
-        }catch (e: Exception){
-            CoreResult.Failure(e.message.toString())
         }
     }
 

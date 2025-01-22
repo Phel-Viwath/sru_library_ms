@@ -9,12 +9,9 @@ import kotlinx.coroutines.flow.Flow
 import org.springframework.stereotype.Repository
 import sru.edu.sru_lib_management.core.domain.dto.BookAvailableDto
 import sru.edu.sru_lib_management.core.domain.dto.FundCount
-import sru.edu.sru_lib_management.core.domain.dto.analytic.BookIncome
 import sru.edu.sru_lib_management.core.domain.model.Books
 import sru.edu.sru_lib_management.core.domain.repository.crud.ICrudRepository
 import java.time.LocalDate
-import java.time.Month
-import java.time.YearMonth
 
 @Repository
 interface BookRepository : ICrudRepository<Books, String>{
