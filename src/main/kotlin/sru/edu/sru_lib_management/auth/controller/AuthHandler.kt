@@ -42,7 +42,6 @@ class AuthHandler(
 
     private val logger:Logger = LoggerFactory.getLogger(AuthHandler::class.java)
 
-
     suspend fun register(
         request: ServerRequest
     ): ServerResponse {

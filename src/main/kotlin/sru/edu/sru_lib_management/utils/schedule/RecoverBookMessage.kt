@@ -27,10 +27,9 @@ class RecoverBookMessage (
             mutableMapBook[book.bookId] = book.bookTitle
         }
         logger.info("Websocket message: $mutableMapBook")
-//        if (mutableMapBook.isNotEmpty()){
-//            sentRecoverNotification(mutableMapBook)
-//        }
-        sentRecoverNotification(mutableMapBook)
+        if (mutableMapBook.isNotEmpty()){
+            sentRecoverNotification(mutableMapBook)
+        }
     }
 
     private fun sentRecoverNotification(bookMap: Map<String, String>){
