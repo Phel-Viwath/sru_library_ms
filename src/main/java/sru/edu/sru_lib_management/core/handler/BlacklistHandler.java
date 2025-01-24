@@ -6,8 +6,8 @@
 package sru.edu.sru_lib_management.core.handler;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import reactor.core.publisher.Mono;
@@ -21,12 +21,13 @@ public class BlacklistHandler {
 
     private final BlacklistService blacklistService;
 
-
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     public Mono<ServerResponse> allInBlackListDetail(ServerRequest request) {
         var data =  blacklistService.getBlackListDetail();
         return ServerResponse.ok().body(data, BlackListDto.class);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public Mono<ServerResponse> updateBlackList(
             ServerRequest request
     ){
@@ -48,6 +49,7 @@ public class BlacklistHandler {
         });
     }
 
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     public Mono<ServerResponse> getById(ServerRequest request){
         int blacklistId = Integer.parseInt(request.pathVariable("blacklistId"));
         return blacklistService.findById(blacklistId)
@@ -57,6 +59,7 @@ public class BlacklistHandler {
                 .switchIfEmpty(ServerResponse.badRequest().build());
     }
 
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
     public Mono<ServerResponse> delete(
             ServerRequest request
     ){
@@ -68,7 +71,7 @@ public class BlacklistHandler {
                 .switchIfEmpty(ServerResponse.notFound().build());
     }
 
-    @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public Mono<ServerResponse> addToBlackList(ServerRequest request){
         return request.bodyToMono(BlackList.class)
                 .flatMap(blacklist ->{

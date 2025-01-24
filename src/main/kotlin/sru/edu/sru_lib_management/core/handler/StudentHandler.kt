@@ -34,7 +34,7 @@ class StudentHandler(
     /*
      * Add student to database
      */
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     suspend fun saveStudent(request: ServerRequest): ServerResponse {
 
         val students = request.bodyToMono(Students::class.java).awaitFirstOrNull()
@@ -55,7 +55,7 @@ class StudentHandler(
     }
 
     // Get all student using flux as flow
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun getAllStudents(): ServerResponse {
        return try {
            logger.info("Get ALL Students")
@@ -70,7 +70,7 @@ class StudentHandler(
      * get student from database by id
      */
 
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun getStudentById(
         request: ServerRequest
     ): ServerResponse = coroutineScope{
@@ -90,7 +90,7 @@ class StudentHandler(
      * Update student from database
      */
 
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
     suspend fun updateStudent(
         request: ServerRequest
     ): ServerResponse = coroutineScope {
@@ -113,7 +113,7 @@ class StudentHandler(
     * Delete student from database
      */
 
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
     suspend fun deleteStudent(request: ServerRequest): ServerResponse {
         val studentId = request.pathVariable("studentId").toLong()
         return when(val result = studentService.deleteStudent(studentId)){

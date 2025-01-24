@@ -7,6 +7,6 @@ class NotificationService(
     private val notificationWebSocketHandler: NotificationWebSocketHandler
 ) {
     fun notifyAllClients(message: String) {
-        notificationWebSocketHandler.sendNotification(message)
+        notificationWebSocketHandler.sendToAllClient(message)
     }
 }

@@ -7,6 +7,7 @@ package sru.edu.sru_lib_management.core.handler;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -21,10 +22,12 @@ public class MajorHandler {
 
     private final MajorService majorService;
 
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     public Mono<ServerResponse> getAllMajor(ServerRequest request){
         return ServerResponse.ok().body(majorService.findAll(), Major.class);
     }
 
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     public Mono<ServerResponse> getMajorById(ServerRequest request){
         return majorService.findById(request.pathVariable("id"))
                 .flatMap(major -> ServerResponse.ok().bodyValue(this))
@@ -38,6 +41,7 @@ public class MajorHandler {
                 });
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public Mono<ServerResponse> addNewMajor(ServerRequest request){
         return request.bodyToMono(Major.class).flatMap(major -> {
             if (major.getMajorName().isBlank() || major.getCollegeId().isBlank() || major.getMajorId().isBlank())
@@ -48,6 +52,7 @@ public class MajorHandler {
         });
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public Mono<ServerResponse> updateMajor(ServerRequest request){
         var id = request.pathVariable("id");
         return request.bodyToMono(Major.class)
@@ -56,6 +61,7 @@ public class MajorHandler {
                 .onErrorResume(e -> ServerResponse.status(500).bodyValue(e.getMessage()));
     }
 
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
     public Mono<ServerResponse> deleteMajor(ServerRequest request){
         return majorService.delete(request.pathVariable("id"))
                 .flatMap(result -> result

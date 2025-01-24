@@ -20,16 +20,17 @@ class RecoverBookMessage (
     private val logger = LoggerFactory.getLogger(RecoverBookMessage::class.java)
     private val mutableMapBook: MutableMap<String, String> = mutableMapOf()
 
-    @Scheduled(cron = "0 25 22 * * ?", zone = "Asia/Phnom_Penh")
+    @Scheduled(cron = "0 46 21 * * ?", zone = "Asia/Phnom_Penh")
     suspend fun alertRecoveryBook(){
         val books = bookRepository.alertTrashMessage(indoChinaDate())
         books.forEach { book ->
             mutableMapBook[book.bookId] = book.bookTitle
         }
-        logger.info("$mutableMapBook")
-        if (mutableMapBook.isNotEmpty()){
-            sentRecoverNotification(mutableMapBook)
-        }
+        logger.info("Websocket message: $mutableMapBook")
+//        if (mutableMapBook.isNotEmpty()){
+//            sentRecoverNotification(mutableMapBook)
+//        }
+        sentRecoverNotification(mutableMapBook)
     }
 
     private fun sentRecoverNotification(bookMap: Map<String, String>){

@@ -22,7 +22,7 @@ class DonateHandler(
     private val donationService: DonationService
 ) {
 
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     suspend fun saveDonation(
         request: ServerRequest
     ): ServerResponse = coroutineScope{
@@ -38,13 +38,13 @@ class DonateHandler(
         }
     }
 
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun donationDetailInfo(): ServerResponse {
         val donationDetail =  donationService.getDonationDetail()
         return ServerResponse.ok().bodyAndAwait(donationDetail)
     }
 
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     suspend fun updateDonation(
         request: ServerRequest
     ): ServerResponse = coroutineScope {

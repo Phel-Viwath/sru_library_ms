@@ -43,6 +43,7 @@ class BookHandler(
         * -> http://localhost:8090/api/v1/book
         * This Endpoint use to add book to database
         * */
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun searchBook(request: ServerRequest): ServerResponse = coroutineScope{
         val keyword = request.queryParams()["keyword"]?.firstOrNull()
             ?: return@coroutineScope ServerResponse.badRequest().buildAndAwait()
@@ -50,7 +51,7 @@ class BookHandler(
         ServerResponse.ok().bodyAndAwait(books)
     }
 
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     suspend fun addNewBook(
         request: ServerRequest
     ): ServerResponse = coroutineScope {
@@ -65,7 +66,7 @@ class BookHandler(
         }
     }
 
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     suspend fun uploadBook(
         request: ServerRequest
     ): ServerResponse = coroutineScope {
@@ -101,7 +102,7 @@ class BookHandler(
    * This Endpoint use to get all book from database
    * */
 
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun getBooks(): ServerResponse = coroutineScope {
         val allBooks = bookService.getAllBooks()
         ServerResponse.ok().bodyAndAwait(allBooks)
@@ -111,7 +112,7 @@ class BookHandler(
    * -> http://localhost:8090/api/v1/book/current-book
    * This Endpoint use to get all book from database
    * */
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun currentAvailableBook(): ServerResponse = coroutineScope{
         val bookAvailable = bookService.currentAvailableBook().asFlow()
         ServerResponse.ok().bodyAndAwait(bookAvailable)
@@ -121,7 +122,7 @@ class BookHandler(
    * -> http://localhost:8090/api/v1/book
    * This Endpoint use to update book in database
    * */
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     suspend fun updateBook(
         request: ServerRequest
     ): ServerResponse = coroutineScope {
@@ -142,7 +143,7 @@ class BookHandler(
     * -> http://localhost:8090/api/v1/book/{id}
     * This Endpoint use to get book in database
     * */
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun getBookById(request: ServerRequest): ServerResponse{
         val bookId = request.pathVariable("bookId")
         return when(val result = bookService.getBook(bookId)){
@@ -159,7 +160,7 @@ class BookHandler(
     * -> http://localhost:8090/api/v1/book/{id}
     * This Endpoint use to update book in database
     * */
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
     suspend fun deleteBook(request: ServerRequest): ServerResponse{
         val bookId = request.pathVariable("bookId")
         return when(val result = bookService.deleteBook(bookId)){
@@ -177,7 +178,7 @@ class BookHandler(
     * -> http://localhost:8090/api/v1/book/available
     * This Endpoint use to get available book
     * */
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun availableBook(): ServerResponse = coroutineScope {
         when(val result = bookService.getAvailableBook()){
             is CoreResult.Success ->
@@ -190,7 +191,7 @@ class BookHandler(
     }
 
     /////////// Trash http://localhost:8090/api/v1/book/trash
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     suspend fun moveToTrash(
         request: ServerRequest
     ): ServerResponse = coroutineScope{
@@ -209,7 +210,7 @@ class BookHandler(
     }
 
     // http://localhost:8090/api/v1/book/recover
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     suspend fun recoverBook(
         request: ServerRequest
     ): ServerResponse = coroutineScope{
@@ -227,7 +228,7 @@ class BookHandler(
     }
 
     // http://localhost:8090/api/v1/book/in-trash
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun getBooksInTrash(): ServerResponse = coroutineScope{
         val bookInTrash =  bookService.getBooksInTrash().map {
             it.toBookDto()
@@ -235,7 +236,7 @@ class BookHandler(
         ServerResponse.ok().bodyAndAwait(bookInTrash)
     }
 
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun getBookIncome(request: ServerRequest): ServerResponse{
         val sYearMonth = request.queryParam("sYearMonth")
             .map { YearMonth.parse(it) }
@@ -248,7 +249,7 @@ class BookHandler(
     }
 
     @OptIn(DelicateCoroutinesApi::class)
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun aboutBookData(): ServerResponse {
         val data =  GlobalScope.async { bookService.aboutBookData()}.await()
         return ServerResponse.ok().json().bodyValueAndAwait(data)

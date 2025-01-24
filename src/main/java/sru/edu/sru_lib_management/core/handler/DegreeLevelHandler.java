@@ -7,8 +7,9 @@ package sru.edu.sru_lib_management.core.handler;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import org.springframework.web.server.ResponseStatusException;
@@ -24,6 +25,7 @@ public class DegreeLevelHandler {
 
     private final DegreeLevelService degreeLevelService;
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public Mono<ServerResponse> addNewCollege(ServerRequest request){
         return request.bodyToMono(DegreeLevel.class).flatMap(degreeLevel -> {
             if (degreeLevel.getDegreeLevelId().isBlank() || degreeLevel.getDegreeLevel().isBlank())
@@ -35,11 +37,13 @@ public class DegreeLevelHandler {
 
     }
 
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     public Mono<ServerResponse> getAllCollege(ServerRequest request){
         var allDegreeLevel =  degreeLevelService.findAll();
         return ServerResponse.ok().body(allDegreeLevel, College.class);
     }
 
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     public Mono<ServerResponse> getById(ServerRequest request){
         var id = request.pathVariable("id");
         return degreeLevelService.findById(id)
@@ -53,6 +57,7 @@ public class DegreeLevelHandler {
                 });
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public Mono<ServerResponse> updateCollege(ServerRequest request){
         var id = request.pathVariable("id");
         return request.bodyToMono(DegreeLevel.class)
@@ -62,6 +67,7 @@ public class DegreeLevelHandler {
 
     }
 
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
     public Mono<ServerResponse> deleteCollege(ServerRequest request) {
         var id = request.pathVariable("id");
         return degreeLevelService.delete(id)

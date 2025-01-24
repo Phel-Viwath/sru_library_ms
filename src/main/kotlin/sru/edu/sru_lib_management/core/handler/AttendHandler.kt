@@ -35,7 +35,7 @@ class AttendHandler(
     * -> http://localhost:8090/api/v1/att
     * Use to update Attend if necessary
     * */
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     suspend fun updateAtt(
         request: ServerRequest
     ): ServerResponse = coroutineScope {
@@ -57,7 +57,7 @@ class AttendHandler(
     * ->  http://localhost:8090/api/v1/att
     * Get all attend
     * */
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun getAllAttend(): ServerResponse = coroutineScope {
         when(val result = attendService.getAllAttend()){
             is CoreResult.Success ->
@@ -73,7 +73,7 @@ class AttendHandler(
     * ->  http://localhost:8090/api/v1/att
     * this end point use to update exiting time
     * */
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun updateExitingTime(
         request: ServerRequest
     ): ServerResponse = coroutineScope{
@@ -98,7 +98,7 @@ class AttendHandler(
     *  Example : Get Last 1 day, 7 days, 1 month or 1 year
     *
     */
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun getCustomAttend(
         request: ServerRequest
     ): ServerResponse = coroutineScope{
@@ -113,7 +113,7 @@ class AttendHandler(
     * ->  http://localhost:8090/api/v1/att/count
     * Count number of student by custom time
     * */
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun countCustomAttend(
         request: ServerRequest
     ): ServerResponse = coroutineScope{
@@ -137,7 +137,7 @@ class AttendHandler(
    * ->  http://localhost:8090/api/v1/att/compare
    * Count number of attend by custom time and compare it to the previous time
    * */
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun countAndCompare(
         request: ServerRequest
     ): ServerResponse = coroutineScope {
@@ -163,7 +163,7 @@ class AttendHandler(
    * ->  http://localhost:8090/api/v1/att/detail
    * Count number of student by custom time
    * */
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun getDetails(): ServerResponse = coroutineScope {
         val result: Flow<AttendDetail> = attendService.getAttendDetails(indoChinaDate())
         ServerResponse.ok().bodyAndAwait(result)
@@ -173,7 +173,7 @@ class AttendHandler(
   * ->  http://localhost:8090/api/v1/att/weekly
   * Count weekly visit of student by custom time
   * */
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun weeklyVisitor(): ServerResponse = coroutineScope {
         when(val result = attendService.getWeeklyVisit()){
             is CoreResult.Success ->
@@ -185,13 +185,13 @@ class AttendHandler(
         }
     }
 
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun getDurationSpent(): ServerResponse = coroutineScope{
         val durationSpentFlow = attendService.countDuration(null, null)
         ServerResponse.ok().bodyAndAwait(durationSpentFlow)
     }
 
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun getAttendPurpose(
         request: ServerRequest
     ): ServerResponse = coroutineScope{

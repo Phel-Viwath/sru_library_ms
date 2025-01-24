@@ -7,6 +7,7 @@ package sru.edu.sru_lib_management.core.handler;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -25,8 +26,8 @@ public class StaffHandler {
 
     private final StaffService staffService;
 
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
     public Mono<ServerResponse> addNewStaff(ServerRequest request){
-
         return request.bodyToMono(StaffDto.class)
                 .flatMap(staffDto -> {
                     if (staffDto.getStaffName()== null || staffDto.getGender() == null)
@@ -50,10 +51,12 @@ public class StaffHandler {
                 });
     }
 
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     public Mono<ServerResponse> getAllStaff(ServerRequest request){
         return ServerResponse.ok().body(staffService.findAll(), StaffDto.class);
     }
 
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     public Mono<ServerResponse> getByStaffById(ServerRequest request){
         var id = Long.parseLong(request.pathVariable("id"));
         return staffService.findById(id)
@@ -67,6 +70,7 @@ public class StaffHandler {
                 });
     }
 
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
     public Mono<ServerResponse> updateStaff(ServerRequest request){
 
         return request.bodyToMono(StaffDto.class)
@@ -91,6 +95,7 @@ public class StaffHandler {
                 });
     }
 
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
     public Mono<ServerResponse> deleteStaff(ServerRequest request){
         var id = Long.parseLong(request.pathVariable("id"));
         return staffService.delete(id)

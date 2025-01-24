@@ -26,7 +26,7 @@ class AnalyticHandler(
     private val attendService: AttendService
 ) {
 
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     suspend fun analytic(request: ServerRequest): ServerResponse{
 
         val startDate = request.queryParam("startDate")

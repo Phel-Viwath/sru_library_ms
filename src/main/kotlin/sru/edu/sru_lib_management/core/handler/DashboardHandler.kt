@@ -34,7 +34,7 @@ class DashboardHandler(
     //private val logger = LoggerFactory.getLogger(DashboardHandler::class.java)
 
     //http://localhost:8090/api/v1/dashboard
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun dashboard(): ServerResponse {
         return coroutineScope {
             val entryToday: Analyze = when(val result = attendService.analyticAttend(indoChinaDate(), 1)){

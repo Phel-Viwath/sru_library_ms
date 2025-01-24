@@ -48,7 +48,7 @@ class EntryHandler(
     //  http://localhost:8090/api/v1/entry (path variable)
     //  find student in database when they scan
     ////
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun getStudentById(request: ServerRequest): ServerResponse{
         val id = request.pathVariable("id").toLong()
         return coroutineScope {
@@ -64,7 +64,7 @@ class EntryHandler(
     //  http://localhost:8090/api/v1/entry (request param)
     //  save new entry when student scan
     ////
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun newEntry(
         request: ServerRequest
     ): ServerResponse {
@@ -101,7 +101,7 @@ class EntryHandler(
     //  http://localhost:8090/api/v1/entry (request param)
     //  update exiting time when student scan out
     ////
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun updateExitingTime(
         request: ServerRequest
     ): ServerResponse = coroutineScope{
@@ -119,7 +119,7 @@ class EntryHandler(
     //  http://localhost:8090/api/v1/entry
     //  card data and list of attend in entry page
     ////
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun recentEntryData(): ServerResponse = coroutineScope {
         var totalExiting = 0
         var entry = 0
@@ -160,7 +160,7 @@ class EntryHandler(
     //  http://localhost:8090/api/v1/entry/check
     //  card data and list of attend in entry page
     ////
-    @PreAuthorize("hasRole('USER')")
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun checkExistingStudent(request: ServerRequest): ServerResponse {
         val entryIdParam = request.queryParam("entryId").orElse(null)
 

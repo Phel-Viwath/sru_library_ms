@@ -83,7 +83,7 @@ class AuthHandler(
         val loginRequest = request.bodyToMono<LoginRequest>().awaitSingle()
         val alreadyInUse = runBlocking(Dispatchers.IO) { service.existEmail(loginRequest.email) }
         if (!alreadyInUse)
-             return@coroutineScope ServerResponse.badRequest().bodyValueAndAwait(AuthResponse(message = "Incorrect username."))
+             return@coroutineScope ServerResponse.badRequest().bodyValueAndAwait(AuthResponse(message = "Incorrect email."))
         when ( val result = service.login(loginRequest)) {
             is AuthResult.Success -> {
                 val token = result.data

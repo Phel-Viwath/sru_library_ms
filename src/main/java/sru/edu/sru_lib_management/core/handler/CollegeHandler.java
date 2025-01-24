@@ -8,6 +8,7 @@ package sru.edu.sru_lib_management.core.handler;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
@@ -24,6 +25,7 @@ public class CollegeHandler {
 
     private final CollegeService collegeService;
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public Mono<ServerResponse> addNewCollege(ServerRequest request){
         return request.bodyToMono(College.class).flatMap(college -> {
             if (college.getCollegeId() == null || college.getCollegeName() == null)
@@ -37,10 +39,12 @@ public class CollegeHandler {
 
     }
 
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     public Mono<ServerResponse> getAllCollege(ServerRequest request){
         return ServerResponse.ok().body(collegeService.findAll(), College.class);
     }
 
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     public Mono<ServerResponse> getById(ServerRequest request){
         var id = request.pathVariable("id");
         return collegeService.findById(id)
@@ -50,6 +54,7 @@ public class CollegeHandler {
                 .onErrorResume(this::handleError);
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public Mono<ServerResponse> updateCollege(ServerRequest request){
         var id = request.pathVariable("id");
         return request.bodyToMono(College.class)
@@ -60,6 +65,7 @@ public class CollegeHandler {
                 .onErrorResume(this::handleError));
     }
 
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
     public Mono<ServerResponse> deleteCollege(ServerRequest request) {
         var id = request.pathVariable("id");
         return collegeService.delete(id)

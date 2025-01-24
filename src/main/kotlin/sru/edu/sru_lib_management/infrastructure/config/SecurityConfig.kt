@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
-import org.springframework.http.MediaType
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.JavaMailSenderImpl
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity
@@ -31,7 +30,6 @@ import sru.edu.sru_lib_management.auth.domain.jwt.JwtAuthenticationConverter
 import sru.edu.sru_lib_management.auth.domain.jwt.JwtAuthenticationManager
 import java.util.*
 
-@Suppress("DEPRECATION")
 @Configuration
 @EnableWebFluxSecurity
 @EnableReactiveMethodSecurity

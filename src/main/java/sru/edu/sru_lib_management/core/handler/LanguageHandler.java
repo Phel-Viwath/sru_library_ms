@@ -7,6 +7,8 @@ package sru.edu.sru_lib_management.core.handler;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.server.ServerRequest;
@@ -16,14 +18,13 @@ import reactor.core.publisher.Mono;
 import sru.edu.sru_lib_management.core.domain.model.Language;
 import sru.edu.sru_lib_management.core.domain.service.LanguageService;
 
-@Controller
-@RequestMapping("/api/v1/language")
+@Component
 @RequiredArgsConstructor
 public class LanguageHandler {
 
     private final LanguageService languageService;
 
-    @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public Mono<ServerResponse> addLanguage(ServerRequest request){
         return request.bodyToMono(Language.class).flatMap(language -> {
             if (language.getLanguageId().isBlank() || language.getLanguageName().isBlank())
@@ -34,6 +35,7 @@ public class LanguageHandler {
         });
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public Mono<ServerResponse> updateLanguage(ServerRequest request){
         var id = request.pathVariable("id");
         return request.bodyToMono(Language.class)
@@ -42,9 +44,12 @@ public class LanguageHandler {
                 .onErrorResume(e -> ServerResponse.status(500).bodyValue(e.getMessage()));
     }
 
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     public Mono<ServerResponse> allLanguage(ServerRequest request){
         return ServerResponse.ok().body(languageService.findAll(), Language.class);
     }
+
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     public Mono<ServerResponse> findLanguageById(ServerRequest request){
         return languageService.findById(request.pathVariable("id"))
                 .flatMap(language -> ServerResponse.ok().bodyValue(language))
@@ -57,6 +62,7 @@ public class LanguageHandler {
                 });
     }
 
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public Mono<ServerResponse> deleteCollege(ServerRequest request) {
         return languageService.delete(request.pathVariable("id"))
                 .flatMap(result -> result
