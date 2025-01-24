@@ -50,12 +50,10 @@ class JwtToken @Autowired constructor(
     }
 
     fun isValidToken(token: BearerToken, user: UserDetails?): Boolean{
-        requireNotNull(user) { "User details cannot be null" }
-        requireNotNull(token.value) { "Token value cannot be null" }
         val claims = phaser.parseClaimsJws(token.value).body
         val unexpired = claims.expiration.after(Date.from(Instant.now()))
         val roles = claims["roles"] as List<*>?
-        return unexpired && (claims.subject == user.username) && roles?.contains(user.authorities?.first()?.authority) == true
+        return unexpired && (claims.subject == user?.username) && roles?.contains(user?.authorities?.first()?.authority) == true
     }
 
     fun isRefreshToken(token: BearerToken): Boolean = try {

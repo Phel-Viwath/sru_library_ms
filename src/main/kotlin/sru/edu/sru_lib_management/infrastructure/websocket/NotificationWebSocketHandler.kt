@@ -19,14 +19,11 @@ class NotificationWebSocketHandler : WebSocketHandler {
             val input = session.receive()
                 .map { it.payloadAsText }
                 .doOnNext { println("Received message: $it") }
-
             val output = session.send(
                 sink.asFlux().map(session::textMessage)
             )
-
             return output.and(input)
     }
-
     fun sendToAllClient(message: String) {
         sink.tryEmitNext(message)
     }

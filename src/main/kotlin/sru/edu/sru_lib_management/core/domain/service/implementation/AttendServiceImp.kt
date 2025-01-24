@@ -250,7 +250,6 @@ class AttendServiceImp(
                 if (it!!.exitingTimes == null)
                     attendId = it.attendId!!
             }
-            logger.info("$attendId")
             if (entryId.checkEntryId() is Long)
                 attendRepository.updateExitingTime(attendId, exitingTime, entryId.toLong(), indoChinaDate())
             else
@@ -418,7 +417,6 @@ class AttendServiceImp(
         return try {
             val data = attendRepository.getMajorPurpose().toList()
                 .filter { !it.date.isBefore(startDate) && !it.date.isAfter(endDate) }
-            logger.info("GET DATA $data")
             val filterByMajor = if (major != null) {
                 val filtered = data.filter { it.majorName == major }
                 if (filtered.isEmpty()) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid major name: $major")

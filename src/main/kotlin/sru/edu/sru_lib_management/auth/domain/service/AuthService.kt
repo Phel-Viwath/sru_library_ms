@@ -68,7 +68,6 @@ class AuthService(
             // check password
             if (encoder.matches(request.password, user.password)) {
                 val username = repository.findByEmail(request.email)?.username ?: "Unknown USER"
-                logger.info("$username ${user.username}")
                 val roles = user.authorities.map { it.authority }
                 val accessToken = jwtSupport.generateAccessToken(request.email, roles).value
                 val refreshToken = jwtSupport.generateRefreshToken(request.email, roles).value
@@ -113,6 +112,7 @@ class AuthService(
                 AuthResult.InputError("Invalid refresh token")
             }
         }catch (e: Exception){
+            e.printStackTrace()
             AuthResult.Failure(e.message.toString())
         }
     }
