@@ -90,7 +90,8 @@ class SecurityConfig (
                             "http://localhost:5173",
                             "http://localhost:5174",
                             "http://localhost:5175",
-                            "https://react-js-inky-three.vercel.app"
+                            "https://react-js-inky-three.vercel.app",
+                            "https://react-js-inky-three.vercel.app/"
                         )
                         allowedMethods = listOf("GET", "POST", "PUT", "DELETE")
                         allowCredentials = true

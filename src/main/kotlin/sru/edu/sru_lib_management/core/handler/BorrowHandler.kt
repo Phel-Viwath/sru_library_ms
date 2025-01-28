@@ -97,4 +97,10 @@ class BorrowHandler (
         }
     }
 
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
+    suspend fun borrowDetails(): ServerResponse = coroutineScope {
+        val result = borrowService.getBorrowDetail()
+        ServerResponse.ok().bodyValueAndAwait(result)
+    }
+
 }

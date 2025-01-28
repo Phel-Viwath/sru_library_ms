@@ -105,6 +105,7 @@ class RouteConfig {
                 GET("/week-count"){borrowHandler.countBorrowsPerWeek()}
                 POST("", borrowHandler::saveBorrow)
                 GET(""){borrowHandler.getAllBorrow()}
+                GET("/detail"){borrowHandler.borrowDetails()}
                 GET("/over-due"){borrowHandler.getAllOverDueBooks()}
                 PUT("", borrowHandler::bookReturned)
                 PUT("/extend-borrow", borrowHandler::extendBorrowBook)

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import sru.edu.sru_lib_management.core.domain.model.BlackList;
-import sru.edu.sru_lib_management.core.domain.model.BorrowBook;
+import sru.edu.sru_lib_management.core.domain.model.Borrow;
 import sru.edu.sru_lib_management.core.domain.service.BlacklistService;
 import sru.edu.sru_lib_management.core.domain.service.BorrowService;
 import sru.edu.sru_lib_management.core.utils.ExtensionKt;
@@ -28,19 +28,19 @@ public class CheckBorrowBook {
     @Scheduled(cron = "0 0 12 * * *", zone = "Asia/Phnom_Penh")
     public void addToBlackList(){
         System.out.println("Check borrow!");
-        Flux<BorrowBook> bookFlux = ExtensionKt.asFlux(borrowService.getBorrows());
-        bookFlux.filter(borrowBook ->
-                        !borrowBook.isBringBack() && borrowBook.getBorrowDate().isBefore(LocalDate.now().minusDays(14))
+        Flux<Borrow> bookFlux = ExtensionKt.asFlux(borrowService.getBorrows());
+        bookFlux.filter(borrow ->
+                        !borrow.isBringBack() && borrow.getBorrowDate().isBefore(LocalDate.now().minusDays(14))
                 )
-                .flatMap(borrowBook ->
+                .flatMap(borrow ->
                         blacklistService
-                                .exist(borrowBook.getStudentId(), borrowBook.getBookId())
+                                .exist(borrow.getStudentId(), borrow.getBookId())
                                 .flatMap(exist -> {
                                     if (exist){
-                                        return Mono.just(borrowBook);
+                                        return Mono.just(borrow);
                                     }else {
-                                        return blacklistService.save(new BlackList(null, borrowBook.getStudentId(), borrowBook.getBookId()))
-                                                .thenReturn(borrowBook);
+                                        return blacklistService.save(new BlackList(null, borrow.getStudentId(), borrow.getBookId()))
+                                                .thenReturn(borrow);
                                     }
                                 })
                 )

@@ -7,27 +7,29 @@ package sru.edu.sru_lib_management.core.domain.repository
 
 import kotlinx.coroutines.flow.Flow
 import org.springframework.stereotype.Repository
+import sru.edu.sru_lib_management.core.domain.dto.BorrowDetail
 import sru.edu.sru_lib_management.core.domain.dto.CompareValue
 import sru.edu.sru_lib_management.core.domain.dto.analytic.MostBorrow
-import sru.edu.sru_lib_management.core.domain.model.BorrowBook
+import sru.edu.sru_lib_management.core.domain.model.Borrow
 import sru.edu.sru_lib_management.core.domain.repository.crud.ICrudRepository
 import java.sql.Date
 import java.time.LocalDate
 
 @Repository
-interface BorrowRepository : ICrudRepository<BorrowBook, Long> {
-    fun customBorrow(date: Date): Flow<BorrowBook>
+interface BorrowRepository : ICrudRepository<Borrow, Long> {
+    fun customBorrow(date: Date): Flow<Borrow>
     suspend fun countBorrowPerWeek(): Map<LocalDate, Int>
     suspend fun countCurrentAndPreviousBorrow(date: LocalDate, period: Int): CompareValue
 
     suspend fun extendBorrow(borrowId: Long): Long
 
     //
-    fun findOverDueBook(): Flow<BorrowBook>
+    fun findOverDueBook(): Flow<Borrow>
     suspend fun bookReturned(borrowId: Long): Boolean
-    suspend fun findBorrowByStudentIdBookId(studentId: Long, bookId: String): List<BorrowBook>
+    suspend fun findBorrowByStudentIdBookId(studentId: Long, bookId: String): List<Borrow>
     suspend fun getAllBorrowForEachMajor(startDate: LocalDate, endDate: LocalDate): Flow<Map<String, Int>>
 
     fun getMostBorrow(startDate: LocalDate, endDate: LocalDate): Flow<MostBorrow>
-    suspend fun getNotBringBackByStudentId(studentId: Long): List<BorrowBook?>
+    suspend fun getNotBringBackByStudentId(studentId: Long): List<Borrow?>
+    suspend fun getBorrowDetail(): List<BorrowDetail>
 }

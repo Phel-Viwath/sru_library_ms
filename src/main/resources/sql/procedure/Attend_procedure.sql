@@ -83,7 +83,7 @@ CREATE PROCEDURE if not exists CountAttendPerWeek(IN Monday DATE, IN Sunday DATE
 BEGIN
 
     CREATE TEMPORARY TABLE date_series (
-                                           date DATE
+         date DATE
     );
 
     SET @startDate = Monday;

@@ -19,9 +19,10 @@ import sru.edu.sru_lib_management.core.data.query.BorrowQuery.GET_BORROWS_QUERY
 import sru.edu.sru_lib_management.core.data.query.BorrowQuery.GET_BORROW_QUERY
 import sru.edu.sru_lib_management.core.data.query.BorrowQuery.SAVE_BORROW_QUERY
 import sru.edu.sru_lib_management.core.data.query.BorrowQuery.UPDATE_BORROW_QUERY
+import sru.edu.sru_lib_management.core.domain.dto.BorrowDetail
 import sru.edu.sru_lib_management.core.domain.dto.CompareValue
 import sru.edu.sru_lib_management.core.domain.dto.analytic.MostBorrow
-import sru.edu.sru_lib_management.core.domain.model.BorrowBook
+import sru.edu.sru_lib_management.core.domain.model.Borrow
 import sru.edu.sru_lib_management.core.domain.repository.BorrowRepository
 import sru.edu.sru_lib_management.utils.IndochinaDateTime.indoChinaDate
 import java.sql.Date
@@ -31,7 +32,7 @@ import java.time.LocalDate
 class BorrowRepositoryImp(
     private val client: DatabaseClient
 ) : BorrowRepository {
-    override fun customBorrow(date: Date): Flow<BorrowBook> {
+    override fun customBorrow(date: Date): Flow<Borrow> {
         TODO("Not yet implemented")
     }
 
@@ -79,14 +80,14 @@ class BorrowRepositoryImp(
             0L
     }
 
-    override suspend fun save(entity: BorrowBook): BorrowBook {
+    override suspend fun save(entity: Borrow): Borrow {
         client.sql(SAVE_BORROW_QUERY)
             .bindValues(paramsMap(entity))
             .await()
         return entity
     }
 
-    override suspend fun update(entity: BorrowBook): BorrowBook {
+    override suspend fun update(entity: Borrow): Borrow {
         client.sql(UPDATE_BORROW_QUERY)
             .bind("borrow_id", entity.borrowId)
             .bindValues(paramsMap(entity))
@@ -95,14 +96,14 @@ class BorrowRepositoryImp(
         return entity
     }
 
-    override suspend fun getById(id: Long): BorrowBook? = client.sql(GET_BORROW_QUERY)
+    override suspend fun getById(id: Long): Borrow? = client.sql(GET_BORROW_QUERY)
             .bind("borrowId", id)
             .map { row: Row, _ ->
                 row.rowMapping()
             }
             .awaitOneOrNull()
 
-    override fun getAll(): Flow<BorrowBook> = client
+    override fun getAll(): Flow<Borrow> = client
         .sql(GET_BORROWS_QUERY)
         .map { row: Row, _ ->
             row.rowMapping()
@@ -118,7 +119,7 @@ class BorrowRepositoryImp(
         return rowEffected > 0
     }
 
-    override fun findOverDueBook(): Flow<BorrowBook> {
+    override fun findOverDueBook(): Flow<Borrow> {
         val query = "SELECT * FROM borrow_books where give_back_date <= curdate();"
         return client.sql(query)
             .map { row: Row, _ ->
@@ -140,7 +141,7 @@ class BorrowRepositoryImp(
     override suspend fun findBorrowByStudentIdBookId(
         studentId: Long,
         bookId: String
-    ): List<BorrowBook> {
+    ): List<Borrow> {
         return client.sql(FIND_BORROW_BY_STUDENT_ID_BOOK_ID)
             .bind("studentId", studentId)
             .bind("bookId", bookId)
@@ -203,7 +204,7 @@ class BorrowRepositoryImp(
             }.flow()
     }
 
-    override suspend fun getNotBringBackByStudentId(studentId: Long): List<BorrowBook?> {
+    override suspend fun getNotBringBackByStudentId(studentId: Long): List<Borrow?> {
         return client.sql("Select * from borrow_books where student_id = :studentId and is_bring_back = false;")
             .bind("studentId", studentId)
             .map { row: Row, _ ->
@@ -213,7 +214,22 @@ class BorrowRepositoryImp(
             .awaitSingle()
     }
 
-    private fun Row.rowMapping(): BorrowBook = BorrowBook(
+    override suspend fun getBorrowDetail(): List<BorrowDetail> {
+        return client.sql("""
+            SELECT bb.borrow_id, bb.book_id, b.book_title,
+            bb.book_quan, bb.student_id, s.student_name,
+            bb.borrow_date, bb.give_back_date, bb.is_bring_back,
+            bb.is_extend
+            FROM borrow_books bb 
+                inner join books b on bb.book_id = b.book_id
+                inner join students s on bb.student_id = s.student_id;
+                """
+        ).map { row, _ ->
+            row.borrowDetailMapping()
+        }.all().collectList().awaitSingle()
+    }
+
+    private fun Row.rowMapping(): Borrow = Borrow(
         borrowId = this.get("borrow_id", Long::class.java)!!,
         bookId = this.get("book_id", String::class.java)!!,
         bookQuan = this.get("book_quan", Int::class.java)!!,
@@ -224,7 +240,20 @@ class BorrowRepositoryImp(
         isExtend = this.get("is_extend", Boolean::class.java)!!
     )
 
-    private fun paramsMap(borrow: BorrowBook): Map<String, Any> = mapOf(
+    private fun Row.borrowDetailMapping(): BorrowDetail = BorrowDetail(
+        borrowId = this.get("borrow_id", Long::class.java)!!,
+        bookId = this.get("book_id", String::class.java)!!,
+        bookTitle = this.get("book_title", String::class.java)!!,
+        bookQuan = this.get("book_quan", Int::class.java)!!,
+        studentId = this.get("student_id", Long::class.java)!!,
+        studentName = this.get("student_name", String::class.java)!!,
+        borrowDate = this.get("borrow_date", LocalDate::class.java)!!,
+        giveBackDate = this.get("give_back_date", LocalDate::class.java)!!,
+        isBringBack = this.get("is_bring_back", Boolean::class.java)!!,
+        isExtend = this.get("is_extend", Boolean::class.java)!!
+    )
+
+    private fun paramsMap(borrow: Borrow): Map<String, Any> = mapOf(
         "bookId" to borrow.bookId,
         "studentId" to borrow.studentId,
         "bookQuan" to borrow.bookQuan,

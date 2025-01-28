@@ -22,7 +22,6 @@ import sru.edu.sru_lib_management.core.data.query.BookQuery.SAVE_DONATOR
 import sru.edu.sru_lib_management.core.data.query.BookQuery.UPDATE_DONATOR
 import sru.edu.sru_lib_management.core.domain.dto.CompareValue
 import sru.edu.sru_lib_management.core.domain.dto.DonationDetailDto
-import sru.edu.sru_lib_management.core.domain.model.BorrowBook
 import sru.edu.sru_lib_management.core.domain.model.Donation
 import sru.edu.sru_lib_management.core.domain.model.Donator
 import sru.edu.sru_lib_management.core.domain.repository.DonationRepository

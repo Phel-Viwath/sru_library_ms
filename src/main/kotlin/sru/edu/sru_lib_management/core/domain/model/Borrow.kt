@@ -8,7 +8,7 @@ package sru.edu.sru_lib_management.core.domain.model
 import com.fasterxml.jackson.annotation.JsonFormat
 import java.time.LocalDate
 
-class BorrowBook (
+class Borrow (
     val borrowId: Long?,
     val bookId: String,
     val bookQuan: Int,

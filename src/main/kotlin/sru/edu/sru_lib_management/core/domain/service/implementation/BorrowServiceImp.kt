@@ -16,11 +16,12 @@ import org.springframework.web.server.ResponseStatusException
 import sru.edu.sru_lib_management.common.APIException
 import sru.edu.sru_lib_management.common.CoreResult
 import sru.edu.sru_lib_management.core.domain.dto.Analyze
+import sru.edu.sru_lib_management.core.domain.dto.BorrowDetail
 import sru.edu.sru_lib_management.core.domain.dto.BorrowDto
 import sru.edu.sru_lib_management.core.domain.dto.analytic.BorrowReturn
 import sru.edu.sru_lib_management.core.domain.dto.analytic.MajorAttendBorrowed
 import sru.edu.sru_lib_management.core.domain.dto.analytic.MostBorrow
-import sru.edu.sru_lib_management.core.domain.model.BorrowBook
+import sru.edu.sru_lib_management.core.domain.model.Borrow
 import sru.edu.sru_lib_management.core.domain.repository.BookRepository
 import sru.edu.sru_lib_management.core.domain.repository.BorrowRepository
 import sru.edu.sru_lib_management.core.domain.repository.StudentRepository
@@ -40,7 +41,7 @@ class BorrowServiceImp(
 
     override suspend fun saveBorrow(
         borrowDto: BorrowDto
-    ): CoreResult<BorrowBook> = runCatching {
+    ): CoreResult<Borrow> = runCatching {
         if (borrowDto.bookId.isBlank() || borrowDto.bookQuan <= 0 || borrowDto.studentId <= 0){
             return CoreResult.ClientError("Field cannot be blank.")
         }
@@ -55,7 +56,7 @@ class BorrowServiceImp(
             return CoreResult.ClientError("You can not borrow more than two book in two weeks.")
         if (borrowed.size == 1 && borrowDto.bookQuan > 1)
             return CoreResult.ClientError("You can borrow only one book.")
-        val borrow = BorrowBook(
+        val borrow = Borrow(
             borrowId = null,
             bookId = borrowDto.bookId,
             bookQuan = borrowDto.bookQuan,
@@ -77,12 +78,12 @@ class BorrowServiceImp(
     )
 
     override suspend fun updateBorrow(
-        borrowBook: BorrowBook
-    ): CoreResult<BorrowBook> = runCatching{
-        if (borrowBook.borrowId == null)
+        borrow: Borrow
+    ): CoreResult<Borrow> = runCatching{
+        if (borrow.borrowId == null)
             return CoreResult.ClientError("Please enter id for update")
-        borrowRepository.getById(borrowBook.borrowId) ?: return CoreResult.ClientError("Not found borrowing with this ID: ${borrowBook.borrowId}")
-        borrowRepository.update(borrowBook)
+        borrowRepository.getById(borrow.borrowId) ?: return CoreResult.ClientError("Not found borrowing with this ID: ${borrow.borrowId}")
+        borrowRepository.update(borrow)
     }.fold(
         onSuccess = {data ->
             CoreResult.Success(data)
@@ -95,7 +96,7 @@ class BorrowServiceImp(
 
     override suspend fun getBorrow(
         borrowID: Long
-    ): CoreResult<BorrowBook?> = runCatching {
+    ): CoreResult<Borrow?> = runCatching {
         borrowRepository.getById(borrowID) ?: return CoreResult.ClientError("Not found borrowing with this ID: $borrowID")
     }.fold(
         onSuccess = {
@@ -107,7 +108,7 @@ class BorrowServiceImp(
         }
     )
 
-    override fun getBorrows():Flow<BorrowBook> = borrowRepository.getAll()
+    override fun getBorrows():Flow<Borrow> = borrowRepository.getAll()
 
     override suspend fun deleteBorrow(borrowID: Long): CoreResult<Boolean> {
         return try {
@@ -180,7 +181,7 @@ class BorrowServiceImp(
         }
     }
 
-    override suspend fun findBorrowByStudentIdBookId(studentId: Long, bookId: String): List<BorrowBook> {
+    override suspend fun findBorrowByStudentIdBookId(studentId: Long, bookId: String): List<Borrow> {
         return try {
             borrowRepository.findBorrowByStudentIdBookId(studentId, bookId)
         }catch (e: Exception){
@@ -188,7 +189,7 @@ class BorrowServiceImp(
         }
     }
 
-    override fun overDueService(): Flow<BorrowBook> = borrowRepository.findOverDueBook()
+    override fun overDueService(): Flow<Borrow> = borrowRepository.findOverDueBook()
 
     override suspend fun extendBorrow(borrowId: Long): CoreResult<Long> {
         return try {
@@ -270,6 +271,14 @@ class BorrowServiceImp(
                 result.add(BorrowReturn(month, borrowCount, returnCount))
             }
             result
+        }catch (e: Exception){
+            throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.message)
+        }
+    }
+
+    override suspend fun getBorrowDetail(): List<BorrowDetail> {
+        return try {
+            borrowRepository.getBorrowDetail()
         }catch (e: Exception){
             throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.message)
         }
