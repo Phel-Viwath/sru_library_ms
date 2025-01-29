@@ -278,7 +278,23 @@ class BorrowServiceImp(
 
     override suspend fun getBorrowDetail(): List<BorrowDetail> {
         return try {
-            borrowRepository.getBorrowDetail()
+            borrowRepository.getAllBorrowDetail()
+        }catch (e: Exception){
+            throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.message)
+        }
+    }
+
+    override suspend fun searchBorrow(keyword: String): List<BorrowDetail> {
+        return try {
+            borrowRepository.searchBorrow(keyword)
+        }catch (e: Exception){
+            throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.message)
+        }
+    }
+
+    override fun getActiveBorrowed(): Flow<BorrowDetail> {
+        return try {
+            borrowRepository.getActiveBorrowDetail()
         }catch (e: Exception){
             throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.message)
         }

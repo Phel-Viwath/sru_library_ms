@@ -106,9 +106,11 @@ class RouteConfig {
                 POST("", borrowHandler::saveBorrow)
                 GET(""){borrowHandler.getAllBorrow()}
                 GET("/detail"){borrowHandler.borrowDetails()}
+                GET("/detail-active"){borrowHandler.getActiveBorrow()}
                 GET("/over-due"){borrowHandler.getAllOverDueBooks()}
                 PUT("", borrowHandler::bookReturned)
                 PUT("/extend-borrow", borrowHandler::extendBorrowBook)
+                GET("/search", borrowHandler::searchBorrow)
             }
         }
     }

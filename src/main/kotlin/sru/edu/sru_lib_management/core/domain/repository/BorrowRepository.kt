@@ -17,7 +17,6 @@ import java.time.LocalDate
 
 @Repository
 interface BorrowRepository : ICrudRepository<Borrow, Long> {
-    fun customBorrow(date: Date): Flow<Borrow>
     suspend fun countBorrowPerWeek(): Map<LocalDate, Int>
     suspend fun countCurrentAndPreviousBorrow(date: LocalDate, period: Int): CompareValue
 
@@ -31,5 +30,9 @@ interface BorrowRepository : ICrudRepository<Borrow, Long> {
 
     fun getMostBorrow(startDate: LocalDate, endDate: LocalDate): Flow<MostBorrow>
     suspend fun getNotBringBackByStudentId(studentId: Long): List<Borrow?>
-    suspend fun getBorrowDetail(): List<BorrowDetail>
+
+    suspend fun getAllBorrowDetail(): List<BorrowDetail>
+    suspend fun searchBorrow(keyword: String): List<BorrowDetail>
+
+    fun getActiveBorrowDetail(): Flow<BorrowDetail>
 }

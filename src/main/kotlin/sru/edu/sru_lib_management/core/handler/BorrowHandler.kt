@@ -103,4 +103,18 @@ class BorrowHandler (
         ServerResponse.ok().bodyValueAndAwait(result)
     }
 
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
+    suspend fun searchBorrow(request: ServerRequest): ServerResponse = coroutineScope {
+        val keyword = request.queryParams()["keyword"]?.firstOrNull()
+            ?: return@coroutineScope ServerResponse.badRequest().buildAndAwait()
+        val result = borrowService.searchBorrow(keyword)
+        ServerResponse.ok().bodyValueAndAwait(result)
+    }
+
+    @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
+    suspend fun getActiveBorrow(): ServerResponse = coroutineScope{
+        val data = borrowService.getActiveBorrowed()
+        ServerResponse.ok().bodyAndAwait(data)
+    }
+
 }

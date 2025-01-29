@@ -43,4 +43,6 @@ interface BorrowService {
 
     suspend fun getBorrowAndReturn(startDate: LocalDate?, endDate: LocalDate?): List<BorrowReturn>
     suspend fun getBorrowDetail(): List<BorrowDetail>
+    suspend fun searchBorrow(keyword: String): List<BorrowDetail>
+    fun getActiveBorrowed(): Flow<BorrowDetail>
 }

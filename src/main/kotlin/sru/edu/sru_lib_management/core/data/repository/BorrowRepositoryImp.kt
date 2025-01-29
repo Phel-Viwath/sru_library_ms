@@ -25,16 +25,12 @@ import sru.edu.sru_lib_management.core.domain.dto.analytic.MostBorrow
 import sru.edu.sru_lib_management.core.domain.model.Borrow
 import sru.edu.sru_lib_management.core.domain.repository.BorrowRepository
 import sru.edu.sru_lib_management.utils.IndochinaDateTime.indoChinaDate
-import java.sql.Date
 import java.time.LocalDate
 
 @Component
 class BorrowRepositoryImp(
     private val client: DatabaseClient
 ) : BorrowRepository {
-    override fun customBorrow(date: Date): Flow<Borrow> {
-        TODO("Not yet implemented")
-    }
 
     override suspend fun countBorrowPerWeek(): Map<LocalDate, Int> {
        return client.sql("CALL CountBorrowPerWeek()")
@@ -214,7 +210,7 @@ class BorrowRepositoryImp(
             .awaitSingle()
     }
 
-    override suspend fun getBorrowDetail(): List<BorrowDetail> {
+    override suspend fun getAllBorrowDetail(): List<BorrowDetail> {
         return client.sql("""
             SELECT bb.borrow_id, bb.book_id, b.book_title,
             bb.book_quan, bb.student_id, s.student_name,
@@ -227,6 +223,45 @@ class BorrowRepositoryImp(
         ).map { row, _ ->
             row.borrowDetailMapping()
         }.all().collectList().awaitSingle()
+    }
+
+    override suspend fun searchBorrow(keyword: String): List<BorrowDetail> {
+        return client.sql("""
+            SELECT bb.borrow_id, bb.book_id, b.book_title,
+            bb.book_quan, bb.student_id, s.student_name,
+            bb.borrow_date, bb.give_back_date, bb.is_bring_back,
+            bb.is_extend
+            FROM borrow_books bb 
+                inner join books b on bb.book_id = b.book_id
+                inner join students s on bb.student_id = s.student_id
+            WHERE (lower(bb.student_id) like :keyword or lower(bb.book_id) like :keyword or
+                lower(s.student_name) like :keyword or lower(b.book_title) like :keyword) 
+                and bb.is_bring_back = false
+             """
+        )
+            .bind("keyword", "%${keyword.lowercase()}%")
+            .map { row , _->
+                row.borrowDetailMapping()
+            }
+            .all()
+            .collectList()
+            .awaitSingle()
+    }
+
+    override fun getActiveBorrowDetail(): Flow<BorrowDetail> {
+        return client.sql("""
+            SELECT bb.borrow_id, bb.book_id, b.book_title,
+                bb.book_quan, bb.student_id, s.student_name,
+                bb.borrow_date, bb.give_back_date, bb.is_bring_back,
+                bb.is_extend
+            FROM borrow_books bb
+                inner join books b on bb.book_id = b.book_id
+                inner join students s on bb.student_id = s.student_id
+            WHERE bb.is_bring_back = false;
+            """
+        ).map { row, _ ->
+            row.borrowDetailMapping()
+        }.all().asFlow()
     }
 
     private fun Row.rowMapping(): Borrow = Borrow(
