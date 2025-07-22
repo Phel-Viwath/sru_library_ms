@@ -42,9 +42,7 @@ class SecurityConfig (
     fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
     @Bean
-    fun userDetailServices(
-        encoder: PasswordEncoder
-    ): ReactiveUserDetailsService = ReactiveUserDetailsService { email ->
+    fun userDetailServices(): ReactiveUserDetailsService = ReactiveUserDetailsService { email ->
         mono {
             val users = repository.findByEmail(email)
             users?.let {
@@ -55,8 +53,8 @@ class SecurityConfig (
             }
         }
     }
+
     @Bean
-    @Suppress("removal", "DEPRECATION")
     fun springSecurityFilterChain(
         http: ServerHttpSecurity,
         converter: JwtAuthenticationConverter,
@@ -64,25 +62,63 @@ class SecurityConfig (
     ): SecurityWebFilterChain {
         val filter = AuthenticationWebFilter(authManager)
         filter.setServerAuthenticationConverter(converter)
-        http
-            .exceptionHandling()
-            .authenticationEntryPoint { exchange, _ ->
-                Mono.fromRunnable {
-                    exchange.response.statusCode = HttpStatus.UNAUTHORIZED
-                    exchange.response.headers.remove(HttpHeaders.WWW_AUTHENTICATE)
+
+//        http
+//            .exceptionHandling()
+//            .authenticationEntryPoint { exchange, _ ->
+//                Mono.fromRunnable {
+//                    exchange.response.statusCode = HttpStatus.UNAUTHORIZED
+//                    exchange.response.headers.remove(HttpHeaders.WWW_AUTHENTICATE)
+//                }
+//            }
+//            .and()
+//            .authorizeExchange{ exchange ->
+//                exchange
+//                    .pathMatchers("/ws/**", "/notifications").permitAll()
+//                    .pathMatchers("/api/v1/auth/**").permitAll()
+//                    .anyExchange().authenticated()
+//            }
+//            .addFilterAt(filter, SecurityWebFiltersOrder.AUTHENTICATION)
+//            .httpBasic().disable()
+//            .formLogin().disable()
+//            .csrf().disable()
+//            .cors { corsSpec ->
+//                corsSpec.configurationSource {
+//                    CorsConfiguration().apply {
+//                        allowedOrigins = listOf(
+//                            "http://localhost:5173",
+//                            "http://localhost:5174",
+//                            "http://localhost:5175",
+//                            "https://react-js-inky-three.vercel.app",
+//                            "https://react-js-inky-three.vercel.app/"
+//                        )
+//                        allowedMethods = listOf("GET", "POST", "PUT", "DELETE")
+//                        allowCredentials = true
+//                        addAllowedHeader("*")
+//                    }
+//                }
+//            }
+//        return http.build()
+
+        return http
+            .exceptionHandling { exceptions ->
+                exceptions.authenticationEntryPoint { exchange, _ ->
+                    Mono.fromRunnable {
+                        exchange.response.statusCode = HttpStatus.UNAUTHORIZED
+                        exchange.response.headers.remove(HttpHeaders.WWW_AUTHENTICATE)
+                    }
                 }
             }
-            .and()
-            .authorizeExchange{ exchange ->
+            .authorizeExchange { exchange ->
                 exchange
                     .pathMatchers("/ws/**", "/notifications").permitAll()
                     .pathMatchers("/api/v1/auth/**").permitAll()
                     .anyExchange().authenticated()
             }
             .addFilterAt(filter, SecurityWebFiltersOrder.AUTHENTICATION)
-            .httpBasic().disable()
-            .formLogin().disable()
-            .csrf().disable()
+            .httpBasic { it.disable() }
+            .formLogin { it.disable() }
+            .csrf { it.disable() }
             .cors { corsSpec ->
                 corsSpec.configurationSource {
                     CorsConfiguration().apply {
@@ -99,7 +135,7 @@ class SecurityConfig (
                     }
                 }
             }
-        return http.build()
+            .build()
     }
 
     @Bean
