@@ -15,7 +15,10 @@ import org.springframework.stereotype.Component
 import org.springframework.web.server.ResponseStatusException
 import sru.edu.sru_lib_management.common.APIException
 import sru.edu.sru_lib_management.common.CoreResult
-import sru.edu.sru_lib_management.core.domain.dto.*
+import sru.edu.sru_lib_management.core.domain.dto.Analyze
+import sru.edu.sru_lib_management.core.domain.dto.DurationSpent
+import sru.edu.sru_lib_management.core.domain.dto.PurposeByMonthDto
+import sru.edu.sru_lib_management.core.domain.dto.PurposeDto
 import sru.edu.sru_lib_management.core.domain.dto.analytic.MajorAttendBorrowed
 import sru.edu.sru_lib_management.core.domain.dto.analytic.TotalStudentAttendByTime
 import sru.edu.sru_lib_management.core.domain.dto.attend.AttendDetail
