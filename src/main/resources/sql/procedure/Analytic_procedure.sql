@@ -78,7 +78,7 @@ CREATE PROCEDURE IF NOT EXISTS GetBookForEachCollege(
     GROUP BY c.college_name ORDER BY c.college_name;
 end;
 
-CREATE PROCEDURE GetBookLanguage()
+CREATE PROCEDURE IF NOT EXISTS GetBookLanguage()
 BEGIN
     SELECT
         l.language_name AS languageName,
@@ -89,7 +89,7 @@ BEGIN
     GROUP BY b.language_id;
 end;
 
-CREATE PROCEDURE GetBookInCome(
+CREATE PROCEDURE IF NOT EXISTS GetBookInCome(
     IN startDate DATE,
     IN endDate DATE
 )
@@ -140,7 +140,7 @@ BEGIN
     ORDER BY month;
 end;
 
-CREATE PROCEDURE CountDuration(
+CREATE PROCEDURE IF NOT EXISTS CountDuration(
     IN startDate DATE,  -- Start date or NULL
     IN endDate DATE     -- End date or NULL
 )
@@ -204,7 +204,7 @@ BEGIN
     ORDER BY totalTimeSpent DESC;
 END;
 
-CREATE PROCEDURE GetMostAttend(
+CREATE PROCEDURE IF NOT EXISTS GetMostAttend(
     IN startDate DATE,  -- Start date or NULL
     IN endDate DATE     -- End date or NULL
 )
@@ -241,7 +241,7 @@ BEGIN
 
 END;
 
-CREATE PROCEDURE CountAttendByOpenTime(
+CREATE PROCEDURE IF NOT EXISTS CountAttendByOpenTime(
     IN startDate DATE,  -- Start date or NULL
     IN endDate DATE     -- End date or NULL
 )
@@ -281,7 +281,7 @@ BEGIN
 
 END;
 
-CREATE PROCEDURE GetPurposeByMonth(
+CREATE PROCEDURE IF NOT EXISTS GetPurposeByMonth(
     IN majorName VARCHAR(100),  -- Major name filter or NULL
     IN startMonth DATE,         -- Start month (any date in the month) or NULL
     IN endMonth DATE            -- End month (any date in the month) or NULL
@@ -328,5 +328,108 @@ BEGIN
 
 END;
 
+CREATE PROCEDURE IF NOT EXISTS GetBorrowDataEachMajor(
+    IN startDate DATE,
+    IN endDate DATE
+)
+BEGIN
+    DECLARE total_borrows INT DEFAULT 0;
 
+    -- Get total borrows for percentage calculation
+    SELECT COUNT(bb.borrow_id) INTO total_borrows
+    FROM borrow_books bb
+             JOIN students s ON bb.student_id = s.student_id
+             JOIN majors m ON s.major_id = m.major_id
+    WHERE bb.borrow_date BETWEEN startDate AND endDate;
 
+    -- Return major borrow data with percentages
+    SELECT
+        m.major_name AS majorName,
+        COUNT(bb.borrow_id) AS times,
+        IF(total_borrows > 0, ROUND((COUNT(bb.borrow_id) * 100.0 / total_borrows), 2), 0) AS percentage
+    FROM borrow_books bb
+             JOIN students s ON bb.student_id = s.student_id
+             JOIN majors m ON s.major_id = m.major_id
+    WHERE bb.borrow_date BETWEEN startDate AND endDate
+    GROUP BY m.major_id, m.major_name
+    ORDER BY times DESC;
+END;
+
+CREATE PROCEDURE IF NOT EXISTS GetMostBorrowedBooks(
+    IN startDate DATE,
+    IN endDate DATE
+)
+BEGIN
+    SELECT ROW_NUMBER() OVER (ORDER BY COUNT(b.book_id) DESC) AS ranking,
+           b.book_title AS bookTitle,
+           b.genre AS genre,
+           COUNT(b.book_id) AS count
+    FROM borrow_books bb
+             INNER JOIN books b ON bb.book_id = b.book_id
+    WHERE bb.borrow_date BETWEEN startDate AND endDate
+    GROUP BY b.book_id, b.book_title, b.genre
+    ORDER BY count DESC;
+end;
+
+CREATE PROCEDURE IF NOT EXISTS GetBorrowAndReturn(
+    IN startDate DATE,
+    IN endDate DATE
+)
+BEGIN
+    -- Create a temporary table to hold all unique months from both borrow and return data
+    CREATE TEMPORARY TABLE temp_months (
+       month_year VARCHAR(7) PRIMARY KEY,
+       year_month_date DATE
+    );
+
+    -- Insert unique months from borrow_date within the date range
+    INSERT IGNORE INTO temp_months (month_year, year_month_date)
+    SELECT
+        DATE_FORMAT(borrow_date, '%Y-%m') as month_year,
+        DATE(CONCAT(DATE_FORMAT(borrow_date, '%Y-%m'), '-01')) as year_month_date
+    FROM borrow_books
+    WHERE (startDate IS NULL OR borrow_date >= startDate)
+      AND (endDate IS NULL OR borrow_date <= endDate);
+
+    -- Insert unique months from give_back_date for returned books within the date range
+    INSERT IGNORE INTO temp_months (month_year, year_month_date)
+    SELECT
+        DATE_FORMAT(give_back_date, '%Y-%m') as month_year,
+        DATE(CONCAT(DATE_FORMAT(give_back_date, '%Y-%m'), '-01')) as year_month_date
+    FROM borrow_books
+    WHERE is_bring_back = true
+      AND (startDate IS NULL OR give_back_date >= startDate)
+      AND (endDate IS NULL OR give_back_date <= endDate);
+
+    -- Main query to get borrow and return counts by month
+    SELECT
+        tm.month_year as month,
+        COALESCE(borrow_counts.borrow_count, 0) as borrow,
+        COALESCE(return_counts.return_count, 0) as returned
+    FROM temp_months tm
+             LEFT JOIN (
+        -- Count borrows by month
+        SELECT
+            DATE_FORMAT(borrow_date, '%Y-%m') as month_year,
+            COUNT(*) as borrow_count
+        FROM borrow_books
+        WHERE (startDate IS NULL OR borrow_date >= startDate)
+          AND (endDate IS NULL OR borrow_date <= endDate)
+        GROUP BY DATE_FORMAT(borrow_date, '%Y-%m')
+    ) borrow_counts ON tm.month_year = borrow_counts.month_year
+             LEFT JOIN (
+        -- Count returns by month
+        SELECT
+            DATE_FORMAT(give_back_date, '%Y-%m') as month_year,
+            COUNT(*) as return_count
+        FROM borrow_books
+        WHERE is_bring_back = true
+          AND (startDate IS NULL OR give_back_date >= startDate)
+          AND (endDate IS NULL OR give_back_date <= endDate)
+        GROUP BY DATE_FORMAT(give_back_date, '%Y-%m')
+    ) return_counts ON tm.month_year = return_counts.month_year
+    ORDER BY tm.year_month_date;
+
+    -- Clean up temporary table
+    DROP TEMPORARY TABLE temp_months;
+END;

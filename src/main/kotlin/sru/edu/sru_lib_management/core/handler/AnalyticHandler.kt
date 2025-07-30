@@ -53,8 +53,9 @@ class AnalyticHandler(
         val getTotalStudentEntries = attendService.countAttendByOpenTime(startDate, endDate)//
         val getPurposeByMonthDto = attendService.getPurposeByMonth(major, startMonth, endMonth)//
 
-        val majorBorrows = borrowService.getBorrowDataEachMajor(startDate, endDate)
-        val mostBorrows = borrowService.mostBorrow(startDate, endDate).toList()
+        val majorBorrows = borrowService.getBorrowDataEachMajor(startDate, endDate)//
+        val mostBorrows = borrowService.mostBorrow(startDate, endDate).toList()//
+
         val borrowAndReturn = borrowService.getBorrowAndReturn(startDate, endDate)
 
         val analytic =  Analytic(
