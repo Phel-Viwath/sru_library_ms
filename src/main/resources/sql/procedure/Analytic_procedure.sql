@@ -1,8 +1,8 @@
 
 CREATE PROCEDURE IF NOT EXISTS PurposeCount(
-    IN p_start_date DATE,
-    IN p_end_date DATE,
-    IN p_major_name VARCHAR(100)
+    IN startDate DATE,
+    IN endDate DATE,
+    IN major VARCHAR(100)
 )
 BEGIN
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
@@ -12,11 +12,11 @@ BEGIN
         END;
 
     -- Validate input parameters
-    IF p_start_date IS NULL OR p_end_date IS NULL THEN
+    IF startDate IS NULL OR endDate IS NULL THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Start date and end date cannot be null';
     END IF;
 
-    IF p_start_date > p_end_date THEN
+    IF startDate > endDate THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Start date cannot be greater than end date';
     END IF;
 
@@ -25,28 +25,29 @@ BEGIN
         purpose_category,
         SUM(purpose_count) as total_count
     FROM (
-             SELECT
-                 CASE
-                     WHEN LOWER(a.purpose) LIKE '%reading%' OR LOWER(a.purpose) = 'read' THEN 'Reading'
-                     WHEN LOWER(a.purpose) LIKE '%pc%' OR LOWER(a.purpose) LIKE '%computer%' OR LOWER(a.purpose) LIKE '%use pc%' THEN 'Use PC'
-                     ELSE 'Other'
-                     END as purpose_category,
-                 COUNT(*) as purpose_count
-             FROM attend a
-                      LEFT JOIN students s ON a.student_id = s.student_id
-                      LEFT JOIN majors m ON s.major_id = m.major_id
-             WHERE
-                 a.date BETWEEN p_start_date AND p_end_date
-               AND (
-                 p_major_name IS NULL
-                     OR p_major_name = ''
-                     OR m.major_name = p_major_name
-                     OR a.sru_staff_id IS NOT NULL  -- Include staff entries when major filter is applied
-                 )
-             GROUP BY
-                 purpose_category,
-                 a.purpose
-         ) as categorized_purposes
+         SELECT
+             CASE
+                 WHEN LOWER(a.purpose) LIKE '%reading%' OR LOWER(a.purpose) = 'read' THEN 'Reading'
+                 WHEN LOWER(a.purpose) LIKE '%pc%' OR LOWER(a.purpose) LIKE '%computer%' OR LOWER(a.purpose) LIKE '%use pc%' THEN 'Use PC'
+                 WHEN LOWER(a.purpose) LIKE '%assignment%' or LOWER(a.purpose) LIKE '%ass%' THEN 'Assignment'
+                 ELSE 'Other'
+                 END as purpose_category,
+             COUNT(*) as purpose_count
+         FROM attend a
+                  LEFT JOIN students s ON a.student_id = s.student_id
+                  LEFT JOIN majors m ON s.major_id = m.major_id
+         WHERE
+             a.date BETWEEN startDate AND endDate
+           AND (
+             major IS NULL
+                 OR major = ''
+                 OR m.major_name = major
+                 OR a.sru_staff_id IS NOT NULL  -- Include staff entries when major filter is applied
+             )
+         GROUP BY
+             purpose_category,
+             a.purpose
+     ) as categorized_purposes
     GROUP BY purpose_category
     ORDER BY
         CASE purpose_category
@@ -58,25 +59,47 @@ BEGIN
 END;
 
 CREATE PROCEDURE IF NOT EXISTS GetBookForEachCollege(
-    IN startDate DATE,
-    IN endDate DATE
-)BEGIN
+    IN startMonth VARCHAR(7),  -- format: 'YYYY-MM'
+    IN endMonth VARCHAR(7)     -- format: 'YYYY-MM'
+)
+BEGIN
+    DECLARE startDate DATE;
+    DECLARE endDate DATE;
+
+    -- Convert YYYY-MM to DATE (start of month)
+    IF startMonth IS NOT NULL THEN
+        SET startDate = STR_TO_DATE(CONCAT(startMonth, '-01'), '%Y-%m-%d');
+    ELSE
+        SET startDate = NULL;
+    END IF;
+
+    -- Convert YYYY-MM to DATE (end of month using LAST_DAY)
+    IF endMonth IS NOT NULL THEN
+        SET endDate = LAST_DAY(STR_TO_DATE(CONCAT(endMonth, '-01'), '%Y-%m-%d'));
+    ELSE
+        SET endDate = NULL;
+    END IF;
 
     SELECT
-        c.college_name,
-        SUM(b.bookQuan) AS total_book
+        c.college_name AS collegeName,
+        COALESCE(l.language_name, 'Unknown') AS language,
+        SUM(b.bookQuan) AS bookCount
     FROM books b
              JOIN colleges c ON b.college_id = c.college_id
+             LEFT JOIN language l ON b.language_id = l.language_id
              LEFT JOIN donation d ON b.book_id = d.book_id
     WHERE (
-        (b.received_date IS NOT NULL AND b.received_date BETWEEN startDate AND endDate)
-            OR
-        (d.donate_date IS NOT NULL AND d.donate_date BETWEEN startDate AND endDate)
-            OR
-        (startDate IS NULL AND endDate IS NULL)
-    )AND b.isActive = TRUE
-    GROUP BY c.college_name ORDER BY c.college_name;
-end;
+        (startDate IS NOT NULL AND endDate IS NOT NULL AND (
+            (b.received_date IS NOT NULL AND b.received_date BETWEEN startDate AND endDate)
+                OR
+            (d.donate_date IS NOT NULL AND d.donate_date BETWEEN startDate AND endDate)
+            ))
+            OR (startDate IS NULL AND endDate IS NULL)
+        )
+      AND b.isActive = TRUE
+    GROUP BY c.college_name, l.language_name
+    ORDER BY c.college_name, l.language_name;
+END;
 
 CREATE PROCEDURE IF NOT EXISTS GetBookLanguage()
 BEGIN
@@ -89,26 +112,45 @@ BEGIN
     GROUP BY b.language_id;
 end;
 
-CREATE PROCEDURE IF NOT EXISTS GetBookInCome(
-    IN startDate DATE,
-    IN endDate DATE
+CREATE PROCEDURE IF NOT EXISTS GetBookIncome(
+    IN startMonth VARCHAR(7),  -- e.g. '2024-01'
+    IN endMonth VARCHAR(7)     -- e.g. '2024-03'
 )
 BEGIN
+
+    -- Declare actual date range
+    DECLARE startDate DATE;
+    DECLARE endDate DATE;
+
     -- Exit handler for SQL errors
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
         BEGIN
-            -- Optional: Log error
             RESIGNAL;
         END;
 
-    -- Create temp table with UNIQUE key on month
+    -- Convert YearMonth to DATE range
+    IF startMonth IS NOT NULL THEN
+        SET startDate = STR_TO_DATE(CONCAT(startMonth, '-01'), '%Y-%m-%d');
+    ELSE
+        SET startDate = NULL;
+    END IF;
+
+    IF endMonth IS NOT NULL THEN
+        SET endDate = LAST_DAY(STR_TO_DATE(CONCAT(endMonth, '-01'), '%Y-%m-%d'));
+    ELSE
+        SET endDate = NULL;
+    END IF;
+
+    -- Drop if exists
+    DROP TEMPORARY TABLE IF EXISTS temp_book_income;
+    -- Create temp table
     CREATE TEMPORARY TABLE temp_book_income (
         month VARCHAR(7) PRIMARY KEY,
         donation INT DEFAULT 0,
         university_funding INT DEFAULT 0
     );
 
-    -- Insert university funding data
+    -- Insert university-funded books
     INSERT INTO temp_book_income (month, university_funding)
     SELECT
         DATE_FORMAT(received_date, '%Y-%m') AS month,
@@ -120,7 +162,7 @@ BEGIN
       AND (endDate IS NULL OR received_date <= endDate)
     GROUP BY DATE_FORMAT(received_date, '%Y-%m');
 
-    -- Insert or update donation data
+    -- Insert or update donation-funded books
     INSERT INTO temp_book_income (month, donation)
     SELECT
         DATE_FORMAT(donate_date, '%Y-%m') AS month,
@@ -131,14 +173,14 @@ BEGIN
     GROUP BY DATE_FORMAT(donate_date, '%Y-%m')
     ON DUPLICATE KEY UPDATE donation = VALUES(donation);
 
-    -- Final combined result
+    -- Final result
     SELECT
         month,
         COALESCE(donation, 0) AS donation,
         COALESCE(university_funding, 0) AS university_funding
     FROM temp_book_income
     ORDER BY month;
-end;
+END;
 
 CREATE PROCEDURE IF NOT EXISTS CountDuration(
     IN startDate DATE,  -- Start date or NULL
@@ -264,68 +306,60 @@ BEGIN
     SELECT
         COUNT(*)                           AS totalAttend,
         SUM(IF(s.gender = 'Female', 1, 0)) AS totalFemale,
-        SUM(
-                IF(TIME(a.entry_times) BETWEEN @SEVEN_AM AND @ELEVEN_AM, 1, 0)
-        )                                  AS totalMorningAttend,
-        SUM(
-                IF(TIME(a.entry_times) BETWEEN @TWO_PM AND @FIVE_PM, 1, 0)
-        )                                  AS totalAfternoonAttend,
-        SUM(
-                IF(TIME(a.entry_times) BETWEEN @FIVE_THIRTY_PM AND @SEVEN_THIRTY_PM, 1, 0)
-        ) AS totalEveningAttend
+        SUM(IF(TIME(a.entry_times) BETWEEN @SEVEN_AM AND @ELEVEN_AM, 1, 0)) AS totalMorningAttend,
+        SUM(IF(TIME(a.entry_times) BETWEEN @TWO_PM AND @FIVE_PM, 1, 0)) AS totalAfternoonAttend,
+        SUM(IF(TIME(a.entry_times) BETWEEN @FIVE_THIRTY_PM AND @SEVEN_THIRTY_PM, 1, 0)) AS totalEveningAttend
     FROM attend a
              INNER JOIN students s ON a.student_id = s.student_id
     WHERE a.student_id IS NOT NULL
       AND (startDate IS NULL OR a.date >= startDate)
       AND (endDate IS NULL OR a.date <= endDate);
-
 END;
 
 CREATE PROCEDURE IF NOT EXISTS GetPurposeByMonth(
-    IN majorName VARCHAR(100),  -- Major name filter or NULL
-    IN startMonth DATE,         -- Start month (any date in the month) or NULL
-    IN endMonth DATE            -- End month (any date in the month) or NULL
+    IN majorName VARCHAR(100),    -- Major name filter or NULL
+    IN startMonth VARCHAR(7),     -- Format 'YYYY-MM'
+    IN endMonth VARCHAR(7)        -- Format 'YYYY-MM'
 )
 BEGIN
+    -- Declare local DATE variables
+    DECLARE processStartDate DATE;
+    DECLARE processEndDate DATE;
+
+    -- Declare error handler
     DECLARE EXIT HANDLER FOR SQLEXCEPTION
         BEGIN
             ROLLBACK;
             RESIGNAL;
         END;
 
-    -- Set default date range if not provided (current year from January to current month)
-    SET @defaultStartMonth = CONCAT(YEAR(CURDATE()), '-01-01');
-    SET @defaultEndMonth = LAST_DAY(CURDATE());
+    -- Convert input or use defaults
+    SET processStartDate = IFNULL(
+            STR_TO_DATE(CONCAT(startMonth, '-01'), '%Y-%m-%d'),
+            STR_TO_DATE(CONCAT(YEAR(CURDATE()), '-01-01'), '%Y-%m-%d')
+                           );
 
-    -- Use provided dates or defaults
-    SET @processStartMonth = COALESCE(startMonth, @defaultStartMonth);
-    SET @processEndMonth = COALESCE(endMonth, @defaultEndMonth);
+    SET processEndDate = IFNULL(
+            LAST_DAY(STR_TO_DATE(CONCAT(endMonth, '-01'), '%Y-%m-%d')),
+            LAST_DAY(CURDATE())
+                         );
 
-    -- Get purpose counts grouped by month
+    -- Final query
     SELECT
         DATE_FORMAT(a.date, '%Y-%m') AS month,
-        SUM(
-                IF(FIND_IN_SET('Other', REPLACE(a.purpose, ', ', ',')) > 0, 1, 0)
-        ) AS other,
-        SUM(
-                IF(FIND_IN_SET('Reading', REPLACE(a.purpose, ', ', ',')) > 0, 1, 0)
-        ) AS reading,
-        SUM(
-                IF(FIND_IN_SET('Assignment', REPLACE(a.purpose, ', ', ',')) > 0, 1, 0)
-        ) AS assignment,
-        SUM(
-                IF(FIND_IN_SET('Use PC', REPLACE(a.purpose, ', ', ',')) > 0, 1, 0)
-        ) AS usePc
+        SUM(IF(FIND_IN_SET('Other', REPLACE(a.purpose, ', ', ',')) > 0, 1, 0)) AS other,
+        SUM(IF(FIND_IN_SET('Reading', REPLACE(a.purpose, ', ', ',')) > 0, 1, 0)) AS reading,
+        SUM(IF(FIND_IN_SET('Assignment', REPLACE(a.purpose, ', ', ',')) > 0, 1, 0)) AS assignment,
+        SUM(IF(FIND_IN_SET('Use PC', REPLACE(a.purpose, ', ', ',')) > 0, 1, 0)) AS usePc
     FROM attend a
              INNER JOIN students s ON a.student_id = s.student_id
              INNER JOIN majors m ON s.major_id = m.major_id
     WHERE a.student_id IS NOT NULL
-      AND a.date >= DATE_FORMAT(@processStartMonth, '%Y-%m-01')
-      AND a.date <= LAST_DAY(@processEndMonth)
+      AND a.date >= processStartDate
+      AND a.date <= processEndDate
       AND (majorName IS NULL OR m.major_name = majorName)
     GROUP BY DATE_FORMAT(a.date, '%Y-%m')
     ORDER BY month;
-
 END;
 
 CREATE PROCEDURE IF NOT EXISTS GetBorrowDataEachMajor(
@@ -366,10 +400,15 @@ BEGIN
            COUNT(b.book_id) AS count
     FROM borrow_books bb
              INNER JOIN books b ON bb.book_id = b.book_id
-    WHERE bb.borrow_date BETWEEN startDate AND endDate
+    WHERE (
+          (startDate IS NULL OR bb.borrow_date >= startDate) AND
+          (endDate IS NULL OR bb.borrow_date <= endDate)
+    )
     GROUP BY b.book_id, b.book_title, b.genre
     ORDER BY count DESC;
 end;
+
+CALL GetBorrowAndReturn(null, null);
 
 CREATE PROCEDURE IF NOT EXISTS GetBorrowAndReturn(
     IN startDate DATE,

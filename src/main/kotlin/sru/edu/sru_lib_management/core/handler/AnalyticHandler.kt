@@ -43,11 +43,11 @@ class AnalyticHandler(
         val startMonth = YearMonth.from(startDate)
         val endMonth = YearMonth.from(endDate)
 
-        val purposeCount = attendService.getPurposes(major, startDate, endDate)//
         val bookEachCollege = bookService.getBookDataForEachCollege(startMonth, endMonth)//
         val totalBook = bookService.bookLanguage()//
         val bookIncome = bookService.getBookIncome(startMonth, endMonth)//
 
+        val purposeCount = attendService.getPurposes(major, startDate, endDate)//
         val timeSpent = attendService.countDuration(startDate, endDate).toList()//
         val mostMajorAttend = attendService.getMostAttend(startDate, endDate)//
         val getTotalStudentEntries = attendService.countAttendByOpenTime(startDate, endDate)//
@@ -55,8 +55,7 @@ class AnalyticHandler(
 
         val majorBorrows = borrowService.getBorrowDataEachMajor(startDate, endDate)//
         val mostBorrows = borrowService.mostBorrow(startDate, endDate).toList()//
-
-        val borrowAndReturn = borrowService.getBorrowAndReturn(startDate, endDate)
+        val borrowAndReturn = borrowService.getBorrowAndReturn(startDate, endDate)//
 
         val analytic =  Analytic(
             bookIncome = bookIncome,
