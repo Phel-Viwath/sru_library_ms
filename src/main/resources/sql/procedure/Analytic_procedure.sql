@@ -243,7 +243,8 @@ BEGIN
         sad.degree_level,
         sad.generation
     HAVING totalTimeSpent > 0
-    ORDER BY totalTimeSpent DESC;
+    ORDER BY totalTimeSpent DESC
+    LIMIT 10;
 END;
 
 CREATE PROCEDURE IF NOT EXISTS GetMostAttend(
@@ -408,8 +409,6 @@ BEGIN
     ORDER BY count DESC;
 end;
 
-CALL GetBorrowAndReturn(null, null);
-
 CREATE PROCEDURE IF NOT EXISTS GetBorrowAndReturn(
     IN startDate DATE,
     IN endDate DATE
@@ -472,3 +471,4 @@ BEGIN
     -- Clean up temporary table
     DROP TEMPORARY TABLE temp_months;
 END;
+

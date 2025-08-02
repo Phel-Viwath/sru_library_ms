@@ -3,6 +3,7 @@ package sru.edu.sru_lib_management.core.data.repository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactor.awaitSingle
+import org.slf4j.LoggerFactory
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec
 import org.springframework.r2dbc.core.awaitSingle
@@ -22,18 +23,21 @@ import java.time.YearMonth
 class AnalyticRepositoryImp(
     private val client: DatabaseClient
 ) : AnalyticRepository{
+
+    private val logger = LoggerFactory.getLogger(AnalyticRepositoryImp::class.java)
+
     override fun getBookEachCollege(
         startMonth: YearMonth?,
         endMonth: YearMonth?,
     ): Flow<BookEachCollege> {
         return client.sql("CALL GetBookForEachCollege(:startMonth, :endMonth)")
-            .bindNullable("startMoth", startMonth, String::class.java)
-            .bindNullable("endMoth", endMonth, String::class.java)
+            .bindNullable("startMonth", startMonth?.toString(), String::class.java)
+            .bindNullable("endMonth", endMonth?.toString(), String::class.java)
             .map { row ->
                 Triple(
-                    row.get("collegeName", String::class.java) ?: "",
-                    row.get("language", String::class.java) ?: "Unknown",
-                    row.get("bookCount", Int::class.java) ?: 0
+                    row.get("collegeName", String::class.java)!!,
+                    row.get("language", String::class.java)!!,
+                    row.get("bookCount", Int::class.java)!!
                 )
             }
             .all()
@@ -56,9 +60,9 @@ class AnalyticRepositoryImp(
         startMonth: YearMonth?,
         endMonth: YearMonth?,
     ): Flow<BookIncome> {
-        return client.sql("CALL GetBookIncome(:startMoth, :endMoth)")
-            .bindNullable("startMoth", startMonth, String::class.java)
-            .bindNullable("endMoth", endMonth, String::class.java)
+        return client.sql("CALL GetBookIncome(:startMonth, :endMonth)")
+            .bindNullable("startMonth", startMonth?.toString(), String::class.java)
+            .bindNullable("endMonth", endMonth?.toString(), String::class.java)
             .map { row ->
                 BookIncome(
                     month = row.get("month", String::class.java) ?: "",
@@ -73,8 +77,8 @@ class AnalyticRepositoryImp(
         return client.sql("CALL GetBookLanguage()")
             .map { row ->
                 Pair(
-                    row.get("languageName", String::class.java) ?: "Unknown",
-                    row.get("totalBookPerLanguage", Int::class.java) ?: 0
+                    row.get("languageName", String::class.java)!!,
+                    row.get("totalBookPerLanguage", Int::class.java)!!
                 )
             }
             .all()
@@ -93,9 +97,9 @@ class AnalyticRepositoryImp(
         startDate: LocalDate?,
         endDate: LocalDate?,
     ): Flow<PurposeDto> {
-        return client.sql("CALL GetPurposeByMonth(:startDate, :endDate, :major)")
-            .bindNullable("startDate", startDate, String::class.java)
-            .bindNullable("endDate", endDate, String::class.java)
+        return client.sql("CALL PurposeCount(:startDate, :endDate, :major)")
+            .bindNullable("startDate", startDate, LocalDate::class.java)
+            .bindNullable("endDate", endDate, LocalDate::class.java)
             .bindNullable("major", major, String::class.java)
             .map {  row ->
                 PurposeDto(
@@ -111,8 +115,8 @@ class AnalyticRepositoryImp(
         endDate: LocalDate?,
     ): Flow<DurationSpent> {
         return client.sql("CALL CountDuration(:startDate, :endDate)")
-            .bindNullable("startDate", startDate, String::class.java)
-            .bindNullable("endDate", endDate, String::class.java)
+            .bindNullable("startDate", startDate, LocalDate::class.java)
+            .bindNullable("endDate", endDate, LocalDate::class.java)
             .map { row ->
                 DurationSpent(
                     studentId = row.get("studentId", Long::class.java)!!,
@@ -131,8 +135,8 @@ class AnalyticRepositoryImp(
         endDate: LocalDate?,
     ): Flow<MajorAttendBorrowed> {
         return client.sql("CALL GetMostAttend(:startDate, :endDate)")
-            .bindNullable("startDate", startDate, String::class.java)
-            .bindNullable("endDate", endDate, String::class.java)
+            .bindNullable("startDate", startDate, LocalDate::class.java)
+            .bindNullable("endDate", endDate, LocalDate::class.java)
             .map { row ->
                 MajorAttendBorrowed(
                     row.get("major", String::class.java)!!,
@@ -148,17 +152,17 @@ class AnalyticRepositoryImp(
         startMonth: YearMonth?,
         endMonth: YearMonth?,
     ): Flow<PurposeByMonthDto> {
-        return client.sql("CALL GetPurposeByMonth(:majorName, :startMonth, :endMoth)")
+        return client.sql("CALL GetPurposeByMonth(:majorName, :startMonth, :endMonth)")
             .bindNullable("majorName", major, String::class.java)
-            .bind("startMonth", startMonth)
-            .bind("endMonth", endMonth)
+            .bind("startMonth", startMonth?.toString())
+            .bind("endMonth", endMonth?.toString())
             .map { row ->
                 PurposeByMonthDto(
                     other = row.get("other", Int::class.java)!!,
-                    reading = row.get("other", Int::class.java)!!,
-                    assignment = row.get("other", Int::class.java)!!,
-                    usePc = row.get("other", Int::class.java)!!,
-                    month = row.get("month", YearMonth::class.java)!!
+                    reading = row.get("reading", Int::class.java)!!,
+                    assignment = row.get("assignment", Int::class.java)!!,
+                    usePc = row.get("usePc", Int::class.java)!!,
+                    month = row.get("month", String::class.java)!!.toYearMonth()
                 )
             }
             .flow()
@@ -169,8 +173,8 @@ class AnalyticRepositoryImp(
         endDate: LocalDate?,
     ): TotalStudentAttendByTime {
         return client.sql("CALL CountAttendByOpenTime(:startDate, :endDate)")
-            .bindNullable("startDate", startDate, String::class.java)
-            .bindNullable("endDate", endDate, String::class.java)
+            .bindNullable("startDate", startDate, LocalDate::class.java)
+            .bindNullable("endDate", endDate, LocalDate::class.java)
             .map { row ->
                 TotalStudentAttendByTime(
                     totalAttend = row.get("totalAttend", Int::class.java)!!,
@@ -204,9 +208,9 @@ class AnalyticRepositoryImp(
         startDate: LocalDate?,
         endDate: LocalDate?,
     ): Flow<MostBorrow> {
-        return client.sql("CALL GetMostAttend(:startDate, :endDate)")
-            .bindNullable("startDate", startDate, String::class.java)
-            .bindNullable("endDate", endDate, String::class.java)
+        return client.sql("CALL GetMostBorrowedBooks(:startDate, :endDate)")
+            .bindNullable("startDate", startDate, LocalDate::class.java)
+            .bindNullable("endDate", endDate, LocalDate::class.java)
             .map { row ->
                 MostBorrow(
                     rank = row.get("ranking", Int::class.java)!!,
@@ -223,11 +227,11 @@ class AnalyticRepositoryImp(
         endDate: LocalDate?,
     ): Flow<BorrowReturn> {
         return client.sql("CALL GetBorrowAndReturn(:startDate, :endDate)")
-            .bindNullable("startDate", startDate, String::class.java)
-            .bindNullable("endDate", endDate, String::class.java)
+            .bindNullable("startDate", startDate, LocalDate::class.java)
+            .bindNullable("endDate", endDate, LocalDate::class.java)
             .map { row ->
                 BorrowReturn(
-                    month = row.get("month", YearMonth::class.java)!!,
+                    month = row.get("month", String::class.java)!!.toYearMonth(),
                     borrow = row.get("borrow", Int::class.java)!!,
                     returned = row.get("returned", Int::class.java)!!
                 )
@@ -243,5 +247,8 @@ class AnalyticRepositoryImp(
             this.bind(name, value)
         }else
             this.bindNull(name, type)
+    }
+    private fun String.toYearMonth(): YearMonth{
+        return YearMonth.parse(this)
     }
 }

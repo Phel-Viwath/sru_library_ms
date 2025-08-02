@@ -87,7 +87,7 @@ dependencies {
 
     implementation ("me.paulschwarz:spring-dotenv:3.0.0")
     //
-    implementation("org.apache.poi:poi-ooxml:5.2.3")
+    implementation("org.apache.poi:poi-ooxml:5.4.0")
 
     // Test Dependencies
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.7.0")

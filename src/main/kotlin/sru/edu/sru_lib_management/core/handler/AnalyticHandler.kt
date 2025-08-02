@@ -6,6 +6,7 @@
 package sru.edu.sru_lib_management.core.handler
 
 import kotlinx.coroutines.flow.toList
+import org.slf4j.LoggerFactory
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.ServerRequest
@@ -13,18 +14,16 @@ import org.springframework.web.reactive.function.server.ServerResponse
 import org.springframework.web.reactive.function.server.bodyValueAndAwait
 import org.springframework.web.reactive.function.server.queryParamOrNull
 import sru.edu.sru_lib_management.core.domain.dto.analytic.Analytic
-import sru.edu.sru_lib_management.core.domain.service.AttendService
-import sru.edu.sru_lib_management.core.domain.service.BookService
-import sru.edu.sru_lib_management.core.domain.service.BorrowService
+import sru.edu.sru_lib_management.core.domain.service.AnalyticService
 import java.time.LocalDate
 import java.time.YearMonth
 
 @Component
 class AnalyticHandler(
-    private val bookService: BookService,
-    private val borrowService: BorrowService,
-    private val attendService: AttendService
+    private val analyticService: AnalyticService
 ) {
+
+    private val logger = LoggerFactory.getLogger(AnalyticHandler::class.java)
 
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     suspend fun analytic(request: ServerRequest): ServerResponse{
@@ -43,25 +42,30 @@ class AnalyticHandler(
         val startMonth = YearMonth.from(startDate)
         val endMonth = YearMonth.from(endDate)
 
-        val bookEachCollege = bookService.getBookDataForEachCollege(startMonth, endMonth)//
-        val totalBook = bookService.bookLanguage()//
-        val bookIncome = bookService.getBookIncome(startMonth, endMonth)//
+        logger.info("Start month is ${startMonth?.toString()}")
+        logger.info("End month is ${endMonth?.toString()}")
 
-        val purposeCount = attendService.getPurposes(major, startDate, endDate)//
-        val timeSpent = attendService.countDuration(startDate, endDate).toList()//
-        val mostMajorAttend = attendService.getMostAttend(startDate, endDate)//
-        val getTotalStudentEntries = attendService.countAttendByOpenTime(startDate, endDate)//
-        val getPurposeByMonthDto = attendService.getPurposeByMonth(major, startMonth, endMonth)//
 
-        val majorBorrows = borrowService.getBorrowDataEachMajor(startDate, endDate)//
-        val mostBorrows = borrowService.mostBorrow(startDate, endDate).toList()//
-        val borrowAndReturn = borrowService.getBorrowAndReturn(startDate, endDate)//
+
+        val bookEachCollege = analyticService.getBookEachCollege(startMonth, endMonth).toList()
+        val totalBook = analyticService.getTotalBookEachLanguage()
+        val bookIncome = analyticService.getBookIncome(startMonth, endMonth).toList()
+
+        val purposeCount = analyticService.getPurposeCount(major, startDate, endDate).toList()
+        val timeSpent = analyticService.getTimeSpend(startDate, endDate).toList()
+        val mostMajorAttend = analyticService.mostMajorAttend(startDate, endDate).toList()
+        val getTotalStudentEntries = analyticService.getTotalStudentEntries(startDate, endDate)
+        val getPurposeByMonthDto = analyticService.getPurposeByMonth(major, startMonth, endMonth).toList()
+
+        val majorBorrows = analyticService.getBorrowDataEachMajor(startDate, endDate).toList()
+        val mostBorrows = analyticService.mostBorrow(startDate, endDate).toList()
+        val borrowAndReturn = analyticService.getBorrowAndReturn(startDate, endDate).toList()
 
         val analytic =  Analytic(
             bookIncome = bookIncome,
             purposeCount = purposeCount,
             totalBook = totalBook,
-            timeSpent = timeSpent.take(10),
+            timeSpent = timeSpent,
             mostMajorBorrows = majorBorrows,
             mostBorrowBook = mostBorrows,
             bookEachCollege = bookEachCollege,
