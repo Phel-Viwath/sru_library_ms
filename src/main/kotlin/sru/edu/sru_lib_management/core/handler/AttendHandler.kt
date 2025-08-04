@@ -8,7 +8,6 @@ package sru.edu.sru_lib_management.core.handler
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactive.awaitFirst
-import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
@@ -29,7 +28,7 @@ class AttendHandler(
     private val attendService: AttendService,
 ) {
 
-    private val logger = LoggerFactory.getLogger(AttendHandler::class.java)
+    //private val logger = LoggerFactory.getLogger(AttendHandler::class.java)
 
     /*
     * -> http://localhost:8090/api/v1/att

@@ -40,7 +40,7 @@ class RouteConfig {
                 POST("/verify", authHandler::verifyOtp)
                 PUT("/change-password", authHandler::changePassword)
                 PUT("/change-role", authHandler::changeRole)
-                GET("", authHandler::getAllUser)
+                GET(""){authHandler.getAllUser()}
             }
         }
     }

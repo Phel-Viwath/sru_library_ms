@@ -80,7 +80,7 @@ class AuthHandler(
         request: ServerRequest
     ): ServerResponse = coroutineScope {
         val loginRequest = request.bodyToMono<LoginRequest>().awaitSingle()
-        val alreadyInUse = runBlocking(Dispatchers.IO) { service.existEmail(loginRequest.email) }
+        val alreadyInUse = service.existEmail(loginRequest.email)
         if (!alreadyInUse)
              return@coroutineScope ServerResponse.badRequest().bodyValueAndAwait(AuthResponse(message = "Incorrect email."))
         when ( val result = service.login(loginRequest)) {
@@ -186,6 +186,7 @@ class AuthHandler(
         val roles = try {
             Role.valueOf(role.uppercase(Locale.getDefault()))
         } catch (e: IllegalArgumentException) {
+            logger.info("${e.message}")
             return ServerResponse.badRequest().bodyValueAndAwait("Invalid role parameter")
         }
         logger.info("$roles")
@@ -198,7 +199,7 @@ class AuthHandler(
 
     }
 
-    suspend fun getAllUser(request: ServerRequest): ServerResponse{
+    suspend fun getAllUser(): ServerResponse{
         val allUser =  service.getAllUser().asFlow()
         return ServerResponse.status(OK).bodyAndAwait(allUser)
     }
