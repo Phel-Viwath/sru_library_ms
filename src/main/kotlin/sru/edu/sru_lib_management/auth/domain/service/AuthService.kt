@@ -9,6 +9,7 @@ import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService
+import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
@@ -21,12 +22,13 @@ import sru.edu.sru_lib_management.auth.domain.jwt.JwtToken
 import sru.edu.sru_lib_management.auth.domain.model.Role
 import sru.edu.sru_lib_management.auth.domain.model.User
 import sru.edu.sru_lib_management.common.AuthResult
+import java.util.*
 
 
 @Service
 class AuthService(
     private val userDetailsService: ReactiveUserDetailsService,
-    private val repository: AuthRepositoryImp,
+    private val authRepository: AuthRepositoryImp,
     private val jwtSupport: JwtToken,
     private val encoder: PasswordEncoder
 ){
@@ -37,12 +39,13 @@ class AuthService(
 
             val encryptPassword = encoder.encode(request.password)
             val newUser = User(
+                userId = UUID.randomUUID().toString(),
                 username = request.username,
                 email = request.email,
                 password = encryptPassword,
                 roles = Role.USER
             )
-            repository.save(newUser)
+            authRepository.save(newUser)
             "Success!"
         }.fold(
             onSuccess = {
@@ -62,23 +65,13 @@ class AuthService(
                 AuthResult.InputError("Please enter username and password.")
 
             // find user with their email
-            val user = userDetailsService.findByUsername(request.email).awaitSingleOrNull()
+            val userDetails = userDetailsService.findByUsername(request.email).awaitSingleOrNull()
                 ?: return AuthResult.InputError("Invalid username or password.")
 
             // check password
-            if (encoder.matches(request.password, user.password)) {
-                val username = repository.findByEmail(request.email)?.username ?: "Unknown USER"
-                val roles = user.authorities.map { it.authority }
-                val accessToken = jwtSupport.generateAccessToken(request.email, roles).value
-                val refreshToken = jwtSupport.generateRefreshToken(request.email, roles).value
-                AuthResult.Success(
-                    mapOf(
-                        "accessToken" to accessToken,
-                        "refreshToken" to refreshToken,
-                        "role" to roles.toString(),
-                        "username" to username
-                    )
-                )
+            if (encoder.matches(request.password, userDetails.password)) {
+                val userId = authRepository.findByEmail(request.email)?.userId ?: "Unknown USER"
+                authSuccess(userId, userDetails)
             } else {
                 AuthResult.InputError("Invalid password")
             }
@@ -91,23 +84,14 @@ class AuthService(
     suspend fun refreshToken(refreshToken: String): AuthResult<Map<String, String>>{
         return try {
             val bearerToken = BearerToken(refreshToken)
-            val email = jwtSupport.extractEmail(bearerToken)
-            val user = userDetailsService.findByUsername(email).awaitSingleOrNull()
+            val userId = jwtSupport.extractUserId(bearerToken)
+            val user = authRepository.findByUserId(userId)
+                ?: return AuthResult.InputError("Invalid refresh token.")
+            val userDetails = userDetailsService.findByUsername(user.username).awaitSingleOrNull()
                 ?: return AuthResult.InputError("Invalid refresh token.")
 
-            if (jwtSupport.isValidToken(bearerToken, user) && jwtSupport.isRefreshToken(bearerToken)){
-                val roles = user.authorities.map { it.authority }
-                val username = repository.findByEmail(email)?.username ?: "Unknown USER"
-                val newAccessToken = jwtSupport.generateAccessToken(email, roles).value
-                val newRefreshToken = jwtSupport.generateRefreshToken(email, roles).value
-                AuthResult.Success(
-                    mapOf(
-                        "accessToken" to newAccessToken,
-                        "refreshToken" to newRefreshToken,
-                        "role" to roles.toString(),
-                        "username" to username
-                    )
-                )
+            if (jwtSupport.isValidToken(bearerToken, userDetails) && jwtSupport.isRefreshToken(bearerToken)){
+                authSuccess(userId, userDetails)
             }else{
                 AuthResult.InputError("Invalid refresh token")
             }
@@ -121,16 +105,18 @@ class AuthService(
         return try {
             var role: Role = Role.USER
             var username = ""
+            var userId = ""
 
             // find user in database
-            repository.findByEmail(email)?.let { user ->
+            authRepository.findByEmail(email)?.let { user ->
                 role = user.roles
                 username = user.username
+                userId = user.userId
             } ?: return AuthResult.InputError("Invalid email.")
             // encrypt password
             val encryptPassword = encoder.encode(password)
-            val user = User(email = email, username = username, password = encryptPassword, roles = role)
-            val updated = repository.update(user)
+            val user = User(userId = userId, email = email, username = username, password = encryptPassword, roles = role)
+            val updated = authRepository.update(user)
             if (updated)
                 AuthResult.Success("Success.")
             else
@@ -145,13 +131,14 @@ class AuthService(
             val user = userDetailsService.findByUsername(email).awaitSingleOrNull()
             user != null
         }catch (e: Exception){
+            logger.error("${e.message}")
             false
         }
     }
 
     suspend fun updateRole(role: Role, email: String): Boolean {
         return try {
-            val roleUpdated = repository.changeRole(email, role)
+            val roleUpdated = authRepository.changeRole(email, role)
             roleUpdated
         }catch (e: Exception){
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, e.message)
@@ -159,10 +146,24 @@ class AuthService(
     }
     suspend fun getAllUser(): List<UserDto>{
         try {
-            return repository.getAll()
+            return authRepository.getAll()
         }catch (e: Exception){
             throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.message)
         }
+    }
+
+    private fun authSuccess(userId: String, userDetails: UserDetails): AuthResult.Success<Map<String, String>>{
+        val roles = userDetails.authorities.map { grantedAuthority -> grantedAuthority.authority }
+        val newAccessToken = jwtSupport.generateAccessToken(userId, roles).value
+        val newRefreshToken = jwtSupport.generateRefreshToken(userId, roles).value
+         return AuthResult.Success(
+            mapOf(
+                "accessToken" to newAccessToken,
+                "refreshToken" to newRefreshToken,
+                "role" to roles.toString(),
+                "userId" to userId
+            )
+        )
     }
 
 }

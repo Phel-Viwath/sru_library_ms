@@ -90,7 +90,7 @@ class AuthHandler(
                    accessToken = token["accessToken"],
                    refreshToken = token["refreshToken"],
                    role = token["role"].toString().trim('[', ']').removePrefix("ROLE_"),
-                   username = token["username"]
+                   userId = token["userId"]
                ))
             }
             is AuthResult.InputError ->
@@ -112,7 +112,7 @@ class AuthHandler(
                         accessToken = token["accessToken"],
                         refreshToken = token["refreshToken"],
                         role = token["role"].toString().trim('[', ']').removePrefix("ROLE_"),
-                        username = token["username"]
+                        userId = token["userId"]
                     )
                 )
             }

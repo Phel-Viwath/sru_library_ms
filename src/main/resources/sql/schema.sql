@@ -155,7 +155,8 @@ create table if not exists sru_staff(
 #========================================================
 #crate table user
 create table if not exists users(
-    email varchar(50) primary key ,
+    userId varchar(100) primary key not null,
+    email varchar(50),
     username varchar(50)  ,
     password varchar(255) not null ,
     roles enum('USER', 'ADMIN', 'SUPER_ADMIN') not null

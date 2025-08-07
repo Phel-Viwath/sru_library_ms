@@ -12,6 +12,7 @@ import sru.edu.sru_lib_management.auth.domain.model.User
 interface AuthRepository<T> {
     suspend fun save(entity: T)
     suspend fun update(entity: T): Boolean
+    suspend fun findByUserId(userId: String): User?
     suspend fun findByEmail(email: String): User?
     suspend fun changeRole(email: String, role: Role): Boolean
     suspend fun getAll(): List<UserDto>

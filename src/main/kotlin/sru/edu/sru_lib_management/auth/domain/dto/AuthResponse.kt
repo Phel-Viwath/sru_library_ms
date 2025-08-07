@@ -8,7 +8,7 @@ package sru.edu.sru_lib_management.auth.domain.dto
 data class AuthResponse (
     val accessToken: String? = null,
     val refreshToken: String? = null,
-    val username: String? = null,
+    val userId: String? = null,
     val role: String? = null,
     val message: String? = null
 )

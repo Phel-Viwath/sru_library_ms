@@ -23,19 +23,19 @@ class JwtToken @Autowired constructor(
     private val secretKey = Keys.hmacShaKeyFor(key)
     private val phaser = Jwts.parserBuilder().setSigningKey(secretKey).build()
 
-    fun generateAccessToken(email: String, roles: List<String>): BearerToken{
-        return createToken(email, 15, roles)
+    fun generateAccessToken(userId: String, roles: List<String>): BearerToken{
+        return createToken(userId, 15, roles)
     }
 
-    fun generateRefreshToken(email: String, roles: List<String>): BearerToken{
-        return createToken(email, 43200, roles)
+    fun generateRefreshToken(userId: String, roles: List<String>): BearerToken{
+        return createToken(userId, 43200, roles)
     }
 
-    fun createToken(email: String, minute: Long, roles: List<String>): BearerToken {
+    fun createToken(userId: String, minute: Long, roles: List<String>): BearerToken {
         val claim: Map<String, Any> = mapOf("roles" to roles)
         val token = Jwts.builder()
             .setClaims(claim)
-            .setSubject(email)
+            .setSubject(userId)
             .setIssuedAt(Date.from(Instant.now()))
             .setExpiration(Date.from(Instant.now().plus(minute, ChronoUnit.MINUTES)))
             .signWith(secretKey)
@@ -43,17 +43,17 @@ class JwtToken @Autowired constructor(
         return BearerToken(token)
     }
 
-    fun extractEmail(token: BearerToken): String{
+    fun extractUserId(token: BearerToken): String{
         return phaser
             .parseClaimsJws(token.value)
             .body.subject
     }
 
-    fun isValidToken(token: BearerToken, user: UserDetails?): Boolean{
+    fun isValidToken(token: BearerToken, userDetails: UserDetails?): Boolean{
         val claims = phaser.parseClaimsJws(token.value).body
         val unexpired = claims.expiration.after(Date.from(Instant.now()))
         val roles = claims["roles"] as List<*>?
-        return unexpired && (claims.subject == user?.username) && roles?.contains(user?.authorities?.first()?.authority) == true
+        return unexpired && (claims.subject == userDetails?.username) && roles?.contains(userDetails?.authorities?.first()?.authority) == true
     }
 
     fun isRefreshToken(token: BearerToken): Boolean = try {

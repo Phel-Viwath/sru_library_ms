@@ -62,44 +62,6 @@ class SecurityConfig (
     ): SecurityWebFilterChain {
         val filter = AuthenticationWebFilter(authManager)
         filter.setServerAuthenticationConverter(converter)
-
-//        http
-//            .exceptionHandling()
-//            .authenticationEntryPoint { exchange, _ ->
-//                Mono.fromRunnable {
-//                    exchange.response.statusCode = HttpStatus.UNAUTHORIZED
-//                    exchange.response.headers.remove(HttpHeaders.WWW_AUTHENTICATE)
-//                }
-//            }
-//            .and()
-//            .authorizeExchange{ exchange ->
-//                exchange
-//                    .pathMatchers("/ws/**", "/notifications").permitAll()
-//                    .pathMatchers("/api/v1/auth/**").permitAll()
-//                    .anyExchange().authenticated()
-//            }
-//            .addFilterAt(filter, SecurityWebFiltersOrder.AUTHENTICATION)
-//            .httpBasic().disable()
-//            .formLogin().disable()
-//            .csrf().disable()
-//            .cors { corsSpec ->
-//                corsSpec.configurationSource {
-//                    CorsConfiguration().apply {
-//                        allowedOrigins = listOf(
-//                            "http://localhost:5173",
-//                            "http://localhost:5174",
-//                            "http://localhost:5175",
-//                            "https://react-js-inky-three.vercel.app",
-//                            "https://react-js-inky-three.vercel.app/"
-//                        )
-//                        allowedMethods = listOf("GET", "POST", "PUT", "DELETE")
-//                        allowCredentials = true
-//                        addAllowedHeader("*")
-//                    }
-//                }
-//            }
-//        return http.build()
-
         return http
             .exceptionHandling { exceptions ->
                 exceptions.authenticationEntryPoint { exchange, _ ->
