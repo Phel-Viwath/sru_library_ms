@@ -156,12 +156,11 @@ create table if not exists sru_staff(
 #crate table user
 create table if not exists users(
     userId varchar(100) primary key not null,
-    email varchar(50),
+    email varchar(50) unique ,
     username varchar(50)  ,
     password varchar(255) not null ,
     roles enum('USER', 'ADMIN', 'SUPER_ADMIN') not null
 );
-
 #
 create table if not exists blacklist(
     blacklist_id int primary key auto_increment,

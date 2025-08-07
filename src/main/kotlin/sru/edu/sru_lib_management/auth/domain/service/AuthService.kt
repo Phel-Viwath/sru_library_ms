@@ -86,9 +86,10 @@ class AuthService(
             val bearerToken = BearerToken(refreshToken)
             val userId = jwtSupport.extractUserId(bearerToken)
             val user = authRepository.findByUserId(userId)
-                ?: return AuthResult.InputError("Invalid refresh token.")
-            val userDetails = userDetailsService.findByUsername(user.username).awaitSingleOrNull()
-                ?: return AuthResult.InputError("Invalid refresh token.")
+                ?: return AuthResult.InputError("Invalid refresh token. Credential not found.")
+            val userDetails = userDetailsService.findByUsername(user.email).awaitSingleOrNull()
+                ?: return AuthResult.InputError("Invalid refresh token. User details not found")
+            logger.info("Refresh token user details is ${userDetails.username}")
 
             if (jwtSupport.isValidToken(bearerToken, userDetails) && jwtSupport.isRefreshToken(bearerToken)){
                 authSuccess(userId, userDetails)
@@ -96,7 +97,7 @@ class AuthService(
                 AuthResult.InputError("Invalid refresh token")
             }
         }catch (e: Exception){
-            e.printStackTrace()
+            logger.error("${e.message}")
             AuthResult.Failure(e.message.toString())
         }
     }

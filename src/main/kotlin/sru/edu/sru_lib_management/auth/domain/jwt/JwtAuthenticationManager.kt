@@ -5,7 +5,6 @@
 
 package sru.edu.sru_lib_management.auth.domain.jwt
 
-import kotlinx.coroutines.reactor.awaitSingleOrNull
 import kotlinx.coroutines.reactor.mono
 import org.slf4j.LoggerFactory
 import org.springframework.security.authentication.ReactiveAuthenticationManager
@@ -15,6 +14,7 @@ import org.springframework.security.core.userdetails.ReactiveUserDetailsService
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Mono
 import sru.edu.sru_lib_management.auth.data.repository.AuthRepositoryImp
+import sru.edu.sru_lib_management.auth.domain.model.CustomUserDetails
 import sru.edu.sru_lib_management.common.InvalidBearerToken
 
 @Component
@@ -44,12 +44,17 @@ class JwtAuthenticationManager(
         val userId = jwtToken.extractUserId(token)
         val user = authRepository.findByUserId(userId)
             ?: throw IllegalArgumentException("User ID not found.")
-        val userDetails = users.findByUsername(user.username).awaitSingleOrNull()
-        val isTokenValid = jwtToken.isValidToken(token, userDetails)
-        logger.info("Token is $isTokenValid")
-        if (isTokenValid){
+        // ✅ Create CustomUserDetails manually
+        val userDetails = CustomUserDetails(
+            userId = user.userId,
+            email = user.email,
+            password = user.password,
+            role = user.roles.name
+        )
+
+        if (jwtToken.isValidToken(token, userDetails)){
             return UsernamePasswordAuthenticationToken(
-                userDetails!!.username,
+                userDetails.username,
                 userDetails.password,
                 userDetails.authorities
             )

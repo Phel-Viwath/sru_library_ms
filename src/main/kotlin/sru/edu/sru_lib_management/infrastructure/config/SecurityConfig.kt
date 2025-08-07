@@ -18,7 +18,6 @@ import org.springframework.security.config.annotation.web.reactive.EnableWebFlux
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder
 import org.springframework.security.config.web.server.ServerHttpSecurity
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService
-import org.springframework.security.core.userdetails.User
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.web.server.SecurityWebFilterChain
@@ -28,6 +27,7 @@ import reactor.core.publisher.Mono
 import sru.edu.sru_lib_management.auth.data.repository.AuthRepositoryImp
 import sru.edu.sru_lib_management.auth.domain.jwt.JwtAuthenticationConverter
 import sru.edu.sru_lib_management.auth.domain.jwt.JwtAuthenticationManager
+import sru.edu.sru_lib_management.auth.domain.model.CustomUserDetails
 import java.util.*
 
 @Configuration
@@ -38,6 +38,7 @@ class SecurityConfig (
     @Value("\${spring.mail.password}") val mailSenderPassword: String,
     @Value("\${spring.mail.username}") val mailSenderUsername: String,
 ) {
+
     @Bean
     fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
@@ -45,11 +46,13 @@ class SecurityConfig (
     fun userDetailServices(): ReactiveUserDetailsService = ReactiveUserDetailsService { email ->
         mono {
             val users = repository.findByEmail(email)
-            users?.let {
-                User.withUsername(it.email)
-                    .password(it.password)
-                    .roles(it.roles.name)
-                    .build()
+            users?.let { user ->
+                CustomUserDetails(
+                    userId = user.userId,
+                    email = user.email,
+                    password = user.password,
+                    role = user.roles.name
+                )
             }
         }
     }
