@@ -1,5 +1,5 @@
 # Use the official Gradle image to build the project
-FROM gradle:7.6.0-jdk17 AS build
+FROM gradle:8.10-jdk17 AS build
 
 # Set environment variables
 ENV APP_HOME=/usr/app \

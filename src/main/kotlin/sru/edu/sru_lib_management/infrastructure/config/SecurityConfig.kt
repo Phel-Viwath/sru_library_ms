@@ -35,8 +35,8 @@ import java.util.*
 @EnableReactiveMethodSecurity
 class SecurityConfig (
     private val repository: AuthRepositoryImp,
-    @Value("\${spring.mail.password}") val mailSenderPassword: String,
-    @Value("\${spring.mail.username}") val mailSenderUsername: String,
+    @param:Value("\${spring.mail.password}") val mailSenderPassword: String,
+    @param:Value("\${spring.mail.username}") val mailSenderUsername: String,
 ) {
 
     @Bean

@@ -11,6 +11,6 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 class ApiKeyConfig(
-    @Value("\${jwt.token}") val jwtToken: String,
-    @Value("\${hunter.api.key}") val apiKey: String,
+    @param:Value("\${jwt.token}") val jwtToken: String,
+    @param:Value("\${hunter.api.key}") val apiKey: String,
 )

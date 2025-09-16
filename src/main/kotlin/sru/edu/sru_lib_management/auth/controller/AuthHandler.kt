@@ -10,6 +10,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import lombok.extern.slf4j.Slf4j
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -58,7 +59,7 @@ class AuthHandler(
             return ServerResponse.badRequest().bodyValueAndAwait("Invalid email")
 
         // check username is already exist or not
-        val alreadyInUse = runBlocking(Dispatchers.IO) {
+        val alreadyInUse = withContext(Dispatchers.IO) {
             service.existEmail(registerRequest.email)
         }
         if (alreadyInUse)

@@ -7,6 +7,8 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8090:8090"
+    env_file:
+      - .env
     environment:
       SPRING_DATASOURCE_URL: ${DB_URL}
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME}

@@ -19,48 +19,48 @@ import org.springframework.transaction.annotation.EnableTransactionManagement
 @Configuration
 @EnableTransactionManagement
 class DatabaseConfig(
-    @Value("\${spring.datasource.url}") private val url: String,
-    @Value("\${spring.datasource.username}") private val username: String,
-    @Value("\${spring.datasource.password}") private val password: String
+    @param:Value("\${spring.datasource.url}") private val url: String,
+    @param:Value("\${spring.datasource.username}") private val username: String,
+    @param:Value("\${spring.datasource.password}") private val password: String
 ) : AbstractR2dbcConfiguration(){
 
     @Bean
     override fun connectionFactory(): ConnectionFactory {
 
-//        // for local database
-//        //jdbc:mysql://localhost:3306/sru_library
-//        val mySqlUrl = url.removePrefix("jdbc:mysql://")
-//        // mySqlUrl will equal to localhost:3306/sru_library
-//        val (dbHost, dbPortAndDbName) = mySqlUrl.split(":") // we spit it at :
-//        // so dbHost will be equal localhost and dbPortAndDbName will equal to  3306/sru_library
-//        val (dbPort, dbName) = dbPortAndDbName.split("/") // we spit it at /
-//
-//        return MySqlConnectionFactory.from(
-//            MySqlConnectionConfiguration.builder()
-//                .host(dbHost)
-//                .port(dbPort.toInt())
-//                .database(dbName)
-//                .username(username)
-//                .password(password)
-//                .build()
-//        )
-
-        val r2dbcUrl = url.removePrefix("mysql://")
-        val (credentials, hostAndDatabase) = r2dbcUrl.split("@")
-        val (hostAndPort, database) = hostAndDatabase.split("/")
-        val (username, password) = credentials.split(":")
-
-        val (host, port) = hostAndPort.split(":")
+        // for local database
+        //jdbc:mysql://localhost:3306/sru_library
+        val mySqlUrl = url.removePrefix("jdbc:mysql://")
+        // mySqlUrl will equal to localhost:3306/sru_library
+        val (dbHost, dbPortAndDbName) = mySqlUrl.split(":") // we spit it at :
+        // so dbHost will be equal localhost and dbPortAndDbName will equal to  3306/sru_library
+        val (dbPort, dbName) = dbPortAndDbName.split("/") // we spit it at /
 
         return MySqlConnectionFactory.from(
             MySqlConnectionConfiguration.builder()
-                .host(host)
-                .port(port.toInt())
-                .database(database)
+                .host(dbHost)
+                .port(dbPort.toInt())
+                .database(dbName)
                 .username(username)
                 .password(password)
                 .build()
         )
+
+//        val r2dbcUrl = url.removePrefix("mysql://")
+//        val (credentials, hostAndDatabase) = r2dbcUrl.split("@")
+//        val (hostAndPort, database) = hostAndDatabase.split("/")
+//        val (username, password) = credentials.split(":")
+//
+//        val (host, port) = hostAndPort.split(":")
+//
+//        return MySqlConnectionFactory.from(
+//            MySqlConnectionConfiguration.builder()
+//                .host(host)
+//                .port(port.toInt())
+//                .database(database)
+//                .username(username)
+//                .password(password)
+//                .build()
+//        )
 
 
     }
