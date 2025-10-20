@@ -102,11 +102,6 @@ Create table if not exists borrow_books(
     foreign key (student_id) references students(student_id) on update cascade
 );
 
-/*
- * Copyright (c) 2024.
- * @Author Phel Viwath
- */
-
 #========================================================
 #crate table guest
 create table if not exists donator(
