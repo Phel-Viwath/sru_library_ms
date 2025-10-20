@@ -6,7 +6,7 @@ services:
       context: . # Path to the directory containing the Dockerfile
       dockerfile: Dockerfile
     ports:
-      - "8090:8090"
+      - "8070:8070"
     env_file:
       - .env
     environment:

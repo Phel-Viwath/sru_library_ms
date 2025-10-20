@@ -15,13 +15,13 @@ COPY build.gradle.kts build.gradle.kts
 COPY settings.gradle.kts settings.gradle.kts
 
 # Cache dependencies by resolving them first
-RUN gradle dependencies --no-daemon || true
+RUN ./gradlew dependencies --no-daemon || true
 
 # Copy the rest of the project files
 COPY . .
 
 # Build the application using Gradle
-RUN gradle bootJar --no-daemon
+RUN ./gradlew bootJar --no-daemon && mv build/libs/*[!-plain].jar build/libs/app.jar
 RUN curl -I https://repo.maven.apache.org/maven2/
 
 # Use a lightweight JDK image for runtime
@@ -34,7 +34,7 @@ ENV APP_HOME=/usr/app
 WORKDIR $APP_HOME
 
 # Copy the built JAR file from the build stage
-COPY --from=build $APP_HOME/build/libs/*.jar app.jar
+COPY --from=build $APP_HOME/build/libs/app.jar app.jar
 
 # Expose the port your Spring Boot application runs on
 EXPOSE 8090
