@@ -10,13 +10,13 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 data class AttendDto(
-    val attendId: Long?,
-    val entryId: String,
-    @JsonFormat(pattern = "HH:mm:ss")
+    val studentId: Long? = null,
+    val sruStaffId: String? = null,
+    @field:JsonFormat(pattern = "HH:mm:ss")
     val entryTimes: LocalTime,
-    @JsonFormat(pattern = "HH:mm:ss")
+    @field:JsonFormat(pattern = "HH:mm:ss")
     val exitingTimes: LocalTime?,
     val purpose: String,
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    val date: LocalDate,
+    @field:JsonFormat(pattern = "yyyy-MM-dd")
+    val attendDate: LocalDate,
 )

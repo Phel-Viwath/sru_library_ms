@@ -16,7 +16,6 @@ import org.springframework.web.server.ResponseStatusException
 import sru.edu.sru_lib_management.core.domain.dto.DonationDetailDto
 import sru.edu.sru_lib_management.core.domain.dto.attend.StaffAttendDto
 import sru.edu.sru_lib_management.core.domain.dto.attend.StudentAttendDetail
-import sru.edu.sru_lib_management.core.domain.dto.attend.StudentAttendDto
 import sru.edu.sru_lib_management.core.domain.dto.report.MonthlyEntry
 import sru.edu.sru_lib_management.core.domain.repository.AttendRepository
 import sru.edu.sru_lib_management.core.domain.repository.BookRepository
@@ -36,7 +35,6 @@ class ReportService(
     private val bookRepository: BookRepository,
     private val donationService: DonationService
 ) {
-
 
     fun getAllDonation(startDate: LocalDate?, endDate: LocalDate?): Flow<DonationDetailDto>{
         return try {
@@ -235,6 +233,7 @@ class ReportService(
 
         listAttend.asFlow()
     }catch (e: Exception){
+
         throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR)
     }
 

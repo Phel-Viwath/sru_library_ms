@@ -19,5 +19,5 @@ data class DonationDetail(
     val author: String?,
     val publicationYear: Int?,
     val genre: String,
-    @JsonFormat(pattern = "yyyy-MM-dd") val donateDate: LocalDate
+    @field:JsonFormat(pattern = "yyyy-MM-dd") val donateDate: LocalDate
 )

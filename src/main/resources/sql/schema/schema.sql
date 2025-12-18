@@ -2,7 +2,17 @@ create schema if not exists sru_library;
 
 Use sru_library;
 Set names 'UTF8MB4';
-#1
+# =============================================  independent tables ===============================================
+
+#========================================================
+#crate table user
+create table if not exists users(
+    userId varchar(100) primary key not null,
+    email varchar(50) unique,
+    username varchar(50),
+    password varchar(255) not null ,
+    roles enum('USER', 'ADMIN', 'SUPER_ADMIN') not null
+);
 #========================================================
 # crate table degree level
 #Drop table if exists degree_level;
@@ -11,7 +21,6 @@ create table if not exists degree_level(
     degree_level varchar(100) not null
 );
 
-#2
 #========================================================
 # crate table collages
 #Drop table if exists collages;
@@ -19,10 +28,26 @@ create table if not exists colleges(
     college_id varchar(10) primary key,
     college_name varchar(100) not null
 );
-#3
+
+#========================================================
+# crate table language.sql
+#Drop table if exists language.sql;
+create table if not exists language(
+   language_id varchar(5) primary key,
+   language_name varchar(20) not null
+);
+
+#========================================================
+#crate table guest
+create table if not exists donator(
+  donator_id int primary key auto_increment,
+  donator_name varchar(50) not null
+);
+
+# =========================================== dependent tables ================================================
 #========================================================
 # crate table major
-#Drop table if exists majors;
+#Drop tables if exists majors;
 create table if not exists majors(
     major_id varchar(10) primary key,
     major_name varchar(100) not null,
@@ -51,16 +76,6 @@ create table if not exists students(
        on delete cascade
        on update cascade
 );
-
-#5
-#========================================================
-# crate table language.sql
-#Drop table if exists language.sql;
-create table if not exists language(
-    language_id varchar(5) primary key,
-    language_name varchar(20) not null
-);
-
 
 #========================================================
 # crate table books
@@ -103,13 +118,6 @@ Create table if not exists borrow_books(
 );
 
 #========================================================
-#crate table guest
-create table if not exists donator(
-    donator_id int primary key auto_increment,
-    donator_name varchar(50) not null
-);
-#========================================================
-
 create table if not exists donation(
     PRIMARY KEY (book_id, donator_id),
     book_id varchar(10),
@@ -122,18 +130,21 @@ create table if not exists donation(
         ON DELETE CASCADE
         ON UPDATE CASCADE
 );
+
 #========================================================
 # crate table attend and exit
 Create table if not exists attend(
-    attend_id bigint primary key auto_increment,
-    student_id bigint null ,
-    sru_staff_id varchar(10) null ,
-    entry_times timestamp not null ,
-    exiting_times timestamp null ,
-    date date not null ,
-    purpose varchar(50) not null ,
-    foreign key (student_id) references students(student_id),
-    foreign key (sru_staff_id) references sru_staff(sru_staff_id)
+    attend_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    visitor_id BIGINT NOT NULL,
+    entry_time TIMESTAMP NOT NULL,
+    exit_time TIMESTAMP NULL,
+    attend_date DATE NOT NULL,
+    purpose VARCHAR(50) NOT NULL,
+
+    CONSTRAINT fk_attend_visitor
+     FOREIGN KEY (visitor_id)
+         REFERENCES visitors(visitor_id)
+         ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 #9
@@ -146,16 +157,7 @@ create table if not exists sru_staff(
     gender varchar(8) not null ,
     position varchar(30)
 );
-#11
-#========================================================
-#crate table user
-create table if not exists users(
-    userId varchar(100) primary key not null,
-    email varchar(50) unique ,
-    username varchar(50)  ,
-    password varchar(255) not null ,
-    roles enum('USER', 'ADMIN', 'SUPER_ADMIN') not null
-);
+
 #
 create table if not exists blacklist(
     blacklist_id int primary key auto_increment,
@@ -186,3 +188,17 @@ create table if not exists staff_major(
    FOREIGN KEY (major_id) REFERENCES majors(major_id) on delete cascade on update cascade
 );
 
+CREATE TABLE if not exists visitors(
+    visitor_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    visitor_type ENUM('STUDENT', 'SRU_STAFF') NOT NULL,
+    student_id BIGINT NULL,
+    sru_staff_id VARCHAR(10) NULL,
+
+    CONSTRAINT fk_visitor_student
+        FOREIGN KEY (student_id) REFERENCES students(student_id)
+            ON DELETE CASCADE ON UPDATE CASCADE,
+
+    CONSTRAINT fk_visitor_staff
+        FOREIGN KEY (sru_staff_id) REFERENCES sru_staff(sru_staff_id)
+            ON DELETE CASCADE ON UPDATE CASCADE
+);

@@ -17,12 +17,12 @@ data class StudentAttendDetail(
     val major: String,
     val degreeLevel: String,
     val generation: Int,
-    @JsonFormat(pattern = "HH:mm:ss")
+    @field:JsonFormat(pattern = "HH:mm:ss")
     val entryTimes: LocalTime,
-    @JsonFormat(pattern = "HH:mm:ss")
+    @field:JsonFormat(pattern = "HH:mm:ss")
     val exitingTimes: LocalTime?,
     val purpose: String,
-    @JsonFormat(pattern = "yyyy-MM-dd")
+    @field:JsonFormat(pattern = "yyyy-MM-dd")
     val date: LocalDate,
     var status: String?
 )

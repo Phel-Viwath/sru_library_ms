@@ -21,6 +21,7 @@ import sru.edu.sru_lib_management.core.domain.dto.attend.StaffAttendDto
 import sru.edu.sru_lib_management.core.domain.dto.dashbord.DayVisitor
 import sru.edu.sru_lib_management.core.domain.dto.dashbord.TotalMajorVisitor
 import sru.edu.sru_lib_management.core.domain.model.Attend
+import sru.edu.sru_lib_management.core.domain.model.VisitorType
 import sru.edu.sru_lib_management.core.domain.repository.AttendRepository
 import sru.edu.sru_lib_management.utils.checkEntryId
 import java.time.DayOfWeek
@@ -32,8 +33,9 @@ import java.time.temporal.TemporalAdjusters
 class AttendRepositoryImp(
     private val client: DatabaseClient
 ) : AttendRepository {
+
     override fun getAllAttendByDate(date: LocalDate): Flow<Attend> {
-        return client.sql("SELECT * FROM attend where date = :date")
+        return client.sql("SELECT * FROM attend where attend_date = :date")
             .bind("date", date)
             .map { row: Row, _ -> row.mapToAttend() }
             .all()
@@ -70,12 +72,11 @@ class AttendRepositoryImp(
         }
         val attends = Attend(
             attendId,
-            entity.studentId,
-            entity.staffId,
+            entity.visitorId,
             entity.entryTimes,
-            entity.exitingTimes,
+            entity.exitTimes,
             entity.purpose,
-            entity.date
+            entity.attendDate
         )
         return attends
     }
@@ -179,7 +180,7 @@ class AttendRepositoryImp(
                 .toList()
     }
 
-    /// Count total major and total of each major
+    /// Count the total major and total of each major
     override suspend fun getWeeklyVisit(): List<DayVisitor> {
         val today = LocalDate.now()
         val thisWeekMonday = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
@@ -201,7 +202,7 @@ class AttendRepositoryImp(
             .awaitSingle()
     }
 
-    /// Count total major and total of each major
+    /// Count the total major and total of each major
     override suspend fun countCurrentAndPreviousAttend(date: LocalDate, period: Int): CompareValue {
         val param = mapOf(
             "date" to date,
@@ -219,9 +220,7 @@ class AttendRepositoryImp(
             .awaitSingle()
     }
 
-    /// Count total major and total of each major
-
-    /// Count total major and total of each major
+    /// Count the total major and total of each major
     override suspend fun totalMajorVisit(): List<TotalMajorVisitor> {
         return client.sql("CALL CountMajorAttendLib()")
             .map { row ->
@@ -238,8 +237,9 @@ class AttendRepositoryImp(
             .toList()
     }
 
-    override fun getAllAttendDetail(): Flow<StudentAttendDetail> {
-        return client.sql("CALL GetAllAttendDetail()")
+    override fun getAllAttendDetail(visitorType: VisitorType): Flow<StudentAttendDetail> {
+        return client.sql("CALL GetAllAttendDetail(:p_visitor_type)")
+            .bind("p_visitor_type", visitorType.name)
             .map { row: Row, _ ->
                 row.mapToStudentAttendDetail()
             }
@@ -252,10 +252,11 @@ class AttendRepositoryImp(
         entryTime: LocalTime,
         exitingTime: LocalTime,
     ): Flow<StudentAttendDetail> {
-        return client.sql("CALL GetAttendDetailByPeriod(:date, :entryTime, :exitingTime)")
+        return client.sql("CALL GetAttendDetailByPeriod(:date, :entryTime, :exitingTime, :p_visitor_type)")
             .bind("date", date)
             .bind("entryTime", entryTime)
             .bind("exitingTime", exitingTime)
+            .bind("p_visitor_type", VisitorType.STUDENT.name)
             .map { row: Row, _ ->
                 row.mapToStudentAttendDetail()
             }
@@ -263,7 +264,8 @@ class AttendRepositoryImp(
     }
 
     override suspend fun getAttendDetailById(attendId: Long): StudentAttendDetail? {
-        return client.sql("CALL GetAttendDetailById(:Id)")
+        return client.sql("CALL GetAttendDetailById(:Id, :p_visitor_type)")
+            .bind("p_visitor_type", VisitorType.STUDENT.name)
             .bind("Id", attendId)
             .map { row: Row, _ ->
                 row.mapToStudentAttendDetail()
@@ -275,9 +277,9 @@ class AttendRepositoryImp(
         startDate: LocalDate?,
         endDate: LocalDate?,
     ): List<StudentAttendDetail> {
-        val map = mapOf( "sDate" to startDate, "eDate" to endDate)
+        val map = mapOf( "sDate" to startDate, "eDate" to endDate, "p_visitor_type" to VisitorType.STUDENT.name)
         var statement = client
-            .sql("CALL GetCustomAttendDetail(:sDate, :eDate)")
+            .sql("CALL GetCustomAttendDetail(:sDate, :eDate, :p_visitor_type)")
         map.forEach { (k, v) ->
             statement = if (v != null){
                 statement.bind(k, v)
@@ -300,10 +302,14 @@ class AttendRepositoryImp(
 
     override fun getMajorPurpose(): Flow<MajorPurpose> {
         val query = """
-            SELECT m.major_name as major, a.purpose as purpose, a.date as date
-            FROM attend a 
-            JOIN students s ON a.student_id = s.student_id 
-            JOIN majors m ON s.major_id = m.major_id;
+            SELECT 
+                m.major_name AS major,
+                a.purpose AS purpose,
+                a.attend_date AS date
+            FROM attend a
+            JOIN visitors v ON a.visitor_id = v.visitor_id
+            JOIN students s ON v.student_id = s.student_id
+            JOIN majors m ON s.major_id = m.major_id
         """
         return client.sql(query)
             .map { row ->
@@ -357,22 +363,20 @@ class AttendRepositoryImp(
 
 
     private fun paramMap(attend: Attend): Map<String, Any?> = mapOf(
-        "studentId" to attend.studentId,
-        "staffId" to attend.staffId,
+        "visitorId" to attend.visitorId,
         "entryTimes" to attend.entryTimes,
-        "exitingTimes" to attend.exitingTimes,
+        "exitingTimes" to attend.exitTimes,
         "purpose" to attend.purpose,
-        "date" to attend.date
+        "date" to attend.attendDate
     )
 
     private fun Row.mapToAttend(): Attend = Attend(
         attendId = this.get("attend_id", Long::class.java)!!,
-        studentId = this.get("student_id", Long::class.java),
-        staffId = this.get("sru_staff_id", String::class.java),
-        entryTimes = this.get("entry_times", LocalTime::class.java)!!,
-        exitingTimes = this.get("exiting_times", LocalTime::class.java),
+        visitorId = this.get("visitor_id", Long::class.java)!!,
+        entryTimes = this.get("entry_time", LocalTime::class.java)!!,
+        exitTimes = this.get("exit_time", LocalTime::class.java),
         purpose = this.get("purpose", String::class.java)!!,
-        date = this.get("date", LocalDate::class.java)!!,
+        attendDate = this.get("date", LocalDate::class.java)!!
     )
 
     private fun Row.mapToStudentAttendDetail(): StudentAttendDetail = StudentAttendDetail(
@@ -402,38 +406,49 @@ class AttendRepositoryImp(
 
     companion object {
         const val SAVE_ATTEND_QUERY = """
-            INSERT INTO attend(student_id, sru_staff_id, entry_times, exiting_times, purpose, date)
-            VALUES(:studentId, :staffId, :entryTimes, :exitingTimes, :purpose, :date);
+            INSERT INTO attend(visitor_id, entry_time, exit_time, attend_date, purpose)
+            VALUES(:visitorId, :entryTimes, :exitTimes, :attendDate, :purpose);
         """
         const val UPDATE_ATTEND_QUERY = """
-            UPDATE attend set student_id = :studentId, sru_staff_id = :staffId, entry_times = :entryTimes,
-            exiting_times = :exitingTimes, date = :date, purpose = :purpose
+            UPDATE attend set visitor_id = :visitorId, entry_time = :entryTimes,
+            exit_time = :exitTimes, attend_date = :attendDate, purpose = :purpose
             WHERE attend_id = :attendId;
         """
         const val DELETE_ATTEND_QUERY = "DELETE FROM attend WHERE attend_id = :attendId;"
         const val GET_ATTEND_QUERY = "SELECT * FROM attend WHERE attend_id = :attendId;"
-        const val GET_ATTEND_QUERY_BY_STUDENT_ID = "SELECT * FROM attend WHERE student_id = :studentId and date = :date;"
-        const val GET_ATTEND_QUERY_BY_STAFF_ID = "SELECT * FROM attend WHERE sru_staff_id = :staffId and date = :date;"
+
+        const val GET_ATTEND_QUERY_BY_STUDENT_ID = """
+            SELECT * FROM vw_attend_details
+                WHERE visitor_type = 'STUDENT'
+                  AND student_id = :studentId
+                  AND attend_date = :date
+        """
+        const val GET_ATTEND_QUERY_BY_STAFF_ID = """
+            SELECT * FROM vw_attend_details
+            WHERE visitor_type = 'SRU_STAFF'
+              AND sru_staff_id = :staffId
+              AND attend_date = :date
+        """
         const val GET_ALL_ATTEND_QUERY = "SELECT * FROM attend;"
 
-        const val UPDATE_EXIT_TIME = "UPDATE attend SET exiting_times = :exitingTimes WHERE attend_id = :attendId AND date = :date;"
+        const val UPDATE_EXIT_TIME = "UPDATE attend SET exit_time = :exitingTimes WHERE attend_id = :attendId AND attend_date = :date;"
         const val UPDATE_STAFF_EXITING_TIME = """
-            UPDATE attend set exiting_times = :exitingTimes WHERE attend_id = :attendId AND date = :date;
+            UPDATE attend set exit_time = :exitingTimes WHERE attend_id = :attendId AND attend_date = :date;
         """
 
         const val GET_ALL_STAFF_ATTEND = """
-            SELECT a.attend_id,
-                   a.sru_staff_id as staff_id,
-                   s.sru_staff_name as staff_name,
-                   s.gender,
-                   a.entry_times, a.exiting_times,
-                   a.purpose,
-                   a.date
-            from attend a inner join sru_staff s where a.sru_staff_id = s.sru_staff_id;
+            SELECT
+                attend_id,
+                sru_staff_id   AS staff_id,
+                sru_staff_name AS staff_name,
+                gender,
+                entry_time     AS entryTimes,
+                exit_time      AS exitingTimes,
+                purpose,
+                attend_date    AS date
+            FROM vw_attend_details
+            WHERE visitor_type = 'SRU_STAFF'
         """
     }
-
-
-
 
 }

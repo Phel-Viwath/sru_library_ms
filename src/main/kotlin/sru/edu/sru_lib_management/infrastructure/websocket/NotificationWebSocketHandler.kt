@@ -14,7 +14,7 @@ class NotificationWebSocketHandler : WebSocketHandler {
     private val sink: Sinks.Many<String> = Sinks.many().multicast().onBackpressureBuffer()
     //private val clientSessions = ConcurrentHashMap<String, WebSocketSession>()
 
-    /// old version sent to all user
+    /// old version sent to all users
     override fun handle(session: WebSocketSession): Mono<Void> {
             val input = session.receive()
                 .map { it.payloadAsText }

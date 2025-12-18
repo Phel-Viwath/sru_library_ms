@@ -19,6 +19,6 @@ data class Books (
     val genre: String,
     val receiveDate: LocalDate?,
     val isActive: Boolean,
-    @JsonFormat(pattern = "dd:MM:yyyy")
+    @field:JsonFormat(pattern = "dd:MM:yyyy")
     val inactiveDate: LocalDate?
 )

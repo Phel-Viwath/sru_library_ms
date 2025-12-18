@@ -11,7 +11,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.web.server.ResponseStatusException
 import sru.edu.sru_lib_management.common.CoreResult
-import sru.edu.sru_lib_management.core.data.repository.StudentRepositoryImp
 import sru.edu.sru_lib_management.core.domain.dto.StudentDto
 import sru.edu.sru_lib_management.core.domain.model.Students
 import sru.edu.sru_lib_management.core.domain.repository.StudentRepository
@@ -84,9 +83,9 @@ class StudentServiceImp(
     override suspend fun getStudent(studentId: Long): CoreResult<StudentDto?> {
         return try{
             val student = studentRepository.getStudentDetailById(studentId)
-            if (student != null)
-                return CoreResult.Success(student)
-            else return CoreResult.ClientError("Incorrect ID")
+            return if (student != null)
+                CoreResult.Success(student)
+            else CoreResult.ClientError("Incorrect ID")
         }catch (e: Exception){
             CoreResult.Failure(e.message ?: "Unknown error occurred.")
         }

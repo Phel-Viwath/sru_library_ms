@@ -254,8 +254,7 @@ class BookServiceImp(
                     val bookDate = it.receiveDate ?: donationMap[it.bookId]?.donateDate
                     if (startDate != null && endDate != null && bookDate != null){
                         val bookYearMonth = YearMonth.from(bookDate)
-                        (bookYearMonth.isAfter(startDate) || bookYearMonth == startDate) &&
-                                (bookYearMonth.isBefore(endDate) || bookYearMonth == endDate)
+                        !bookYearMonth.isBefore(startDate) && !bookYearMonth.isAfter(endDate)
                     } else true
                 }
                 .groupBy { it.collegeId }
@@ -325,9 +324,9 @@ class BookServiceImp(
                     !it.isBringBack && it.giveBackDate.isBefore(indoChinaDate())
                 }.sumOf { it.bookQuan }
 
-            val todayBorrow = allBorrowList.filter { it.borrowDate == indoChinaDate() }.sumOf { it.bookQuan }
+            val todayBorrow = allBorrowList.filter { it.borrowDate.isEqual(indoChinaDate())}.sumOf { it.bookQuan }
             val todayReturn = allBorrowList
-                .filter { it.isBringBack && it.giveBackDate == indoChinaDate() }
+                .filter { it.isBringBack && it.giveBackDate.isEqual(indoChinaDate()) }
                 .sumOf { it.bookQuan }
             mapOf(
                 "totalBook" to totalBook,

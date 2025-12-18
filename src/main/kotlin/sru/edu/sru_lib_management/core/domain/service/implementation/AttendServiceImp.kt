@@ -28,9 +28,12 @@ import sru.edu.sru_lib_management.core.domain.dto.attend.StudentAttendDetail
 import sru.edu.sru_lib_management.core.domain.dto.dashbord.TotalMajorVisitor
 import sru.edu.sru_lib_management.core.domain.dto.dashbord.WeeklyVisitor
 import sru.edu.sru_lib_management.core.domain.model.Attend
+import sru.edu.sru_lib_management.core.domain.model.Visitor
+import sru.edu.sru_lib_management.core.domain.model.VisitorType
 import sru.edu.sru_lib_management.core.domain.repository.AttendRepository
 import sru.edu.sru_lib_management.core.domain.repository.SruStaffRepository
 import sru.edu.sru_lib_management.core.domain.repository.StudentRepository
+import sru.edu.sru_lib_management.core.domain.repository.VisitorRepository
 import sru.edu.sru_lib_management.core.domain.service.AttendService
 import sru.edu.sru_lib_management.utils.IndochinaDateTime.indoChinaDate
 import sru.edu.sru_lib_management.utils.OpeningTime.ELEVEN_AM
@@ -49,7 +52,8 @@ import java.time.YearMonth
 class AttendServiceImp(
     private val attendRepository: AttendRepository,
     private val studentRepository: StudentRepository,
-    private val sruStaffRepository: SruStaffRepository
+    private val sruStaffRepository: SruStaffRepository,
+    private val visitorRepository: VisitorRepository
 ) : AttendService {
 
     private val logger = LoggerFactory.getLogger(AttendServiceImp::class.java)
@@ -58,36 +62,58 @@ class AttendServiceImp(
     * */
     override suspend fun saveAttend(attendDto: AttendDto): CoreResult<Attend> {
         return runCatching {
-            var studentId: Long? = null
-            var staffId: String? = null
-            val entryId = attendDto.entryId
             val checkEntryTime =
                 attendDto.entryTimes !in (SEVEN_AM..ELEVEN_AM ) &&
                         attendDto.entryTimes !in TWO_PM ..FIVE_PM &&
                         attendDto.entryTimes !in FIVE_THIRTY_PM..SEVEN_THIRTY_PM
-//            if (checkEntryTime)
-//                return CoreResult.ClientError("Closing time.")
-            if(entryId.all { it.isDigit() }){
-                studentId = entryId.toLong()
-            }else{
-                staffId = entryId
+            if (checkEntryTime)
+                return CoreResult.ClientError("Closing time.")
+            if (attendDto.studentId == null && attendDto.sruStaffId == null) {
+                return CoreResult.ClientError("Student ID or Staff ID is required")
             }
-            if (studentId != null) {
-                studentRepository.getById(studentId)
-                    ?: return CoreResult.ClientError("Can not find student with this ID: ${attendDto.entryId}")
+
+            if (attendDto.studentId != null && attendDto.sruStaffId != null) {
+                return CoreResult.ClientError("Only one visitor type is allowed")
             }
-            else{
-                val staff = sruStaffRepository.findById(staffId!!).awaitSingleOrNull()
-                staff ?: return CoreResult.ClientError("Can not find staff with this ID: ${attendDto.entryId}")
+            val visitor = when {
+                attendDto.studentId != null -> {
+                    studentRepository.getById(attendDto.studentId)
+                        ?: return CoreResult.ClientError("Student not found!")
+
+                    visitorRepository.findByStudentId(attendDto.studentId)
+                        ?: visitorRepository.save(
+                            Visitor(
+                                visitorId = null,
+                                visitorType = VisitorType.STUDENT,
+                                studentId = attendDto.studentId,
+                                sruStaffId = null
+                            )
+                        )
+                }
+                else -> {
+                    val staff = sruStaffRepository
+                        .findById(attendDto.sruStaffId!!)
+                        .awaitSingleOrNull()
+                        ?: return CoreResult.ClientError("Staff not found")
+
+                    visitorRepository.findByStaffId(attendDto.sruStaffId)
+                        ?: visitorRepository.save(
+                            Visitor(
+                                visitorId = null,
+                                visitorType = VisitorType.SRU_STAFF,
+                                studentId = null,
+                                sruStaffId = staff.sruStaffId
+                            )
+                        )
+                }
             }
             val attend = Attend(
                 attendId = null,
-                studentId = studentId,
-                staffId = staffId,
+                visitorId = visitor.visitorId,
                 entryTimes = attendDto.entryTimes,
-                exitingTimes = attendDto.exitingTimes,
+                exitTimes = attendDto.exitingTimes,
                 purpose = attendDto.purpose,
-                date = indoChinaDate()
+                attendDate = indoChinaDate(),
             )
             attendRepository.save(attend)
         }.fold(
@@ -140,7 +166,7 @@ class AttendServiceImp(
     }
 
     /*
-    * Select custom attend by date
+    * Select custom attends by date
     * */
     override suspend fun getCustomAttByDate(date: LocalDate): Flow<List<Attend>> {
         return runCatching {
@@ -182,7 +208,7 @@ class AttendServiceImp(
     override fun getAttendDetails(date: LocalDate): Flow<AttendDetail> {
         return try {
             attendRepository.getAttendDetail(date).onEach {
-                    if (it.exitingTime == null)
+                    if (it.exitTime == null)
                         it.status = "IN"
                     else it.status = "OUT"
             }
@@ -194,12 +220,9 @@ class AttendServiceImp(
     override fun getAllStudentAttendDetail(date: LocalDate): Flow<StudentAttendDetail> {
         return try {
             attendRepository.getAllAttendDetail()
-                .filter { it.date == date }
+                .filter { it.date.isEqual(date) }
                 .onEach {
-                    if (it.exitingTimes == null)
-                        it.status = "IN"
-                    else
-                        it.status = "OUT"
+                    it.status = if (it.exitingTimes == null) "IN" else "OUT"
                 }
         }catch (e: Exception){
             throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.message)
@@ -250,7 +273,7 @@ class AttendServiceImp(
             if (existAttend.isEmpty())
                 CoreResult.ClientError("Can not find attend with this student id: $entryId")
             existAttend.forEach {
-                if (it!!.exitingTimes == null)
+                if (it!!.exitTimes == null)
                     attendId = it.attendId!!
             }
             if (entryId.checkEntryId() is Long)
@@ -372,6 +395,7 @@ class AttendServiceImp(
         return try {
             attendRepository.getAttendDetailById(attendId)
         }catch (e: Exception){
+            logger.error(e.message)
             throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR)
         }
     }

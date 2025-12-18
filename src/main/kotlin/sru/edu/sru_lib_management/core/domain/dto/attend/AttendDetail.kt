@@ -11,10 +11,10 @@ import java.time.LocalTime
 data class AttendDetail(
     val id: String,
     val name: String,
-    @JsonFormat(pattern = "HH:mm:ss")
+    @field:JsonFormat(pattern = "HH:mm:ss")
     val entryTimes: LocalTime,
-    @JsonFormat(pattern = "HH:mm:ss")
-    val exitingTime: LocalTime?,
+    @field:JsonFormat(pattern = "HH:mm:ss")
+    val exitTime: LocalTime?,
     val purpose: String,
     var status: String?
 )

@@ -11,5 +11,5 @@ import java.time.LocalDate
 data class Donation (
     val bookId: String,
     val donatorId: Int,
-    @JsonFormat(pattern = "yyyy-MM-dd") val donateDate: LocalDate
+    @field:JsonFormat(pattern = "yyyy-MM-dd") val donateDate: LocalDate
 )

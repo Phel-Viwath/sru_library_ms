@@ -80,11 +80,11 @@ class EntryHandler(
 
             val attend = AttendDto(
                 attendId = null,
-                entryId = entryId,
+                visitorId = entryId,
                 entryTimes = indoChinaTime(),
                 exitingTimes = null,
                 purpose = purpose,
-                date = indoChinaDate()
+                attendDate = indoChinaDate()
             )
             when(val result = attendService.saveAttend(attend)){
                 is CoreResult.Success ->

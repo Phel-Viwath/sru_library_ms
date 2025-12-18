@@ -44,12 +44,8 @@ public class CheckBorrowBook {
                                     }
                                 })
                 )
-                .doOnError(error -> {
-                    System.err.println("Error processing blacklist: " + error.getMessage());
-                })
-                .doOnComplete(() -> {
-                    System.out.println("Blacklist processing completed.");
-                })
+                .doOnError(error -> System.err.println("Error processing blacklist: " + error.getMessage()))
+                .doOnComplete(() -> System.out.println("Blacklist processing completed."))
                 .subscribe();
     }
 

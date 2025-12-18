@@ -1,4 +1,4 @@
-
+/*
 CREATE PROCEDURE IF NOT EXISTS PurposeCount(
     IN startDate DATE,
     IN endDate DATE,
@@ -56,6 +56,72 @@ BEGIN
             WHEN 'Other' THEN 3
         END;
 
+END;*/
+
+CREATE PROCEDURE PurposeCount(
+    IN startDate DATE,
+    IN endDate DATE,
+    IN majorName VARCHAR(100)
+)
+BEGIN
+    -- ============================
+    -- Validate input
+    -- ============================
+    IF startDate IS NULL OR endDate IS NULL THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Start date and end date cannot be null';
+    END IF;
+
+    IF startDate > endDate THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Start date cannot be greater than end date';
+    END IF;
+
+    -- ============================
+    -- Main query
+    -- ============================
+    SELECT
+        purpose_category,
+        COUNT(*) AS total_count
+    FROM (
+             SELECT
+                 CASE
+                     WHEN LOWER(a.purpose) LIKE '%reading%'
+                         OR LOWER(a.purpose) = 'read'
+                         THEN 'Reading'
+
+                     WHEN LOWER(a.purpose) LIKE '%pc%'
+                         OR LOWER(a.purpose) LIKE '%computer%'
+                         OR LOWER(a.purpose) LIKE '%use pc%'
+                         THEN 'Use PC'
+
+                     WHEN LOWER(a.purpose) LIKE '%assignment%'
+                         OR LOWER(a.purpose) LIKE '%ass%'
+                         THEN 'Assignment'
+
+                     ELSE 'Other'
+                     END AS purpose_category
+             FROM attend a
+                      JOIN visitors v ON a.visitor_id = v.visitor_id
+                      LEFT JOIN students s ON v.student_id = s.student_id
+                      LEFT JOIN majors m ON s.major_id = m.major_id
+
+             WHERE a.attend_date BETWEEN startDate AND endDate
+               AND (
+                 majorName IS NULL
+                     OR majorName = ''
+                     OR m.major_name = majorName
+                     OR v.visitor_type = 'SRU_STAFF'
+                 )
+         ) categorized
+    GROUP BY purpose_category
+    ORDER BY
+        CASE purpose_category
+            WHEN 'Reading' THEN 1
+            WHEN 'Use PC' THEN 2
+            WHEN 'Assignment' THEN 3
+            ELSE 4
+            END;
 END;
 
 CREATE PROCEDURE IF NOT EXISTS GetBookForEachCollege(
@@ -182,7 +248,7 @@ BEGIN
     ORDER BY month;
 END;
 
-CREATE PROCEDURE IF NOT EXISTS CountDuration(
+/*CREATE PROCEDURE IF NOT EXISTS CountDuration(
     IN startDate DATE,  -- Start date or NULL
     IN endDate DATE     -- End date or NULL
 )
@@ -218,15 +284,15 @@ BEGIN
                  m.major_name AS majorName,
                  dl.degree_level,
                  s.generation,
-                 a.entry_times AS entryTimes,
-                 a.exiting_times AS exitingTime
+                 a.entry_time AS entryTimes,
+                 a.exit_time AS exitingTime
              FROM attend a
                       INNER JOIN students s ON a.student_id = s.student_id
                       INNER JOIN majors m ON s.major_id = m.major_id
                       INNER JOIN degree_level dl ON s.degree_level_id = dl.degree_level_id
              WHERE a.student_id IS NOT NULL
-               AND (startDate IS NULL OR a.date >= startDate)
-               AND (endDate IS NULL OR a.date <= endDate)
+               AND (startDate IS NULL OR a.attend_date >= startDate)
+               AND (endDate IS NULL OR a.attend_date <= endDate)
          ) AS sad
     WHERE sad.exitingTime IS NOT NULL
       -- Filter out invalid exit times (keep only valid library hours)
@@ -246,56 +312,14 @@ BEGIN
     ORDER BY totalTimeSpent DESC
     LIMIT 10;
 END;
+*/
 
-CREATE PROCEDURE IF NOT EXISTS GetMostAttend(
-    IN startDate DATE,  -- Start date or NULL
-    IN endDate DATE     -- End date or NULL
+CREATE PROCEDURE IF NOT EXISTS CountDuration(
+    IN startDate DATE,
+    IN endDate DATE
 )
 BEGIN
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-        BEGIN
-            ROLLBACK;
-            RESIGNAL;
-        END;
-
-    -- Calculate major attendance with counts and percentages
-    SELECT
-        m.major_name AS major,
-        COUNT(*) AS times,
-        ROUND(
-                (COUNT(*) * 100.0) / (
-                    SELECT COUNT(*)
-                    FROM attend a2
-                             INNER JOIN students s2 ON a2.student_id = s2.student_id
-                    WHERE a2.student_id IS NOT NULL
-                      AND (startDate IS NULL OR a2.date >= startDate)
-                      AND (endDate IS NULL OR a2.date <= endDate)
-                ),
-                2
-        ) AS percentage
-    FROM attend a
-             INNER JOIN students s ON a.student_id = s.student_id
-             INNER JOIN majors m ON s.major_id = m.major_id
-    WHERE a.student_id IS NOT NULL
-      AND (startDate IS NULL OR a.date >= startDate)
-      AND (endDate IS NULL OR a.date <= endDate)
-    GROUP BY m.major_id, m.major_name
-    ORDER BY times DESC;
-
-END;
-
-CREATE PROCEDURE IF NOT EXISTS CountAttendByOpenTime(
-    IN startDate DATE,  -- Start date or NULL
-    IN endDate DATE     -- End date or NULL
-)
-BEGIN
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-        BEGIN
-            ROLLBACK;
-            RESIGNAL;
-        END;
-
-    -- Define time constants (in TIME format)
+    -- Time constants
     SET @SEVEN_AM = TIME('07:00:00');
     SET @ELEVEN_AM = TIME('11:00:00');
     SET @TWO_PM = TIME('14:00:00');
@@ -303,63 +327,124 @@ BEGIN
     SET @FIVE_THIRTY_PM = TIME('17:30:00');
     SET @SEVEN_THIRTY_PM = TIME('19:30:00');
 
-    -- Calculate attendance statistics by time periods
     SELECT
-        COUNT(*)                           AS totalAttend,
-        SUM(IF(s.gender = 'Female', 1, 0)) AS totalFemale,
-        SUM(IF(TIME(a.entry_times) BETWEEN @SEVEN_AM AND @ELEVEN_AM, 1, 0)) AS totalMorningAttend,
-        SUM(IF(TIME(a.entry_times) BETWEEN @TWO_PM AND @FIVE_PM, 1, 0)) AS totalAfternoonAttend,
-        SUM(IF(TIME(a.entry_times) BETWEEN @FIVE_THIRTY_PM AND @SEVEN_THIRTY_PM, 1, 0)) AS totalEveningAttend
-    FROM attend a
-             INNER JOIN students s ON a.student_id = s.student_id
-    WHERE a.student_id IS NOT NULL
-      AND (startDate IS NULL OR a.date >= startDate)
-      AND (endDate IS NULL OR a.date <= endDate);
+        student_id        AS studentId,
+        student_name      AS studentName,
+        major_name        AS major,
+        degree_level      AS degree,
+        generation,
+        SUM(
+            TIMESTAMPDIFF(
+                    MINUTE,
+                    entry_time,
+                    exit_time
+            )
+        ) AS totalTimeSpent
+    FROM vw_attend_details
+    WHERE visitor_type = 'STUDENT'
+        AND exit_time IS NOT NULL
+        AND (startDate IS NULL OR attend_date >= startDate)
+        AND (endDate IS NULL OR attend_date <= endDate)
+        AND (
+            TIME(exit_time) BETWEEN @SEVEN_AM AND @ELEVEN_AM
+                OR TIME(exit_time) BETWEEN @TWO_PM AND @FIVE_PM
+                OR TIME(exit_time) BETWEEN @FIVE_THIRTY_PM AND @SEVEN_THIRTY_PM
+        )
+    GROUP BY
+        student_id,
+        student_name,
+        major_name,
+        degree_level,
+        generation
+    HAVING totalTimeSpent > 0
+    ORDER BY totalTimeSpent DESC
+    LIMIT 10;
+END;
+
+CREATE PROCEDURE IF NOT EXISTS GetMostAttend(
+    IN startDate DATE,
+    IN endDate DATE
+)
+BEGIN
+    SELECT
+        major_name AS major,
+        COUNT(*)   AS times,
+        ROUND(
+                COUNT(*) * 100.0 /
+                (
+                    SELECT COUNT(*)
+                    FROM vw_attend_details
+                    WHERE visitor_type = 'STUDENT'
+                      AND (startDate IS NULL OR attend_date >= startDate)
+                      AND (endDate IS NULL OR attend_date <= endDate)
+                ),
+                2
+        ) AS percentage
+    FROM vw_attend_details
+    WHERE visitor_type = 'STUDENT'
+      AND major_name IS NOT NULL
+      AND (startDate IS NULL OR attend_date >= startDate)
+      AND (endDate IS NULL OR attend_date <= endDate)
+    GROUP BY major_name
+    ORDER BY times DESC;
+END;
+
+CREATE PROCEDURE IF NOT EXISTS CountAttendByOpenTime(
+    IN startDate DATE,
+    IN endDate DATE
+)
+BEGIN
+    SET @SEVEN_AM = TIME('07:00:00');
+    SET @ELEVEN_AM = TIME('11:00:00');
+    SET @TWO_PM = TIME('14:00:00');
+    SET @FIVE_PM = TIME('17:00:00');
+    SET @FIVE_THIRTY_PM = TIME('17:30:00');
+    SET @SEVEN_THIRTY_PM = TIME('19:30:00');
+
+    SELECT
+        COUNT(*) AS totalAttend,
+        SUM(IF(gender = 'Female', 1, 0)) AS totalFemale,
+        SUM(IF(TIME(entry_time) BETWEEN @SEVEN_AM AND @ELEVEN_AM, 1, 0)) AS totalMorningAttend,
+        SUM(IF(TIME(entry_time) BETWEEN @TWO_PM AND @FIVE_PM, 1, 0)) AS totalAfternoonAttend,
+        SUM(IF(TIME(entry_time) BETWEEN @FIVE_THIRTY_PM AND @SEVEN_THIRTY_PM, 1, 0)) AS totalEveningAttend
+    FROM vw_attend_details
+    WHERE visitor_type = 'STUDENT'
+      AND (startDate IS NULL OR attend_date >= startDate)
+      AND (endDate IS NULL OR attend_date <= endDate);
 END;
 
 CREATE PROCEDURE IF NOT EXISTS GetPurposeByMonth(
-    IN majorName VARCHAR(100),    -- Major name filter or NULL
-    IN startMonth VARCHAR(7),     -- Format 'YYYY-MM'
-    IN endMonth VARCHAR(7)        -- Format 'YYYY-MM'
+    IN majorName VARCHAR(100),
+    IN startMonth VARCHAR(7),
+    IN endMonth VARCHAR(7)
 )
 BEGIN
-    -- Declare local DATE variables
     DECLARE processStartDate DATE;
     DECLARE processEndDate DATE;
 
-    -- Declare error handler
-    DECLARE EXIT HANDLER FOR SQLEXCEPTION
-        BEGIN
-            ROLLBACK;
-            RESIGNAL;
-        END;
+    SET processStartDate =
+        IFNULL(
+                STR_TO_DATE(CONCAT(startMonth, '-01'), '%Y-%m-%d'),
+                STR_TO_DATE(CONCAT(YEAR(CURDATE()), '-01-01'), '%Y-%m-%d')
+        );
 
-    -- Convert input or use defaults
-    SET processStartDate = IFNULL(
-            STR_TO_DATE(CONCAT(startMonth, '-01'), '%Y-%m-%d'),
-            STR_TO_DATE(CONCAT(YEAR(CURDATE()), '-01-01'), '%Y-%m-%d')
-                           );
+    SET processEndDate =
+        IFNULL(
+                LAST_DAY(STR_TO_DATE(CONCAT(endMonth, '-01'), '%Y-%m-%d')),
+                LAST_DAY(CURDATE())
+        );
 
-    SET processEndDate = IFNULL(
-            LAST_DAY(STR_TO_DATE(CONCAT(endMonth, '-01'), '%Y-%m-%d')),
-            LAST_DAY(CURDATE())
-                         );
-
-    -- Final query
     SELECT
-        DATE_FORMAT(a.date, '%Y-%m') AS month,
-        SUM(IF(FIND_IN_SET('Other', REPLACE(a.purpose, ', ', ',')) > 0, 1, 0)) AS other,
-        SUM(IF(FIND_IN_SET('Reading', REPLACE(a.purpose, ', ', ',')) > 0, 1, 0)) AS reading,
-        SUM(IF(FIND_IN_SET('Assignment', REPLACE(a.purpose, ', ', ',')) > 0, 1, 0)) AS assignment,
-        SUM(IF(FIND_IN_SET('Use PC', REPLACE(a.purpose, ', ', ',')) > 0, 1, 0)) AS usePc
-    FROM attend a
-             INNER JOIN students s ON a.student_id = s.student_id
-             INNER JOIN majors m ON s.major_id = m.major_id
-    WHERE a.student_id IS NOT NULL
-      AND a.date >= processStartDate
-      AND a.date <= processEndDate
-      AND (majorName IS NULL OR m.major_name = majorName)
-    GROUP BY DATE_FORMAT(a.date, '%Y-%m')
+        DATE_FORMAT(attend_date, '%Y-%m') AS month,
+        SUM(purpose LIKE '%Other%')       AS other,
+        SUM(purpose LIKE '%Reading%')     AS reading,
+        SUM(purpose LIKE '%Assignment%')  AS assignment,
+        SUM(purpose LIKE '%Use PC%')       AS usePc
+    FROM vw_attend_details
+    WHERE visitor_type = 'STUDENT'
+      AND attend_date BETWEEN processStartDate AND processEndDate
+      AND (majorName IS NULL OR major_name = majorName)
+    GROUP BY DATE_FORMAT(attend_date, '%Y-%m')
     ORDER BY month;
 END;
 

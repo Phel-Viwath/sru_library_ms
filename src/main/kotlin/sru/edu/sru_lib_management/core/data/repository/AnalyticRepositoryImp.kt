@@ -3,7 +3,6 @@ package sru.edu.sru_lib_management.core.data.repository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactor.awaitSingle
-import org.slf4j.LoggerFactory
 import org.springframework.r2dbc.core.DatabaseClient
 import org.springframework.r2dbc.core.DatabaseClient.GenericExecuteSpec
 import org.springframework.r2dbc.core.awaitSingle
@@ -24,7 +23,7 @@ class AnalyticRepositoryImp(
     private val client: DatabaseClient
 ) : AnalyticRepository{
 
-    private val logger = LoggerFactory.getLogger(AnalyticRepositoryImp::class.java)
+    //private val logger = LoggerFactory.getLogger(AnalyticRepositoryImp::class.java)
 
     override fun getBookEachCollege(
         startMonth: YearMonth?,
@@ -84,7 +83,7 @@ class AnalyticRepositoryImp(
             .all()
             .collectList()
             .map { languageBookCounts ->
-                // Calculate totalBook and create the bookEachLanguage map
+                // Calculate the totalBook and create the bookEachLanguage map
                 val totalBook = languageBookCounts.sumOf { it.second }
                 val bookEachLanguage = languageBookCounts.associate { it.first to it.second }
                 TotalBook(totalBook = totalBook, bookEachLanguage = bookEachLanguage)

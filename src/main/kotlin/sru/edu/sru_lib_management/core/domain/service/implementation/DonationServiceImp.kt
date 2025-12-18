@@ -123,8 +123,6 @@ class DonationServiceImp(
             donationRepository.getAll()
         }catch (e: Exception){
             throw APIException(e.message.toString())
-        }finally {
-            donationRepository.getAll()
         }
     }
 

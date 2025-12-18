@@ -13,9 +13,9 @@ class Borrow (
     val bookId: String,
     val bookQuan: Int,
     val studentId: Long,
-    @JsonFormat(pattern = "yyyy-MM-dd")
+    @field:JsonFormat(pattern = "yyyy-MM-dd")
     val borrowDate: LocalDate,
-    @JsonFormat(pattern = "yyyy-MM-dd")
+    @field:JsonFormat(pattern = "yyyy-MM-dd")
     val giveBackDate: LocalDate,
     val isBringBack: Boolean,
     val isExtend: Boolean

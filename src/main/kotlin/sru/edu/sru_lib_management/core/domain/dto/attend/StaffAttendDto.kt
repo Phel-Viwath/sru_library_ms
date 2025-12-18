@@ -14,9 +14,9 @@ data class StaffAttendDto(
     val staffId: String,
     val staffName: String,
     val gender: String,
-    @JsonFormat(pattern = "HH:mm:ss") val entryTimes: LocalTime,
-    @JsonFormat(pattern = "HH:mm:ss") val exitingTimes: LocalTime?,
+    @field:JsonFormat(pattern = "HH:mm:ss") val entryTimes: LocalTime,
+    @field:JsonFormat(pattern = "HH:mm:ss") val exitingTimes: LocalTime?,
     val purpose: String,
-    @JsonFormat(pattern = "yyyy:MM:dd")
+    @field:JsonFormat(pattern = "yyyy:MM:dd")
     val date: LocalDate
 )

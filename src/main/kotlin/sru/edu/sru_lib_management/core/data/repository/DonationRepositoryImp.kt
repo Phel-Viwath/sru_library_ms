@@ -34,7 +34,7 @@ class DonationRepositoryImp(
 
     private val logger = LoggerFactory.getLogger(DonationRepositoryImp::class.java)
 
-    //// This method use to save new donation after donator already saved
+    //// This method uses to save new donation after donator already saved
     override suspend fun newDonation(donation: Donation): Donation {
         logger.info("Donation Repository: $donation")
         client.sql(SAVE_DONATION)

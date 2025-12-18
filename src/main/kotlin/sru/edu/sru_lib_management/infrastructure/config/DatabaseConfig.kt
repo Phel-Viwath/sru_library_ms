@@ -27,25 +27,25 @@ class DatabaseConfig(
     @Bean
     override fun connectionFactory(): ConnectionFactory {
 
-//        // for local database
-//        //jdbc:mysql://localhost:3306/sru_library
-//        val mySqlUrl = url.removePrefix("jdbc:mysql://")
-//        // mySqlUrl will equal to localhost:3306/sru_library
-//        val (dbHost, dbPortAndDbName) = mySqlUrl.split(":") // we spit it at :
-//        // so dbHost will be equal localhost and dbPortAndDbName will equal to  3306/sru_library
-//        val (dbPort, dbName) = dbPortAndDbName.split("/") // we spit it at /
-//
-//        return MySqlConnectionFactory.from(
-//            MySqlConnectionConfiguration.builder()
-//                .host(dbHost)
-//                .port(dbPort.toInt())
-//                .database(dbName)
-//                .username(username)
-//                .password(password)
-//                .build()
-//        )
+        // for local database
+        //jdbc:mysql://localhost:3306/sru_library
+        val mySqlUrl = url.removePrefix("jdbc:mysql://")
+        // mySqlUrl will equal to localhost:3306/sru_library
+        val (dbHost, dbPortAndDbName) = mySqlUrl.split(":") // we spit it at :
+        // so dbHost will be equal localhost and dbPortAndDbName will equal to  3306/sru_library
+        val (dbPort, dbName) = dbPortAndDbName.split("/") // we spit it at /
 
-        val r2dbcUrl = url.removePrefix("mysql://")
+        return MySqlConnectionFactory.from(
+            MySqlConnectionConfiguration.builder()
+                .host(dbHost)
+                .port(dbPort.toInt())
+                .database(dbName)
+                .username(username)
+                .password(password)
+                .build()
+        )
+
+        /*val r2dbcUrl = url.removePrefix("mysql://")
         val (credentials, hostAndDatabase) = r2dbcUrl.split("@")
         val (hostAndPort, database) = hostAndDatabase.split("/")
         val (username, password) = credentials.split(":")
@@ -60,7 +60,7 @@ class DatabaseConfig(
                 .username(username)
                 .password(password)
                 .build()
-        )
+        )*/
 
 
     }

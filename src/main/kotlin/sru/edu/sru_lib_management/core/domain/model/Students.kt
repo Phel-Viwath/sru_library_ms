@@ -12,7 +12,7 @@ data class Students (
     val studentId: Long?,
     val studentName: String,
     val gender: String,
-    @JsonFormat(pattern = "yyyy-MM-dd")
+    @field:JsonFormat(pattern = "yyyy-MM-dd")
     val dateOfBirth: LocalDate,
     val degreeLevelId: String,
     val majorId: String,
