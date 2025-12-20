@@ -9,19 +9,26 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.awaitFirst
 import kotlinx.coroutines.reactive.awaitFirstOrNull
+import org.apache.poi.ss.usermodel.Cell
+import org.apache.poi.ss.usermodel.CellType
 import org.apache.poi.ss.usermodel.DateUtil
 import org.apache.poi.ss.usermodel.WorkbookFactory
 import org.springframework.http.codec.multipart.FilePart
+import org.springframework.http.codec.multipart.Part
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
+import org.springframework.util.MultiValueMap
 import org.springframework.web.reactive.function.server.*
 import sru.edu.sru_lib_management.common.CoreResult
+import sru.edu.sru_lib_management.core.domain.dto.BookAvailableDto
 import sru.edu.sru_lib_management.core.domain.dto.BookDto
+import sru.edu.sru_lib_management.core.domain.model.Books
 import sru.edu.sru_lib_management.core.domain.service.BookService
 import sru.edu.sru_lib_management.utils.ResponseStatus.ACCEPTED
 import sru.edu.sru_lib_management.utils.ResponseStatus.BAD_REQUEST
@@ -32,6 +39,7 @@ import java.io.File
 import java.io.InputStream
 import java.time.LocalDate
 import java.time.YearMonth
+import java.time.ZoneId
 
 @Component
 class BookHandler(
@@ -45,7 +53,7 @@ class BookHandler(
         * */
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun searchBook(request: ServerRequest): ServerResponse = coroutineScope{
-        val keyword = request.queryParams()["keyword"]?.firstOrNull()
+        val keyword: String = request.queryParams()["keyword"]?.firstOrNull()
             ?: return@coroutineScope ServerResponse.badRequest().buildAndAwait()
         val books = bookService.searchBooks(keyword)
         ServerResponse.ok().bodyAndAwait(books)
@@ -55,7 +63,7 @@ class BookHandler(
     suspend fun addNewBook(
         request: ServerRequest
     ): ServerResponse = coroutineScope {
-        val books = request.bodyToMono<List<BookDto>>().awaitFirst()
+        val books: List<BookDto> = request.bodyToMono<List<BookDto>>().awaitFirst()
         when(val result = bookService.saveBook(books)){
             is CoreResult.Success ->
                 ServerResponse.ok().bodyValueAndAwait(result.data)
@@ -70,7 +78,7 @@ class BookHandler(
     suspend fun uploadBook(
         request: ServerRequest
     ): ServerResponse = coroutineScope {
-        val multipartData = request.awaitMultipartData()
+        val multipartData: MultiValueMap<String, Part> = request.awaitMultipartData()
         println("Multipart keys received: ${multipartData.keys}")
 
         val filePart = multipartData["book_file"]?.firstOrNull() as? FilePart
@@ -114,7 +122,7 @@ class BookHandler(
    * */
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun currentAvailableBook(): ServerResponse = coroutineScope{
-        val bookAvailable = bookService.currentAvailableBook().asFlow()
+        val bookAvailable: Flow<Books> = bookService.currentAvailableBook().asFlow()
         ServerResponse.ok().bodyAndAwait(bookAvailable)
     }
 
@@ -127,7 +135,7 @@ class BookHandler(
         request: ServerRequest
     ): ServerResponse = coroutineScope {
 
-        val bookDto = request.bodyToMono<BookDto>().awaitFirst()
+        val bookDto: BookDto = request.bodyToMono<BookDto>().awaitFirst()
 
         when(val result = bookService.updateBook(bookDto)){
             is CoreResult.Success ->
@@ -145,7 +153,7 @@ class BookHandler(
     * */
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun getBookById(request: ServerRequest): ServerResponse{
-        val bookId = request.pathVariable("bookId")
+        val bookId: String = request.pathVariable("bookId")
         return when(val result = bookService.getBook(bookId)){
             is CoreResult.Failure ->
                 ServerResponse.status(INTERNAL_SERVER_ERROR).bodyValueAndAwait(result.errorMsg)
@@ -158,11 +166,11 @@ class BookHandler(
 
     /*
     * -> http://localhost:8090/api/v1/book/{id}
-    * This Endpoint use to update book in database
+    * This Endpoint use to update book in Database
     * */
     @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
     suspend fun deleteBook(request: ServerRequest): ServerResponse{
-        val bookId = request.pathVariable("bookId")
+        val bookId: String = request.pathVariable("bookId")
         return when(val result = bookService.deleteBook(bookId)){
             is CoreResult.Failure ->
                 ServerResponse.status(INTERNAL_SERVER_ERROR).bodyValueAndAwait(result.errorMsg)
@@ -176,11 +184,11 @@ class BookHandler(
 
     /*
     * -> http://localhost:8090/api/v1/book/available
-    * This Endpoint use to get available book
+    * This Endpoint use to get the Available book
     * */
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun availableBook(): ServerResponse = coroutineScope {
-        when(val result = bookService.getAvailableBook()){
+        when(val result: CoreResult<List<BookAvailableDto>> = bookService.getAvailableBook()){
             is CoreResult.Success ->
                 ServerResponse.status(OK).bodyValueAndAwait(result.data)
             is CoreResult.Failure ->
@@ -196,7 +204,7 @@ class BookHandler(
         request: ServerRequest
     ): ServerResponse = coroutineScope{
 
-        val bookId = request.queryParams()["bookId"]
+        val bookId: MutableList<String> = request.queryParams()["bookId"]
             ?: return@coroutineScope ServerResponse.noContent().buildAndAwait()
 
         when(val result = bookService.moveToTrash(bookId)){
@@ -214,7 +222,7 @@ class BookHandler(
     suspend fun recoverBook(
         request: ServerRequest
     ): ServerResponse = coroutineScope{
-        val bookId = request.queryParams()["bookId"]
+        val bookId: MutableList<String> = request.queryParams()["bookId"]
             ?: return@coroutineScope ServerResponse.noContent().buildAndAwait()
 
         when(val result = bookService.recoveryBooks(bookId)){
@@ -230,7 +238,7 @@ class BookHandler(
     // http://localhost:8090/api/v1/book/in-trash
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun getBooksInTrash(): ServerResponse = coroutineScope{
-        val bookInTrash =  bookService.getBooksInTrash().map {
+        val bookInTrash: Flow<BookDto> =  bookService.getBooksInTrash().map {
             it.toBookDto()
         }
         ServerResponse.ok().bodyAndAwait(bookInTrash)
@@ -238,12 +246,14 @@ class BookHandler(
 
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun getBookIncome(request: ServerRequest): ServerResponse{
-        val sYearMonth = request.queryParam("sYearMonth")
+        val sYearMonth: YearMonth = request.queryParam("sYearMonth")
             .map { YearMonth.parse(it) }
-            .orElse(null)
+            .orElse(null)  ?: return ServerResponse.badRequest().buildAndAwait()
+
         val eYearMonth = request.queryParam("eYearMonth")
             .map { YearMonth.parse(it) }
-            .orElse(null)
+            .orElse(null) ?: return ServerResponse.badRequest().buildAndAwait()
+
         val bookIncomes = bookService.getBookIncome(sYearMonth, eYearMonth).asFlow()
         return ServerResponse.ok().bodyAndAwait(bookIncomes)
     }
@@ -251,7 +261,7 @@ class BookHandler(
     @OptIn(DelicateCoroutinesApi::class)
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun aboutBookData(): ServerResponse {
-        val data =  GlobalScope.async { bookService.aboutBookData()}.await()
+        val data: Map<String, Int> =  GlobalScope.async { bookService.aboutBookData()}.await()
         return ServerResponse.ok().json().bodyValueAndAwait(data)
     }
 
@@ -289,24 +299,24 @@ class BookHandler(
         return books
     }
     // Extension functions to handle cell types dynamically
-    private fun org.apache.poi.ss.usermodel.Cell.stringValue(): String {
+    private fun Cell.stringValue(): String {
         return when (cellType) {
-            org.apache.poi.ss.usermodel.CellType.STRING -> stringCellValue
-            org.apache.poi.ss.usermodel.CellType.NUMERIC -> numericCellValue.toInt().toString()
+            CellType.STRING -> stringCellValue
+            CellType.NUMERIC -> numericCellValue.toInt().toString()
             else -> ""
         }
     }
 
-    private fun org.apache.poi.ss.usermodel.Cell.numericValue(): Double? {
+    private fun Cell.numericValue(): Double? {
         return when (cellType) {
-            org.apache.poi.ss.usermodel.CellType.NUMERIC -> numericCellValue
-            org.apache.poi.ss.usermodel.CellType.STRING -> stringCellValue.toDoubleOrNull()
+            CellType.NUMERIC -> numericCellValue
+            CellType.STRING -> stringCellValue.toDoubleOrNull()
             else -> null
         }
     }
-    private fun org.apache.poi.ss.usermodel.Cell.dateValue(): LocalDate? {
-        return if (cellType == org.apache.poi.ss.usermodel.CellType.NUMERIC && DateUtil.isCellDateFormatted(this)) {
-            DateUtil.getJavaDate(numericCellValue).toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate()
+    private fun Cell.dateValue(): LocalDate? {
+        return if (cellType == CellType.NUMERIC && DateUtil.isCellDateFormatted(this)) {
+            DateUtil.getJavaDate(numericCellValue).toInstant().atZone(ZoneId.systemDefault()).toLocalDate()
         } else {
             stringValue().let { LocalDate.parse(it) }
         }
