@@ -8,4 +8,6 @@ interface VisitorRepository {
     suspend fun findByStudentId(studentId: Long): Visitor?
     suspend fun findByStaffId(staffId: String): Visitor?
     suspend fun save(visitor: Visitor): Visitor
+    suspend fun findVisitorIdByStudentId(studentId: Long): Long?
+    suspend fun findVisitorIdByStaffId(staffId: String): Long?
 }

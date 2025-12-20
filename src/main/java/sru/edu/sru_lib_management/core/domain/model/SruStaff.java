@@ -5,9 +5,7 @@
 
 package sru.edu.sru_lib_management.core.domain.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 @Data
 @AllArgsConstructor
@@ -17,4 +15,8 @@ public class SruStaff {
     private String sruStaffName;
     private String gender;
     private String position;
+
+    public String _getSruStaffId() {
+        return sruStaffId;
+    }
 }

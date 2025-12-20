@@ -18,6 +18,7 @@ import sru.edu.sru_lib_management.core.domain.dto.attend.StaffAttendDto
 import sru.edu.sru_lib_management.core.domain.dto.dashbord.TotalMajorVisitor
 import sru.edu.sru_lib_management.core.domain.dto.dashbord.WeeklyVisitor
 import sru.edu.sru_lib_management.core.domain.model.Attend
+import sru.edu.sru_lib_management.core.domain.model.VisitorDetail
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.YearMonth
@@ -25,7 +26,7 @@ import java.time.YearMonth
 @Service
 interface AttendService {
     fun getAllAttend(): CoreResult<Flow<Attend>>
-    fun getAllAttendByDate(date: LocalDate): Flow<Attend>
+    fun getAllAttendByDate(date: LocalDate): Flow<VisitorDetail>
     fun getAttendDetails(date: LocalDate): Flow<AttendDetail>
 
     fun getAllStudentAttendDetail(date: LocalDate): Flow<StudentAttendDetail>
@@ -34,8 +35,10 @@ interface AttendService {
     suspend fun deleteAttend(attendId: Long): CoreResult<Boolean>
     suspend fun getCustomAttByDate(date: LocalDate): Flow<List<Attend>>
     suspend fun getAttend(attendId: Long): CoreResult<Attend?>
-    suspend fun getAttByEntryId(entryId: String, date: LocalDate): CoreResult<List<Attend?>>
-    suspend fun updateExitingTime(entryId: String, exitingTime: LocalTime): CoreResult<String>
+    suspend fun getAttByEntryId(visitorId: Long, date: LocalDate): CoreResult<List<Attend?>>
+    suspend fun updateExitingTime(visitorId: Long, exitingTime: LocalTime): CoreResult<String>
+
+    suspend fun updateExitTimeByVisitorId(entryId: String, exitTime: LocalTime): CoreResult<String>
     suspend fun countAttendCustomTime(date: LocalDate, period: Int): CoreResult<Int?>
 
     suspend fun getWeeklyVisit(): CoreResult<WeeklyVisitor>

@@ -16,21 +16,29 @@ class VisitorRepositoryImp(
 
     companion object {
         private const val FIND_BY_STUDENT_ID = """
-        SELECT visitor_id, visitor_type, student_id, sru_staff_id
-        FROM visitors
-        WHERE student_id = :studentId
-    """
-
+            SELECT visitor_id, visitor_type, student_id, sru_staff_id
+            FROM visitors
+            WHERE student_id = :studentId
+        """
         private const val FIND_BY_STAFF_ID = """
-        SELECT visitor_id, visitor_type, student_id, sru_staff_id
-        FROM visitors
-        WHERE sru_staff_id = :staffId
-    """
-
+            SELECT visitor_id, visitor_type, student_id, sru_staff_id
+            FROM visitors
+            WHERE sru_staff_id = :staffId
+        """
         private const val SAVE_VISITOR = """
-        INSERT INTO visitors (visitor_type, student_id, sru_staff_id)
-        VALUES (:visitorType, :studentId, :sruStaffId)
-    """
+            INSERT INTO visitors (visitor_type, student_id, sru_staff_id)
+            VALUES (:visitorType, :studentId, :sruStaffId)
+        """
+        const val FIND_VISITOR_BY_STUDENT = """
+            SELECT visitor_id
+            FROM visitors
+            WHERE student_id = :studentId
+        """
+        const val FIND_VISITOR_BY_STAFF = """
+            SELECT visitor_id
+            FROM visitors
+            WHERE sru_staff_id = :staffId
+        """
     }
 
     override suspend fun findByStudentId(studentId: Long): Visitor? {
@@ -78,6 +86,18 @@ class VisitorRepositoryImp(
 
         return visitor.copy(visitorId = visitorId)
     }
+
+    override suspend fun findVisitorIdByStudentId(studentId: Long): Long? =
+        client.sql(FIND_VISITOR_BY_STUDENT)
+            .bind("studentId", studentId)
+            .map { row, _ -> row.get("visitor_id", java.lang.Long::class.java)!!.toLong() }
+            .awaitOneOrNull()
+
+    override suspend fun findVisitorIdByStaffId(staffId: String): Long? =
+        client.sql(FIND_VISITOR_BY_STAFF)
+            .bind("staffId", staffId)
+            .map { row, _ -> row.get("visitor_id", java.lang.Long::class.java)!!.toLong() }
+            .awaitOneOrNull()
 
     private fun Row.rowMapping(): Visitor = Visitor(
         visitorId = this.get("visitor_id", java.lang.Long::class.java)?.toLong(),

@@ -77,7 +77,7 @@ class AttendHandler(
         request: ServerRequest
     ): ServerResponse = coroutineScope{
 
-        val entryId = request.queryParamOrNull("entryId")
+        val entryId = request.queryParamOrNull("entryId")?.toLongOrNull()
             ?: return@coroutineScope ServerResponse.badRequest().buildAndAwait()
         val exitingTime = request.queryParam("exitingTime")
             .map { LocalTime.parse(it) }.orElse(null)
@@ -93,8 +93,8 @@ class AttendHandler(
     }
 
     /*
-    -> http://localhost:8090/api/v1/att/custom get attend custom by time
-    *  Example : Get Last 1 day, 7 days, 1 month or 1 year
+    -> http://localhost:8090/api/v1/att/custom get Attend custom by time
+    *  Example: Get Last 1 day, 7 days, 1 month or 1 year
     *
     */
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
@@ -110,7 +110,7 @@ class AttendHandler(
 
     /*
     * ->  http://localhost:8090/api/v1/att/count
-    * Count number of student by custom time
+    * Count number of Student by custom time
     * */
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun countCustomAttend(
@@ -134,7 +134,7 @@ class AttendHandler(
 
     /*
    * ->  http://localhost:8090/api/v1/att/compare
-   * Count number of attend by custom time and compare it to the previous time
+   * Count number of Attend by custom time and compare it to the previous time
    * */
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun countAndCompare(
@@ -160,7 +160,7 @@ class AttendHandler(
 
     /*
    * ->  http://localhost:8090/api/v1/att/detail
-   * Count number of student by custom time
+   * Count number of Students by custom time
    * */
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun getDetails(): ServerResponse = coroutineScope {
@@ -170,7 +170,7 @@ class AttendHandler(
 
     /*
   * ->  http://localhost:8090/api/v1/att/weekly
-  * Count weekly visit of student by custom time
+  * Count weekly visit of Student by custom time
   * */
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun weeklyVisitor(): ServerResponse = coroutineScope {

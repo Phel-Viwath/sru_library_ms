@@ -136,8 +136,8 @@ create table if not exists donation(
 Create table if not exists attend(
     attend_id BIGINT PRIMARY KEY AUTO_INCREMENT,
     visitor_id BIGINT NOT NULL,
-    entry_time TIMESTAMP NOT NULL,
-    exit_time TIMESTAMP NULL,
+    entry_time TIME NOT NULL,
+    exit_time TIME NULL,
     attend_date DATE NOT NULL,
     purpose VARCHAR(50) NOT NULL,
 
@@ -202,3 +202,14 @@ CREATE TABLE if not exists visitors(
         FOREIGN KEY (sru_staff_id) REFERENCES sru_staff(sru_staff_id)
             ON DELETE CASCADE ON UPDATE CASCADE
 );
+
+
+
+
+
+
+
+
+
+
+

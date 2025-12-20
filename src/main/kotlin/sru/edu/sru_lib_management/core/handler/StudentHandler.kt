@@ -32,7 +32,7 @@ class StudentHandler(
     private val logger = LoggerFactory.getLogger(StudentHandler::class.java)
 
     /*
-     * Add student to database
+     * Add student to Database
      */
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     suspend fun saveStudent(request: ServerRequest): ServerResponse {
@@ -54,7 +54,7 @@ class StudentHandler(
             ServerResponse.badRequest().buildAndAwait()
     }
 
-    // Get all student using flux as flow
+    // Get all student using flux as Flow
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun getAllStudents(): ServerResponse {
        return try {
@@ -67,7 +67,7 @@ class StudentHandler(
     }
 
     /*
-     * get student from database by id
+     * get student from Database by id
      */
 
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
@@ -87,7 +87,7 @@ class StudentHandler(
     }
 
     /*
-     * Update student from database
+     * Update student from Database
      */
 
     @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
@@ -110,7 +110,7 @@ class StudentHandler(
     }
 
     /*
-    * Delete student from database
+    * Delete student from Database
      */
 
     @PreAuthorize("hasAnyRole('SUPER_ADMIN')")

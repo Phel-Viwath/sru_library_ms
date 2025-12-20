@@ -41,20 +41,17 @@ class ScheduleTask(
             LocalTime.parse("19:40:00")
         )
         try {
-            attendService.getAllAttendByDate(indoChinaDate()).onEach { attend ->
-                if (attend.exitingTimes == null) {
+            attendService.getAllAttendByDate(indoChinaDate()).onEach { visitorDetail ->
+                if (visitorDetail.exitTimes == null) {
                     val newExitingTime = when (indoChinaTime()) {
                         in SEVEN_AM..ELEVEN_AM -> timeToAutoExit[0]
                         in TWO_PM..FIVE_PM -> timeToAutoExit[1]
                         in FIVE_THIRTY_PM..SEVEN_THIRTY_PM -> timeToAutoExit[2]
                         else -> indoChinaTime()
                     }
-                    logger.info("Updating exiting time for student ${attend.studentId} to $newExitingTime")
-                    if (attend.studentId != null){
-                        attendService.updateExitingTime(attend.studentId.toString(), indoChinaTime())
-                    }
-                    if (attend.staffId != null)
-                        attendService.updateExitingTime(attend.staffId, indoChinaTime())
+                    logger.info("Updating exiting time for student ${visitorDetail.visitorId} to $newExitingTime")
+                    if (visitorDetail.visitorId != null)
+                        attendService.updateExitingTime(visitorDetail.visitorId, indoChinaTime())
                 }
             }
         } catch (e: Exception) {
@@ -62,7 +59,7 @@ class ScheduleTask(
         }
     }
 
-    /// Delete all book that inactive in 30 day
+    /// Delete all book that inactive in 30 days
     @Scheduled(cron = "0 0 * * * ?", zone = "Asia/Phnom_Penh")
     @Transactional
     suspend fun deleteInactiveBook(){

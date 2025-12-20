@@ -29,6 +29,7 @@ import sru.edu.sru_lib_management.core.domain.dto.dashbord.TotalMajorVisitor
 import sru.edu.sru_lib_management.core.domain.dto.dashbord.WeeklyVisitor
 import sru.edu.sru_lib_management.core.domain.model.Attend
 import sru.edu.sru_lib_management.core.domain.model.Visitor
+import sru.edu.sru_lib_management.core.domain.model.VisitorDetail
 import sru.edu.sru_lib_management.core.domain.model.VisitorType
 import sru.edu.sru_lib_management.core.domain.repository.AttendRepository
 import sru.edu.sru_lib_management.core.domain.repository.SruStaffRepository
@@ -42,7 +43,6 @@ import sru.edu.sru_lib_management.utils.OpeningTime.FIVE_THIRTY_PM
 import sru.edu.sru_lib_management.utils.OpeningTime.SEVEN_AM
 import sru.edu.sru_lib_management.utils.OpeningTime.SEVEN_THIRTY_PM
 import sru.edu.sru_lib_management.utils.OpeningTime.TWO_PM
-import sru.edu.sru_lib_management.utils.checkEntryId
 import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalTime
@@ -62,12 +62,12 @@ class AttendServiceImp(
     * */
     override suspend fun saveAttend(attendDto: AttendDto): CoreResult<Attend> {
         return runCatching {
-            val checkEntryTime =
-                attendDto.entryTimes !in (SEVEN_AM..ELEVEN_AM ) &&
-                        attendDto.entryTimes !in TWO_PM ..FIVE_PM &&
-                        attendDto.entryTimes !in FIVE_THIRTY_PM..SEVEN_THIRTY_PM
-            if (checkEntryTime)
-                return CoreResult.ClientError("Closing time.")
+//            val checkEntryTime =
+//                attendDto.entryTimes !in (SEVEN_AM..ELEVEN_AM ) &&
+//                        attendDto.entryTimes !in TWO_PM ..FIVE_PM &&
+//                        attendDto.entryTimes !in FIVE_THIRTY_PM..SEVEN_THIRTY_PM
+//            if (checkEntryTime)
+//                return CoreResult.ClientError("Closing time.")
             if (attendDto.studentId == null && attendDto.sruStaffId == null) {
                 return CoreResult.ClientError("Student ID or Staff ID is required")
             }
@@ -102,11 +102,26 @@ class AttendServiceImp(
                                 visitorId = null,
                                 visitorType = VisitorType.SRU_STAFF,
                                 studentId = null,
-                                sruStaffId = staff.sruStaffId
+                                sruStaffId = staff._getSruStaffId()
                             )
                         )
                 }
             }
+
+            val existingAttend = attendRepository.getAttendByEntryId(visitor.visitorId!!, indoChinaDate())
+
+            // update exitTime when they forgot to Scan out
+            existingAttend.forEach { attend ->
+                if (attend != null && attend.exitTimes == null){
+                    attendRepository.updateExitingTime(
+                        attendId = attend.attendId!!,
+                        exitingTimes = attendDto.entryTimes,
+                        date = indoChinaDate()
+                    )
+                    logger.info("Auto-updated exit time for attend_id: ${attend.attendId} to ${attendDto.entryTimes}")
+                }
+            }
+
             val attend = Attend(
                 attendId = null,
                 visitorId = visitor.visitorId,
@@ -182,7 +197,7 @@ class AttendServiceImp(
     }
 
     /*
-    * Get all attend
+    * Get all attending
     * */
     override fun getAllAttend(): CoreResult<Flow<Attend>> {
         return runCatching {
@@ -197,7 +212,7 @@ class AttendServiceImp(
         )
     }
 
-    override fun getAllAttendByDate(date: LocalDate): Flow<Attend> {
+    override fun getAllAttendByDate(date: LocalDate): Flow<VisitorDetail> {
         return try {
             attendRepository.getAllAttendByDate(date)
         }catch (e: Exception){
@@ -246,11 +261,11 @@ class AttendServiceImp(
     }
 
     /*
-    * Get attend by student id
+    * Get Attends by student id
     * */
-    override suspend fun getAttByEntryId(entryId: String, date: LocalDate): CoreResult<List<Attend?>> {
+    override suspend fun getAttByEntryId(visitorId: Long, date: LocalDate): CoreResult<List<Attend?>> {
         return runCatching{
-            attendRepository.getAttendByEntryId(entryId, date)
+            attendRepository.getAttendByEntryId(visitorId, date)
         }.fold(
             onSuccess = {
                 CoreResult.Success(it)
@@ -263,23 +278,20 @@ class AttendServiceImp(
     }
 
     /*
-    * Update exiting time when student go out
+    * Update exiting time when Student goes out
     * */
-    override suspend fun updateExitingTime(entryId: String, exitingTime: LocalTime): CoreResult<String> {
+    override suspend fun updateExitingTime(visitorId: Long, exitingTime: LocalTime): CoreResult<String> {
         return runCatching {
-            val existAttend = attendRepository.getAttendByEntryId(entryId, indoChinaDate())
+            val existAttend = attendRepository.getAttendByEntryId(visitorId, indoChinaDate())
+            logger.info("Exist attend: $existAttend")
             var attendId = 0L
-            logger.info("$existAttend")
             if (existAttend.isEmpty())
-                CoreResult.ClientError("Can not find attend with this student id: $entryId")
-            existAttend.forEach {
-                if (it!!.exitTimes == null)
-                    attendId = it.attendId!!
+                CoreResult.ClientError("Can not find attend with this student id: $visitorId")
+            existAttend.forEach { attend ->
+                if (attend!!.exitTimes == null)
+                    attendId = attend.attendId!!
             }
-            if (entryId.checkEntryId() is Long)
-                attendRepository.updateExitingTime(attendId, exitingTime, entryId.toLong(), indoChinaDate())
-            else
-                attendRepository.updateStaffExitingTime(attendId, exitingTime, entryId, indoChinaDate())
+            attendRepository.updateExitingTime(attendId,exitingTime,indoChinaDate())
 
         }.fold(
             onSuccess = {
@@ -292,9 +304,36 @@ class AttendServiceImp(
         )
     }
 
+    override suspend fun updateExitTimeByVisitorId(entryId: String, exitTime: LocalTime): CoreResult<String> {
+        return runCatching {
+
+            val visitorId = if (entryId.all { it.isDigit() }) {
+                visitorRepository.findVisitorIdByStudentId(entryId.toLong())
+            } else {
+                visitorRepository.findVisitorIdByStaffId(entryId)
+            } ?: return CoreResult.ClientError("Visitor not found")
+
+            val updated = attendRepository.updateExitTimeByVisitorId(
+                visitorId,
+                exitTime,
+                indoChinaDate()
+            )
+
+            if (!updated)
+                return CoreResult.ClientError("No active attendance to scan out")
+
+            "Scan-out successful"
+
+        }.fold(
+            onSuccess = { CoreResult.Success(it) },
+            onFailure = { CoreResult.Failure(it.message ?: "Update failed") }
+        )
+    }
+
     /*
-    * Count attend custom by time
+    * Count Attends custom by time
     * */
+
     override suspend fun countAttendCustomTime(date: LocalDate, period: Int): CoreResult<Int?> {
         return if (period < 0){
             CoreResult.ClientError("Opp!")

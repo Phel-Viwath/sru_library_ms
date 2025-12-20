@@ -15,6 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.ServerRequest
 import org.springframework.web.reactive.function.server.ServerResponse
+import org.springframework.web.reactive.function.server.buildAndAwait
 import sru.edu.sru_lib_management.common.CoreResult
 import sru.edu.sru_lib_management.core.domain.dto.attend.AttendDto
 import sru.edu.sru_lib_management.core.domain.dto.attend.StudentAttendDetail
@@ -46,7 +47,7 @@ class EntryHandler(
 
     ////
     //  http://localhost:8090/api/v1/entry (path variable)
-    //  find student in database when they scan
+    //  find student in the database when they scan
     ////
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun getStudentById(request: ServerRequest): ServerResponse{
@@ -62,7 +63,7 @@ class EntryHandler(
 
     ////
     //  http://localhost:8090/api/v1/entry (request param)
-    //  save new entry when student scan
+    //  save a new entry when student scans
     ////
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun newEntry(
@@ -78,14 +79,24 @@ class EntryHandler(
             if (purpose.isBlank())
                 return@coroutineScope ServerResponse.badRequest().build().awaitSingle()
 
-            val attend = AttendDto(
-                attendId = null,
-                visitorId = entryId,
-                entryTimes = indoChinaTime(),
-                exitingTimes = null,
-                purpose = purpose,
-                attendDate = indoChinaDate()
-            )
+            val attend = when {
+                entryId.toLongOrNull() != null -> AttendDto(
+                    studentId = entryId.toLong(),
+                    sruStaffId = null,
+                    entryTimes = indoChinaTime(),
+                    exitingTimes = null,
+                    purpose = purpose,
+                    attendDate = indoChinaDate()
+                )
+                else -> AttendDto(
+                    studentId = null,
+                    sruStaffId = entryId,
+                    entryTimes = indoChinaTime(),
+                    exitingTimes = null,
+                    purpose = purpose,
+                    attendDate = indoChinaDate()
+                )
+            }
             when(val result = attendService.saveAttend(attend)){
                 is CoreResult.Success ->
                     ServerResponse.status(CREATED).bodyValue(result.data).awaitSingle()
@@ -106,7 +117,8 @@ class EntryHandler(
         request: ServerRequest
     ): ServerResponse = coroutineScope{
         val entryId = request.queryParam("entryId").orElse(null)
-        when(val result = attendService.updateExitingTime(entryId, indoChinaTime())){
+            ?: return@coroutineScope ServerResponse.badRequest().buildAndAwait()
+        when(val result = attendService.updateExitTimeByVisitorId(entryId, indoChinaTime())){
             is CoreResult.ClientError ->
                 ServerResponse.status(BAD_REQUEST).bodyValue(result.clientErrMsg).awaitSingle()
             is CoreResult.Failure ->
@@ -117,7 +129,7 @@ class EntryHandler(
     }
     ////
     //  http://localhost:8090/api/v1/entry
-    //  card data and list of attend in entry page
+    //  card data and list of attend in Entry page
     ////
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun recentEntryData(): ServerResponse = coroutineScope {
@@ -158,7 +170,7 @@ class EntryHandler(
 
     ////
     //  http://localhost:8090/api/v1/entry/check
-    //  card data and list of attend in entry page
+    //  card data and list of Attend in Entry page
     ////
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun checkExistingStudent(request: ServerRequest): ServerResponse {

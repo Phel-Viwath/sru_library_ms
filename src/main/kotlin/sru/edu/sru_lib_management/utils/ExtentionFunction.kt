@@ -50,14 +50,14 @@ fun Books.toBookDto(): BookDto{
     )
 }
 // to student attend
-fun Attend.toStudentAttend(): StudentAttendDto = StudentAttendDto(
-    attendId = attendId!!,
-    studentId = studentId!!,
-    entryTimes = entryTimes,
-    exitingTimes = exitingTimes,
-    purpose = purpose,
-    date = date
-)
+//fun Attend.toStudentAttend(): StudentAttendDto = StudentAttendDto(
+//    attendId = attendId!!,
+//    studentId = studentId!!,
+//    entryTimes = entryTimes,
+//    exitingTimes = exitingTimes,
+//    purpose = purpose,
+//    date = date
+//)
 // to staff attend
 
 

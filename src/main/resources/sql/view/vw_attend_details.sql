@@ -1,6 +1,7 @@
-CREATE VIEW vw_attend_details AS
+CREATE OR REPLACE VIEW vw_attend_details AS
 SELECT
     a.attend_id,
+    v.visitor_id,
     a.entry_time,
     a.exit_time,
     a.attend_date,

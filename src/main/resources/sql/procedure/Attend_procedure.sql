@@ -305,3 +305,23 @@ BEGIN
              LEFT JOIN sru_staff st ON v.sru_staff_id = st.sru_staff_id
     WHERE a.attend_date = p_date;
 END;
+
+CREATE PROCEDURE GetVisitorDetail(
+    IN p_date DATE,
+    IN p_visitor_type ENUM('STUDENT','SRU_STAFF')
+)
+BEGIN
+    SELECT
+        attendId,
+        visitorId,
+        visitorName,
+        visitorType,
+        entryTimes,
+        exitTimes,
+        purpose,
+        attendDate
+    FROM vw_visitor_attend_detail
+    WHERE (p_date IS NULL OR attendDate = p_date)
+      AND (p_visitor_type IS NULL OR visitorType = p_visitor_type)
+    ORDER BY attendDate DESC, entryTimes;
+END;

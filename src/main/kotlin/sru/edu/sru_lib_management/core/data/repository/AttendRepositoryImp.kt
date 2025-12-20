@@ -13,17 +13,27 @@ import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.r2dbc.core.*
 import org.springframework.stereotype.Component
-import sru.edu.sru_lib_management.core.domain.dto.attend.StudentAttendDetail
+import sru.edu.sru_lib_management.core.data.query.AttendQuery.SAVE_ATTEND_QUERY
+import sru.edu.sru_lib_management.core.data.query.AttendQuery.UPDATE_ATTEND_QUERY
+import sru.edu.sru_lib_management.core.data.query.AttendQuery.GET_VISITOR_BY_ATTEND_ID
+import sru.edu.sru_lib_management.core.data.query.AttendQuery.UPDATE_EXIT_TIME
+import sru.edu.sru_lib_management.core.data.query.AttendQuery.DELETE_ATTEND_QUERY
+import sru.edu.sru_lib_management.core.data.query.AttendQuery.GET_ATTEND_QUERY
+import sru.edu.sru_lib_management.core.data.query.AttendQuery.GET_ALL_ATTEND_QUERY
+import sru.edu.sru_lib_management.core.data.query.AttendQuery.GET_ALL_STAFF_ATTEND
+import sru.edu.sru_lib_management.core.data.query.AttendQuery.UPDATE_EXIT_TIME_BY_VISITOR
 import sru.edu.sru_lib_management.core.domain.dto.CompareValue
 import sru.edu.sru_lib_management.core.domain.dto.MajorPurpose
 import sru.edu.sru_lib_management.core.domain.dto.attend.AttendDetail
 import sru.edu.sru_lib_management.core.domain.dto.attend.StaffAttendDto
+import sru.edu.sru_lib_management.core.domain.dto.attend.StudentAttendDetail
 import sru.edu.sru_lib_management.core.domain.dto.dashbord.DayVisitor
 import sru.edu.sru_lib_management.core.domain.dto.dashbord.TotalMajorVisitor
 import sru.edu.sru_lib_management.core.domain.model.Attend
+import sru.edu.sru_lib_management.core.domain.model.ExitUpdateResult
+import sru.edu.sru_lib_management.core.domain.model.VisitorDetail
 import sru.edu.sru_lib_management.core.domain.model.VisitorType
 import sru.edu.sru_lib_management.core.domain.repository.AttendRepository
-import sru.edu.sru_lib_management.utils.checkEntryId
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -34,10 +44,10 @@ class AttendRepositoryImp(
     private val client: DatabaseClient
 ) : AttendRepository {
 
-    override fun getAllAttendByDate(date: LocalDate): Flow<Attend> {
-        return client.sql("SELECT * FROM attend where attend_date = :date")
+    override fun getAllAttendByDate(date: LocalDate): Flow<VisitorDetail> {
+        return client.sql("CALL GetVisitorDetail(:date, null)")
             .bind("date", date)
-            .map { row: Row, _ -> row.mapToAttend() }
+            .map { row: Row, _ -> row.mapToVisitorDetail() }
             .all()
             .asFlow()
     }
@@ -112,33 +122,34 @@ class AttendRepositoryImp(
         return rowEffect > 0
     }
 
-    override suspend fun updateExitingTime(attendId: Long, exitingTimes: LocalTime, studentId: Long, date: LocalDate): Long {
-        val rowEffect = client.sql(UPDATE_EXIT_TIME)
-            .bind("exitingTimes", exitingTimes)
+    override suspend fun updateExitingTime(attendId: Long, exitingTimes: LocalTime, date: LocalDate): ExitUpdateResult? {
+        val rows = client.sql(UPDATE_EXIT_TIME)
+            .bind("exitTimes", exitingTimes)
             .bind("attendId", attendId)
             .bind("date", date)
             .fetch()
             .awaitRowsUpdated()
-        return if (rowEffect > 0)
-            studentId
-        else 0
+
+        if (rows == 0L) return null
+        return client.sql(GET_VISITOR_BY_ATTEND_ID)
+            .bind("attendId", attendId)
+            .map { row, _ ->
+                ExitUpdateResult(
+                    visitorId = row.get("visitor_id", java.lang.Long::class.java)!!.toLong(),
+                    studentId = row.get("student_id", java.lang.Long::class.java)?.toLong(),
+                    staffId = row.get("sru_staff_id", String::class.java)
+                )
+            }
+            .awaitOneOrNull()
     }
 
-    override suspend fun updateStaffExitingTime(
-        attendId: Long,
-        exitingTimes: LocalTime,
-        staffId: String,
-        date: LocalDate,
-    ): String {
-        val rowEffected = client.sql(UPDATE_STAFF_EXITING_TIME)
-            .bind("attendId", attendId)
-            .bind("exitingTimes", exitingTimes)
+    override suspend fun updateExitTimeByVisitorId(visitorId: Long, exitTime: LocalTime, date: LocalDate): Boolean {
+        return client.sql(UPDATE_EXIT_TIME_BY_VISITOR)
+            .bind("visitorId", visitorId)
+            .bind("exitTime", exitTime)
             .bind("date", date)
             .fetch()
-            .awaitRowsUpdated()
-        return if (rowEffected > 0)
-            staffId
-        else ""
+            .awaitRowsUpdated() > 0
     }
 
     override suspend fun count(date: LocalDate, period: Int): Int? {
@@ -159,19 +170,9 @@ class AttendRepositoryImp(
         }
     }
 
-    override suspend fun getAttendByEntryId(entryId: String, date: LocalDate): List<Attend?> {
-        return if (entryId.checkEntryId() is Long)
-            client.sql(GET_ATTEND_QUERY_BY_STUDENT_ID)
-                .bind("studentId", entryId)
-                .bind("date", date)
-                .map { row: Row, _ ->
-                    row.mapToAttend()
-                }
-                .flow()
-                .toList()
-        else
-            client.sql(GET_ATTEND_QUERY_BY_STAFF_ID)
-                .bind("staffId", entryId)
+    override suspend fun getAttendByEntryId(visitorId: Long, date: LocalDate): List<Attend?> {
+        return client.sql("SELECT * FROM vw_attend_details WHERE visitor_id = :visitorId AND attend_date = :date")
+                .bind("visitorId", visitorId)
                 .bind("date", date)
                 .map { row: Row, _ ->
                     row.mapToAttend()
@@ -365,9 +366,9 @@ class AttendRepositoryImp(
     private fun paramMap(attend: Attend): Map<String, Any?> = mapOf(
         "visitorId" to attend.visitorId,
         "entryTimes" to attend.entryTimes,
-        "exitingTimes" to attend.exitTimes,
+        "exitTimes" to attend.exitTimes,
         "purpose" to attend.purpose,
-        "date" to attend.attendDate
+        "attendDate" to attend.attendDate
     )
 
     private fun Row.mapToAttend(): Attend = Attend(
@@ -376,7 +377,18 @@ class AttendRepositoryImp(
         entryTimes = this.get("entry_time", LocalTime::class.java)!!,
         exitTimes = this.get("exit_time", LocalTime::class.java),
         purpose = this.get("purpose", String::class.java)!!,
-        attendDate = this.get("date", LocalDate::class.java)!!
+        attendDate = this.get("attend_date", LocalDate::class.java)!!
+    )
+
+    private fun Row.mapToVisitorDetail() = VisitorDetail(
+        attendId = this.get("attendId", Long::class.java)!!,
+        visitorId = this.get("visitorId", Long::class.java)!!,
+        visitorName = this.get("visitorName", String::class.java)!!,
+        visitorType = VisitorType.valueOf(this.get("visitorType", String::class.java)!!),
+        entryTimes = this.get("entryTimes", LocalTime::class.java)!!,
+        exitTimes = this.get("exitTimes", LocalTime::class.java),
+        purpose = this.get("purpose", String::class.java)!!,
+        attendDate = this.get("attendDate", LocalDate::class.java)!!
     )
 
     private fun Row.mapToStudentAttendDetail(): StudentAttendDetail = StudentAttendDetail(
@@ -403,52 +415,5 @@ class AttendRepositoryImp(
         status = null
     )
 
-
-    companion object {
-        const val SAVE_ATTEND_QUERY = """
-            INSERT INTO attend(visitor_id, entry_time, exit_time, attend_date, purpose)
-            VALUES(:visitorId, :entryTimes, :exitTimes, :attendDate, :purpose);
-        """
-        const val UPDATE_ATTEND_QUERY = """
-            UPDATE attend set visitor_id = :visitorId, entry_time = :entryTimes,
-            exit_time = :exitTimes, attend_date = :attendDate, purpose = :purpose
-            WHERE attend_id = :attendId;
-        """
-        const val DELETE_ATTEND_QUERY = "DELETE FROM attend WHERE attend_id = :attendId;"
-        const val GET_ATTEND_QUERY = "SELECT * FROM attend WHERE attend_id = :attendId;"
-
-        const val GET_ATTEND_QUERY_BY_STUDENT_ID = """
-            SELECT * FROM vw_attend_details
-                WHERE visitor_type = 'STUDENT'
-                  AND student_id = :studentId
-                  AND attend_date = :date
-        """
-        const val GET_ATTEND_QUERY_BY_STAFF_ID = """
-            SELECT * FROM vw_attend_details
-            WHERE visitor_type = 'SRU_STAFF'
-              AND sru_staff_id = :staffId
-              AND attend_date = :date
-        """
-        const val GET_ALL_ATTEND_QUERY = "SELECT * FROM attend;"
-
-        const val UPDATE_EXIT_TIME = "UPDATE attend SET exit_time = :exitingTimes WHERE attend_id = :attendId AND attend_date = :date;"
-        const val UPDATE_STAFF_EXITING_TIME = """
-            UPDATE attend set exit_time = :exitingTimes WHERE attend_id = :attendId AND attend_date = :date;
-        """
-
-        const val GET_ALL_STAFF_ATTEND = """
-            SELECT
-                attend_id,
-                sru_staff_id   AS staff_id,
-                sru_staff_name AS staff_name,
-                gender,
-                entry_time     AS entryTimes,
-                exit_time      AS exitingTimes,
-                purpose,
-                attend_date    AS date
-            FROM vw_attend_details
-            WHERE visitor_type = 'SRU_STAFF'
-        """
-    }
 
 }

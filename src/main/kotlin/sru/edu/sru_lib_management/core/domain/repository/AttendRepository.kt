@@ -15,6 +15,8 @@ import sru.edu.sru_lib_management.core.domain.dto.attend.StaffAttendDto
 import sru.edu.sru_lib_management.core.domain.dto.dashbord.DayVisitor
 import sru.edu.sru_lib_management.core.domain.dto.dashbord.TotalMajorVisitor
 import sru.edu.sru_lib_management.core.domain.model.Attend
+import sru.edu.sru_lib_management.core.domain.model.ExitUpdateResult
+import sru.edu.sru_lib_management.core.domain.model.VisitorDetail
 import sru.edu.sru_lib_management.core.domain.model.VisitorType
 import sru.edu.sru_lib_management.core.domain.repository.crud.ICrudRepository
 import java.time.LocalDate
@@ -22,13 +24,15 @@ import java.time.LocalTime
 
 @Repository
 interface AttendRepository : ICrudRepository<Attend, Long> {
-    fun getAllAttendByDate(date: LocalDate): Flow<Attend>
+    fun getAllAttendByDate(date: LocalDate): Flow<VisitorDetail>
     fun getCustomAttend(date: LocalDate): Flow<List<Attend>>
     fun getAttendDetail(date: LocalDate): Flow<AttendDetail>
-    suspend fun updateExitingTime(attendId: Long, exitingTimes: LocalTime, studentId: Long, date: LocalDate): Long
-    suspend fun updateStaffExitingTime(attendId: Long, exitingTimes: LocalTime, staffId: String, date: LocalDate): String
+    suspend fun updateExitingTime(attendId: Long, exitingTimes: LocalTime, date: LocalDate): ExitUpdateResult?
+
+    suspend fun updateExitTimeByVisitorId(visitorId: Long, exitTime: LocalTime, date: LocalDate): Boolean
+
     suspend fun count(date: LocalDate, period: Int): Int?
-    suspend fun getAttendByEntryId(entryId: String, date: LocalDate): List<Attend?>
+    suspend fun getAttendByEntryId(visitorId: Long, date: LocalDate): List<Attend?>
     suspend fun getWeeklyVisit(): List<DayVisitor>
 
     suspend fun countCurrentAndPreviousAttend(date: LocalDate, period: Int): CompareValue
