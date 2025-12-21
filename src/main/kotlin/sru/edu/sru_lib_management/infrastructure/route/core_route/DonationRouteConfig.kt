@@ -10,7 +10,7 @@ import org.springframework.web.reactive.function.server.coRouter
 import sru.edu.sru_lib_management.core.handler.DonateHandler
 
 @Configuration
-class DonationRoute {
+class DonationRouteConfig {
 
     @Bean
     @FlowPreview

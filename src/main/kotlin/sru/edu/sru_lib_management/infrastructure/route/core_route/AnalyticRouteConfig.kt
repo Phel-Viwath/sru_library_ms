@@ -1,6 +1,5 @@
 package sru.edu.sru_lib_management.infrastructure.route.core_route
 
-import kotlinx.coroutines.FlowPreview
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.MediaType.APPLICATION_JSON
@@ -8,15 +7,14 @@ import org.springframework.web.reactive.function.server.coRouter
 import sru.edu.sru_lib_management.core.handler.AnalyticHandler
 
 @Configuration
-class AnalyticRoute {
-    @FlowPreview
+class AnalyticRouteConfig {
     @Bean
     fun analyticRoute(analyticHandler: AnalyticHandler) = coRouter {
         (accept(APPLICATION_JSON) and "/api/v1/analytic").nest {
             /**
              * Gets comprehensive analytics data for library operations.
              *
-             * Aggregates multiple analytics including:
+             * Aggregates multiple analytics including
              * - Book income and collection statistics by college
              * - Student attendance purposes and time spent
              * - Major-wise attendance and borrowing trends

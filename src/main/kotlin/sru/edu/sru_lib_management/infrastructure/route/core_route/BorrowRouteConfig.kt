@@ -8,7 +8,7 @@ import org.springframework.web.reactive.function.server.coRouter
 import sru.edu.sru_lib_management.core.handler.BorrowHandler
 
 @Configuration
-class BorrowRoute {
+class BorrowRouteConfig {
     @Bean
     @FlowPreview
     fun borrowRoute(borrowHandler: BorrowHandler) = coRouter {

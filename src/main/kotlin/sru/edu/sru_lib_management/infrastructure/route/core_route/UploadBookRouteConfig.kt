@@ -9,7 +9,7 @@ import org.springframework.web.reactive.function.server.coRouter
 import sru.edu.sru_lib_management.core.handler.BookHandler
 
 @Configuration
-class UploadBookRoute {
+class UploadBookRouteConfig {
     @Bean
     fun uploadRoute(bookHandler: BookHandler): RouterFunction<ServerResponse> = coRouter {
         (accept(MediaType.MULTIPART_FORM_DATA) and "/api/v1/upload").nest {

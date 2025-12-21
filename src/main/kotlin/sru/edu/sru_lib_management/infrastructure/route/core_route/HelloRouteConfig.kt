@@ -12,7 +12,7 @@ import org.springframework.web.reactive.function.server.coRouter
 import sru.edu.sru_lib_management.core.handler.*
 
 @Configuration
-class HelloRoute {
+class HelloRouteConfig {
     // Auth route
 
     @Bean
@@ -23,7 +23,5 @@ class HelloRoute {
             }
         }
     }
-
-
 
 }

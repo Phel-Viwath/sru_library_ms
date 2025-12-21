@@ -15,7 +15,7 @@ import sru.edu.sru_lib_management.core.domain.service.BookService
 import sru.edu.sru_lib_management.core.domain.service.DonationService
 
 @Configuration
-class DashboardRoute {
+class DashboardRouteConfig {
     @Bean
     @FlowPreview
     fun dashboardRoute(dashboardHandler: DashboardHandler): RouterFunction<ServerResponse> = coRouter {

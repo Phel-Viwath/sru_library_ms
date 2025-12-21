@@ -14,7 +14,7 @@ import sru.edu.sru_lib_management.core.domain.service.BookService
 import sru.edu.sru_lib_management.core.domain.service.StaffService
 
 @Configuration
-class ReportRoute {
+class ReportRouteConfig {
     @Bean
     @FlowPreview
     fun reportRoute(reportHandler: ReportHandler): RouterFunction<ServerResponse> = coRouter {

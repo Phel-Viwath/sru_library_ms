@@ -9,7 +9,7 @@ import org.springframework.web.reactive.function.server.coRouter
 import sru.edu.sru_lib_management.auth.controller.AuthHandler
 
 @Configuration
-class AuthRoute {
+class AuthRouteConfig {
 
     @Bean
     fun authRoute(authHandler: AuthHandler): RouterFunction<ServerResponse> {

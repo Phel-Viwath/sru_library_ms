@@ -10,7 +10,7 @@ import org.springframework.web.reactive.function.server.coRouter
 import sru.edu.sru_lib_management.core.handler.StudentHandler
 
 @Configuration
-class StudentRoute {
+class StudentRouteConfig {
     @Bean
     @FlowPreview
     fun studentRoute(studentHandler: StudentHandler): RouterFunction<ServerResponse> = coRouter {

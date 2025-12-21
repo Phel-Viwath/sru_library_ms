@@ -9,7 +9,7 @@ import sru.edu.sru_lib_management.core.handler.AttendHandler
 import kotlinx.coroutines.flow.Flow
 
 @Configuration
-class AttendRoute {
+class AttendRouteConfig {
 
     @Bean
     @FlowPreview

@@ -10,7 +10,7 @@ import org.springframework.web.reactive.function.server.coRouter
 import sru.edu.sru_lib_management.core.handler.BookHandler
 
 @Configuration
-class BookRoute {
+class BookRouteConfig {
     @Bean
     @FlowPreview
     fun bookRouter(bookHandler: BookHandler): RouterFunction<ServerResponse> = coRouter {
