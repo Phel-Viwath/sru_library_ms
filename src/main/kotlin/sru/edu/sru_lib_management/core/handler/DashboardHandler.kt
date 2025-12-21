@@ -14,8 +14,8 @@ import org.springframework.web.reactive.function.server.ServerResponse
 import sru.edu.sru_lib_management.common.CoreResult
 import sru.edu.sru_lib_management.core.domain.dto.Analyze
 import sru.edu.sru_lib_management.core.domain.dto.attend.StudentAttendDetail
-import sru.edu.sru_lib_management.core.domain.dto.dashbord.CardData
-import sru.edu.sru_lib_management.core.domain.dto.dashbord.Dashboard
+import sru.edu.sru_lib_management.core.domain.dto.dashboard.CardData
+import sru.edu.sru_lib_management.core.domain.dto.dashboard.Dashboard
 import sru.edu.sru_lib_management.core.domain.service.AttendService
 import sru.edu.sru_lib_management.core.domain.service.BookService
 import sru.edu.sru_lib_management.core.domain.service.BorrowService

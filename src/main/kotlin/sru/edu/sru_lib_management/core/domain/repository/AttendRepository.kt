@@ -12,8 +12,8 @@ import sru.edu.sru_lib_management.core.domain.dto.CompareValue
 import sru.edu.sru_lib_management.core.domain.dto.MajorPurpose
 import sru.edu.sru_lib_management.core.domain.dto.attend.AttendDetail
 import sru.edu.sru_lib_management.core.domain.dto.attend.StaffAttendDto
-import sru.edu.sru_lib_management.core.domain.dto.dashbord.DayVisitor
-import sru.edu.sru_lib_management.core.domain.dto.dashbord.TotalMajorVisitor
+import sru.edu.sru_lib_management.core.domain.dto.dashboard.DayVisitor
+import sru.edu.sru_lib_management.core.domain.dto.dashboard.TotalMajorVisitor
 import sru.edu.sru_lib_management.core.domain.model.Attend
 import sru.edu.sru_lib_management.core.domain.model.ExitUpdateResult
 import sru.edu.sru_lib_management.core.domain.model.VisitorDetail

@@ -15,8 +15,8 @@ import sru.edu.sru_lib_management.core.domain.dto.attend.AttendDetail
 import sru.edu.sru_lib_management.core.domain.dto.attend.StudentAttendDetail
 import sru.edu.sru_lib_management.core.domain.dto.attend.AttendDto
 import sru.edu.sru_lib_management.core.domain.dto.attend.StaffAttendDto
-import sru.edu.sru_lib_management.core.domain.dto.dashbord.TotalMajorVisitor
-import sru.edu.sru_lib_management.core.domain.dto.dashbord.WeeklyVisitor
+import sru.edu.sru_lib_management.core.domain.dto.dashboard.TotalMajorVisitor
+import sru.edu.sru_lib_management.core.domain.dto.dashboard.WeeklyVisitor
 import sru.edu.sru_lib_management.core.domain.model.Attend
 import sru.edu.sru_lib_management.core.domain.model.VisitorDetail
 import java.time.LocalDate

@@ -3,7 +3,7 @@
  * @Author Phel Viwath
  */
 
-package sru.edu.sru_lib_management.core.domain.dto.dashbord
+package sru.edu.sru_lib_management.core.domain.dto.dashboard
 
 data class StudentEntry(
     val no: Int,

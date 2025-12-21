@@ -26,7 +26,7 @@ class DonateHandler(
     suspend fun saveDonation(
         request: ServerRequest
     ): ServerResponse = coroutineScope{
-        val donationDetails = request.bodyToMono<List<DonationDetail>>().awaitFirstOrNull()
+        val donationDetails: List<DonationDetail> = request.bodyToMono<List<DonationDetail>>().awaitFirstOrNull()
             ?: return@coroutineScope ServerResponse.badRequest().bodyValueAndAwait("Invalid donation details")
         when(val result = donationService.newDonation(donationDetails)){
             is CoreResult.Success ->
@@ -48,7 +48,7 @@ class DonateHandler(
     suspend fun updateDonation(
         request: ServerRequest
     ): ServerResponse = coroutineScope {
-        val donationDetail = request.bodyToMono<DonationDetail>().awaitFirstOrNull()
+        val donationDetail: DonationDetail = request.bodyToMono<DonationDetail>().awaitFirstOrNull()
             ?: return@coroutineScope ServerResponse.badRequest().bodyValueAndAwait("Invalid donation detail")
 
         when(val result = donationService.updateDonation(donationDetail)){

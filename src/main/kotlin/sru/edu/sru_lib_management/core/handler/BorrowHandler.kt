@@ -7,13 +7,17 @@ package sru.edu.sru_lib_management.core.handler
 
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactive.awaitFirst
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.*
 import sru.edu.sru_lib_management.common.CoreResult
+import sru.edu.sru_lib_management.core.domain.dto.BorrowDetail
 import sru.edu.sru_lib_management.core.domain.dto.BorrowDto
+import sru.edu.sru_lib_management.core.domain.model.Borrow
 import sru.edu.sru_lib_management.core.domain.service.BorrowService
+import java.time.LocalDate
 
 @Component
 class BorrowHandler (
@@ -22,7 +26,7 @@ class BorrowHandler (
 
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun countBorrowsPerWeek(): ServerResponse = coroutineScope {
-        when(val result = borrowService.countBorrowPerWeek()){
+        when(val result: CoreResult<Map<LocalDate, Int>> = borrowService.countBorrowPerWeek()){
             is CoreResult.Success ->
                 ServerResponse.ok().bodyValueAndAwait(result.data)
             is CoreResult.ClientError ->
@@ -35,7 +39,7 @@ class BorrowHandler (
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     suspend fun saveBorrow(request: ServerRequest): ServerResponse = coroutineScope {
 
-        val borrowDto = request.bodyToMono<BorrowDto>().awaitFirst()
+        val borrowDto: BorrowDto = request.bodyToMono<BorrowDto>().awaitFirst()
 
         when(val result = borrowService.saveBorrow(borrowDto)){
             is CoreResult.Success ->
@@ -49,13 +53,13 @@ class BorrowHandler (
 
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun getAllBorrow(): ServerResponse = coroutineScope {
-        val borrowData = borrowService.getBorrows()
+        val borrowData: Flow<Borrow> = borrowService.getBorrows()
         ServerResponse.ok().bodyAndAwait(borrowData)
     }
 
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun getAllOverDueBooks(): ServerResponse = coroutineScope {
-        val allOverDue = borrowService.overDueService()
+        val allOverDue: Flow<Borrow> = borrowService.overDueService()
         ServerResponse.ok().bodyAndAwait(allOverDue)
     }
 
@@ -64,8 +68,8 @@ class BorrowHandler (
         request: ServerRequest
     ): ServerResponse = coroutineScope {
 
-        val studentId = request.queryParamOrNull("studentId")?.toLong()
-        val bookId = request.queryParamOrNull("bookId")
+        val studentId: Long? = request.queryParamOrNull("studentId")?.toLong()
+        val bookId: String? = request.queryParamOrNull("bookId")
 
         if (studentId == null || bookId == null)
             return@coroutineScope ServerResponse.badRequest().buildAndAwait()
@@ -84,7 +88,7 @@ class BorrowHandler (
     suspend fun extendBorrowBook(
         request: ServerRequest
     ): ServerResponse = coroutineScope {
-        val id = request.queryParamOrNull("id")?.toLong()
+        val id: Long = request.queryParamOrNull("id")?.toLong()
             ?: return@coroutineScope ServerResponse.badRequest().buildAndAwait()
 
         when(val result = borrowService.extendBorrow(id)){
@@ -99,13 +103,13 @@ class BorrowHandler (
 
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun borrowDetails(): ServerResponse = coroutineScope {
-        val result = borrowService.getBorrowDetail()
+        val result: List<BorrowDetail> = borrowService.getBorrowDetail()
         ServerResponse.ok().bodyValueAndAwait(result)
     }
 
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun searchBorrow(request: ServerRequest): ServerResponse = coroutineScope {
-        val keyword = request.queryParams()["keyword"]?.firstOrNull()
+        val keyword: String = request.queryParams()["keyword"]?.firstOrNull()
             ?: return@coroutineScope ServerResponse.badRequest().buildAndAwait()
         val result = borrowService.searchBorrow(keyword)
         ServerResponse.ok().bodyValueAndAwait(result)
@@ -113,7 +117,7 @@ class BorrowHandler (
 
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun getActiveBorrow(): ServerResponse = coroutineScope{
-        val data = borrowService.getActiveBorrowed()
+        val data: Flow<BorrowDetail> = borrowService.getActiveBorrowed()
         ServerResponse.ok().bodyAndAwait(data)
     }
 

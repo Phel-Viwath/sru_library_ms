@@ -9,7 +9,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.reactor.awaitSingle
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import lombok.extern.slf4j.Slf4j
 import org.slf4j.Logger
@@ -46,7 +45,7 @@ class AuthHandler(
     suspend fun register(
         request: ServerRequest
     ): ServerResponse {
-        val registerRequest = request.bodyToMono<RegisterRequest>().awaitSingle()
+        val registerRequest: RegisterRequest = request.bodyToMono<RegisterRequest>().awaitSingle()
         val areFieldBlank =
             registerRequest.email.isBlank() || registerRequest.password.isBlank() || registerRequest.username.isBlank()
         val isPasswordTooShort = registerRequest.password.length < 8
@@ -58,7 +57,7 @@ class AuthHandler(
         if (validEmail == "undeliverable")
             return ServerResponse.badRequest().bodyValueAndAwait("Invalid email")
 
-        // check username is already exist or not
+        // check Username already exists or not
         val alreadyInUse = withContext(Dispatchers.IO) {
             service.existEmail(registerRequest.email)
         }
@@ -80,7 +79,7 @@ class AuthHandler(
     suspend fun login(
         request: ServerRequest
     ): ServerResponse = coroutineScope {
-        val loginRequest = request.bodyToMono<LoginRequest>().awaitSingle()
+        val loginRequest: LoginRequest = request.bodyToMono<LoginRequest>().awaitSingle()
         val alreadyInUse = service.existEmail(loginRequest.email)
         if (!alreadyInUse)
              return@coroutineScope ServerResponse.badRequest().bodyValueAndAwait(AuthResponse(message = "Incorrect email."))
@@ -104,7 +103,7 @@ class AuthHandler(
     suspend fun refresh(
         request: ServerRequest
     ): ServerResponse {
-        val tokenRequest = request.bodyToMono<RefreshTokenRequest>().awaitSingle()
+        val tokenRequest: RefreshTokenRequest = request.bodyToMono<RefreshTokenRequest>().awaitSingle()
         return when (val result = service.refreshToken(tokenRequest.refreshToken)) {
             is AuthResult.Success -> {
                 val token = result.data
@@ -127,9 +126,9 @@ class AuthHandler(
     suspend fun generateOtp(
         request: ServerRequest
     ): ServerResponse{
-        val email = request.queryParamOrNull("email")
+        val email: String = request.queryParamOrNull("email")
             ?: return ServerResponse.badRequest().buildAndAwait()
-        val validEmail = hunterService.verifyEmail(email)
+        val validEmail: String = hunterService.verifyEmail(email)
         if (validEmail == "undeliverable")
             return ServerResponse.badRequest().bodyValueAndAwait("Invalid username")
 
@@ -146,9 +145,9 @@ class AuthHandler(
     suspend fun verifyOtp(
         request: ServerRequest
     ): ServerResponse {
-        val otp = request.queryParamOrNull("otp")
+        val otp: String = request.queryParamOrNull("otp")
             ?: return ServerResponse.badRequest().buildAndAwait()
-        val email = request.queryParamOrNull("email")
+        val email: String = request.queryParamOrNull("email")
             ?: return ServerResponse.badRequest().buildAndAwait()
 
         return if (otpService.verifyOtp(otp, email)) {
@@ -161,7 +160,7 @@ class AuthHandler(
     suspend fun changePassword(
         request: ServerRequest
     ): ServerResponse = coroutineScope {
-        val loginRequest = request.bodyToMono<LoginRequest>().awaitSingle()
+        val loginRequest: LoginRequest = request.bodyToMono<LoginRequest>().awaitSingle()
         if (loginRequest.password.length < 8){
             return@coroutineScope ServerResponse.badRequest().bodyValueAndAwait("Password is too short.")
         }
@@ -181,7 +180,7 @@ class AuthHandler(
         request: ServerRequest
     ): ServerResponse{
 
-        val email = request.queryParamOrNull("email")
+        val email: String = request.queryParamOrNull("email")
             ?: return ServerResponse.badRequest().buildAndAwait()
         val role = request.queryParam("role").orElse(null)
         val roles = try {

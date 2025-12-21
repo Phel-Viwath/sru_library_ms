@@ -7,7 +7,6 @@ package sru.edu.sru_lib_management.core.handler
 
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactor.awaitSingle
-import org.slf4j.LoggerFactory
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.ServerRequest
@@ -27,7 +26,7 @@ class ReportHandler (
     private val staffService: StaffService,
 ) {
 
-    private val logger = LoggerFactory.getLogger(ReportHandler::class.java)
+    //private val logger = LoggerFactory.getLogger(ReportHandler::class.java)
 
     @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
     suspend fun report(
@@ -42,8 +41,8 @@ class ReportHandler (
             .map { YearMonth.parse(it) }
             .orElse(null)
 
-        val startDate = startMonth?.atDay(1)
-        val endDate = endMonth?.atEndOfMonth()
+        val startDate = startMonth.atDay(1)
+        val endDate = endMonth.atEndOfMonth()
 
         val book = bookService.getAllBooks()
             .toList()
