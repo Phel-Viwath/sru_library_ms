@@ -64,7 +64,7 @@ class AuthService(
             if (request.email.isBlank() || request.password.isBlank())
                 AuthResult.InputError("Please enter username and password.")
 
-            // find user with their email
+            // find Users with their email
             val userDetails = userDetailsService.findByUsername(request.email).awaitSingleOrNull()
                 ?: return AuthResult.InputError("Invalid username or password.")
 
@@ -104,25 +104,23 @@ class AuthService(
 
     suspend fun updatePassword(email: String, password: String): AuthResult<String>{
         return try {
-            var role: Role = Role.USER
-            var username = ""
-            var userId = ""
-
-            // find user in database
-            authRepository.findByEmail(email)?.let { user ->
-                role = user.roles
-                username = user.username
-                userId = user.userId
-            } ?: return AuthResult.InputError("Invalid email.")
+            val existingUser = authRepository.findByEmail(email) ?: return AuthResult.InputError("Invalid email.")
             // encrypt password
             val encryptPassword = encoder.encode(password)
-            val user = User(userId = userId, email = email, username = username, password = encryptPassword, roles = role)
-            val updated = authRepository.update(user)
+            val userUpdate = User(
+                userId = existingUser.userId,
+                email = email,
+                username = existingUser.username,
+                password = encryptPassword,
+                roles = existingUser.roles
+            )
+            val updated = authRepository.update(userUpdate)
             if (updated)
                 AuthResult.Success("Success.")
             else
                 AuthResult.InputError("Fail.")
         }catch (e: Exception){
+            e.printStackTrace()
             AuthResult.Failure(e.message.toString())
         }
     }

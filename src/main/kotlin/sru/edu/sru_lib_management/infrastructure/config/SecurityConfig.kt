@@ -78,6 +78,8 @@ class SecurityConfig (
                 exchange
                     .pathMatchers("/ws/**", "/notifications").permitAll()
                     .pathMatchers("/api/v1/auth/**").permitAll()
+                    .pathMatchers("/api/v1/auth/change-role").authenticated()
+                    .pathMatchers("/api/v1/auth/users").authenticated()
                     .anyExchange().authenticated()
             }
             .addFilterAt(filter, SecurityWebFiltersOrder.AUTHENTICATION)

@@ -27,7 +27,7 @@ class AuthRepositoryImp(
 
     override suspend fun update(entity: User): Boolean {
         return client.sql(UPDATE_USER_QUERY)
-            .bindValues(paramMap(entity))
+            .bindValues(paramMapUpdate(entity))
             .fetch()
             .awaitRowsUpdated() > 0
     }
@@ -80,6 +80,13 @@ class AuthRepositoryImp(
 
     private fun paramMap(user: User): Map<String, Any> = mapOf(
         "userId" to user.userId,
+        "email" to user.email,
+        "username" to user.username,
+        "password" to user.password,
+        "roles" to user.roles
+    )
+
+    private fun paramMapUpdate(user: User): Map<String, Any> = mapOf(
         "email" to user.email,
         "username" to user.username,
         "password" to user.password,

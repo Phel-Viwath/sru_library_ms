@@ -392,8 +392,8 @@ class AttendRepositoryImp(
     )
 
     private fun Row.mapToStudentAttendDetail(): StudentAttendDetail = StudentAttendDetail(
-        this.get("attendId", Long::class.java)!!,
-        this.get("student_id", Long::class.java)!!,
+        this.get("attend_id", Long::class.java)!!,
+        this.get("visitor_id", Long::class.java)!!,
         this.get("studentName", String::class.java)!!,
         this.get("gender", String::class.java)!!,
         this.get("majorName", String::class.java)!!,

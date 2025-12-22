@@ -14,6 +14,7 @@ import lombok.extern.slf4j.Slf4j
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.server.*
 import sru.edu.sru_lib_management.auth.domain.dto.AuthResponse
@@ -25,6 +26,9 @@ import sru.edu.sru_lib_management.auth.domain.service.AuthService
 import sru.edu.sru_lib_management.auth.domain.service.HunterService
 import sru.edu.sru_lib_management.auth.domain.service.OtpService
 import sru.edu.sru_lib_management.common.AuthResult
+import sru.edu.sru_lib_management.core.domain.dto.auth.RequestOtp
+import sru.edu.sru_lib_management.core.domain.dto.auth.RequestOtpVerify
+import sru.edu.sru_lib_management.core.domain.dto.auth.RoleChangeRequest
 import sru.edu.sru_lib_management.utils.ResponseStatus.ACCEPTED
 import sru.edu.sru_lib_management.utils.ResponseStatus.BAD_REQUEST
 import sru.edu.sru_lib_management.utils.ResponseStatus.CREATED
@@ -123,37 +127,35 @@ class AuthHandler(
         }
     }
 
-    suspend fun generateOtp(
+    suspend fun requestOtpCode(
         request: ServerRequest
     ): ServerResponse{
-        val email: String = request.queryParamOrNull("email")
-            ?: return ServerResponse.badRequest().buildAndAwait()
-        val validEmail: String = hunterService.verifyEmail(email)
-        if (validEmail == "undeliverable")
-            return ServerResponse.badRequest().bodyValueAndAwait("Invalid username")
+        val email: String = request.bodyToMono<RequestOtp>().awaitSingle().email
+        if (email.isBlank()) return ServerResponse.badRequest().bodyValueAndAwait("Invalid username")
 
         val alreadyInUse = service.existEmail(email)
-        logger.info("$alreadyInUse")
-        if (!alreadyInUse) {
-            return ServerResponse.badRequest().bodyValueAndAwait("Incorrect username.")
-        }
+        if (!alreadyInUse) return ServerResponse.badRequest().bodyValueAndAwait("Incorrect username.")
 
         val processOtp = otpService.generateAndSent(email)
-        return ServerResponse.ok().bodyValueAndAwait(processOtp)
+        return if (processOtp?.toIntOrNull() == null)
+            ServerResponse.badRequest().bodyValueAndAwait("OTP could not be generated. Please try again later.")
+        else
+            ServerResponse.ok().bodyValueAndAwait("OTP Sent Successfully")
+
     }
 
     suspend fun verifyOtp(
         request: ServerRequest
     ): ServerResponse {
-        val otp: String = request.queryParamOrNull("otp")
-            ?: return ServerResponse.badRequest().buildAndAwait()
-        val email: String = request.queryParamOrNull("email")
-            ?: return ServerResponse.badRequest().buildAndAwait()
+        val verifyRequest: RequestOtpVerify = request.bodyToMono<RequestOtpVerify>().awaitSingle()
+        val otp: String = verifyRequest.otp
+        val email: String = verifyRequest.email
 
-        return if (otpService.verifyOtp(otp, email)) {
-            ServerResponse.ok().bodyValueAndAwait("OTP Verified Successfully")
-        } else {
-            ServerResponse.badRequest().bodyValueAndAwait("Invalid or Expired OTP")
+        return when {
+            otp.isBlank() -> ServerResponse.badRequest().bodyValueAndAwait("Invalid OTP")
+            email.isBlank() -> ServerResponse.badRequest().bodyValueAndAwait("Invalid Email")
+            otpService.verifyOtp(otp, email) -> ServerResponse.ok().bodyValueAndAwait("OTP Verified Successfully")
+            else -> ServerResponse.badRequest().bodyValueAndAwait("Invalid or Expired OTP")
         }
     }
 
@@ -176,13 +178,19 @@ class AuthHandler(
         }
     }
 
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
     suspend fun changeRole(
         request: ServerRequest
     ): ServerResponse{
 
-        val email: String = request.queryParamOrNull("email")
-            ?: return ServerResponse.badRequest().buildAndAwait()
-        val role = request.queryParam("role").orElse(null)
+        val roleChangeRequest = request.bodyToMono<RoleChangeRequest>().awaitSingle()
+
+        val email: String = roleChangeRequest.email
+        val role = roleChangeRequest.role
+
+        if (email.isBlank() || role.isBlank())
+            return ServerResponse.badRequest().bodyValueAndAwait("Invalid email or role parameter")
+
         val roles = try {
             Role.valueOf(role.uppercase(Locale.getDefault()))
         } catch (e: IllegalArgumentException) {
@@ -199,6 +207,7 @@ class AuthHandler(
 
     }
 
+    @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
     suspend fun getAllUser(): ServerResponse{
         val allUser =  service.getAllUser().asFlow()
         return ServerResponse.status(OK).bodyAndAwait(allUser)

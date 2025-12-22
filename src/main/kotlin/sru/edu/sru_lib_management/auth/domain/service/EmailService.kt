@@ -19,6 +19,7 @@ class EmailService(
 ) {
     @Value("\${spring.mail.username}") private val email: String? = null
     suspend fun sendEmail(to: String, subject: String, text: String){
+
         withContext(Dispatchers.IO){
             val message = mailSender.createMimeMessage()
             val helper = MimeMessageHelper(message, true)

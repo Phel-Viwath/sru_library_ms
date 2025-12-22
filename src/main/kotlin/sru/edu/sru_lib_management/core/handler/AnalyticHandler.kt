@@ -31,10 +31,13 @@ class AnalyticHandler(
         val startDate = request.queryParam("startDate")
             .map { LocalDate.parse(it) }
             .orElse(null)
+            ?: return ServerResponse.badRequest().bodyValueAndAwait("Required parameter startDate is missing")
+
 
         val endDate = request.queryParam("endDate")
             .map { LocalDate.parse(it) }
             .orElse(null)
+            ?: return ServerResponse.badRequest().bodyValueAndAwait("Required parameter endDate is missing")
 
         val major = request.queryParamOrNull("major")
 

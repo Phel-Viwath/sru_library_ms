@@ -38,7 +38,7 @@ class AuthRouteConfig {
 
                     /**
                      * Refreshes an expired access token.
-                     * Requires [sru.edu.sru_lib_management.auth.domain.dto.RefreshTokenRequest] with valid refreshToken.
+                     * Requires request body [sru.edu.sru_lib_management.auth.domain.dto.RefreshTokenRequest] with valid refreshToken.
                      * Returns new [sru.edu.sru_lib_management.auth.domain.dto.AuthResponse] with updated tokens.
                      * @see AuthHandler.refresh
                      * @see sru.edu.sru_lib_management.auth.domain.dto.RefreshTokenRequest
@@ -47,18 +47,18 @@ class AuthRouteConfig {
 
                     /**
                      * Generates and sends OTP to the user's email for password reset.
-                     * Query param: email (required).
+                     * Request Body: [sru.edu.sru_lib_management.core.domain.dto.auth.RequestOtp]email (required).
                      * Validates email using [sru.edu.sru_lib_management.auth.domain.service.HunterService]
                      * and sends OTP via [sru.edu.sru_lib_management.auth.domain.service.OtpService].
                      * Returns success message or error.
-                     * @see AuthHandler.generateOtp
+                     * @see AuthHandler.requestOtpCode
                      * @see sru.edu.sru_lib_management.auth.domain.service.OtpService.generateAndSent
                      */
-                    POST("/otp", authHandler::generateOtp)
+                    POST("/otp", authHandler::requestOtpCode)
 
                     /**
                      * Verifies the OTP code sent to the user's email.
-                     * Query params: otp (required), email (required).
+                     * Request Body: [sru.edu.sru_lib_management.core.domain.dto.auth.RequestOtpVerify] otp (required), email (required).
                      * Returns "OTP Verified Successfully" or "Invalid or Expired OTP".
                      * @see AuthHandler.verifyOtp
                      * @see sru.edu.sru_lib_management.auth.domain.service.OtpService.verifyOtp
@@ -77,7 +77,7 @@ class AuthRouteConfig {
                     /**
                      * Updates user role (admin function).
                      * Query params: email (required), role (required - must be valid [sru.edu.sru_lib_management.auth.domain.model.Role] enum).
-                     * Valid roles: USER, ADMIN, SUPER_ADMIN.
+                     * Valid roles: ADMIN, SUPER_ADMIN.
                      * Returns "Role has changed." on success.
                      * @see AuthHandler.changeRole
                      * @see sru.edu.sru_lib_management.auth.domain.model.Role
@@ -92,7 +92,7 @@ class AuthRouteConfig {
                      * @see AuthHandler.getAllUser
                      * @see sru.edu.sru_lib_management.auth.domain.service.AuthService.getAllUser
                      */
-                    GET("") { authHandler.getAllUser() }
+                    GET("/users") { authHandler.getAllUser() }
                 }
             }
         }
