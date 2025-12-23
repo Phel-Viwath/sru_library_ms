@@ -23,7 +23,7 @@ BEGIN
         # Select current date
         SELECT COUNT(*) INTO current_date_count
         FROM donation WHERE donate_date = date;
-        # Select previous day
+        # Select the previous day
         SELECT COUNT(*) INTO previous_date_count
         FROM donation WHERE donate_date = previous_date;
         # Return the results
@@ -60,7 +60,7 @@ BEGIN
         SELECT COUNT(*) INTO current_year_count
         FROM donation
         WHERE donate_date BETWEEN date - INTERVAL 364 day and date;
-        # Select count for previous year
+        # Select count for the previous year
         SELECT COUNT(*) INTO previous_year_count
         FROM donation
         WHERE donate_date between date - INTERVAL ((365*2) - 1) day and date - Interval 365 day ;
@@ -71,10 +71,12 @@ BEGIN
 end;
 
 # Get Donation Detail
+
 CREATE PROCEDURE DonationDetail()
 BEGIN
     SELECT
         b.book_id as bookId,
+        d.donator_id as donatorId,
         d.donator_name as donatorName,
         b.book_title as bookTitle,
         b.bookQuan as bookQuan,
@@ -91,7 +93,6 @@ BEGIN
         INNER JOIN language l on b.language_id = l.language_id
         INNER join colleges c on b.college_id = c.college_id;
 end;
-
 
 ################################### Get yearly donation detail ##################################
 CREATE PROCEDURE YearlyDonationDetail(

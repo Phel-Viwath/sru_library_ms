@@ -84,8 +84,10 @@ class DonationServiceImp(
 
     override suspend fun updateDonation(donationDetail: DonationDetail): CoreResult<Donator> {
         return try {
-            val findBook = bookRepository.getById(donationDetail.bookId) ?: return CoreResult.ClientError("Not found book.")
-            donationRepository.getById(donationDetail.donatorId!!) ?: return CoreResult.ClientError("Not found donator.")
+            val findBook = bookRepository.getById(donationDetail.bookId)
+                ?: return CoreResult.ClientError("Not found book.")
+            donationRepository.getById(donationDetail.donatorId!!)
+                ?: return CoreResult.ClientError("Not found donator.")
 
             collegeRepository.findById(donationDetail.collegeId).awaitSingleOrNull()
                 ?: return CoreResult.ClientError("College ID not found.")
@@ -109,9 +111,17 @@ class DonationServiceImp(
                 donationDetail.donatorId,
                 donationDetail.donatorName
             )
+            val donation = Donation(
+                donationDetail.bookId,
+                donationDetail.donatorId,
+                donationDetail.donateDate
+            )
+
             bookRepository.update(book)
-            val update = donationRepository.update(donator)
-            CoreResult.Success(update)
+            donationRepository.updateDonation(donation)
+            val donatorUpdated = donationRepository.update(donator)
+
+            CoreResult.Success(donatorUpdated)
         }catch (e: Exception){
             e.printStackTrace()
             CoreResult.Failure(e.message.toString())
@@ -155,7 +165,7 @@ class DonationServiceImp(
 
     override fun getDonationDetail(): Flow<DonationDetailDto> {
         return try {
-            donationRepository.getDonationDetail()
+           donationRepository.getDonationDetail()
         }catch (e: Exception){
             throw APIException(e.message)
         }

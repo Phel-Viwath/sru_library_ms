@@ -51,6 +51,9 @@ class DonateHandler(
         val donationDetail: DonationDetail = request.bodyToMono<DonationDetail>().awaitFirstOrNull()
             ?: return@coroutineScope ServerResponse.badRequest().bodyValueAndAwait("Invalid donation detail")
 
+        if (donationDetail.donatorId == null)
+            return@coroutineScope ServerResponse.badRequest().bodyValueAndAwait("Donator id is required")
+
         when(val result = donationService.updateDonation(donationDetail)){
             is CoreResult.Success ->
                 ServerResponse.status(CREATED).bodyValueAndAwait(result.data)

@@ -9,7 +9,7 @@ CREATE TRIGGER remove_from_blacklist_after_return
 BEGIN
     # Check if the book is brought back
     IF NEW.is_bring_back = TRUE THEN
-        # Delete from blacklist if the student is on it
+        # Delete it from blacklist if the student is on it
         DELETE FROM blacklist
         WHERE student_id = NEW.student_id
           AND book_id = NEW.book_id;

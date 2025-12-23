@@ -9,7 +9,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.withContext
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
@@ -36,209 +38,160 @@ class ReportService(
     private val donationService: DonationService
 ) {
 
-    fun getAllDonation(startDate: LocalDate?, endDate: LocalDate?): Flow<DonationDetailDto>{
+    private val logger = LoggerFactory.getLogger(this::class.java)
+
+    // Attendance categories data class to hold categorized entries
+    private data class AttendanceCategories<T>(
+        val morning: MutableList<T> = mutableListOf(),
+        val afternoon: MutableList<T> = mutableListOf(),
+        val evening: MutableList<T> = mutableListOf(),
+        val weekend: MutableList<T> = mutableListOf(),
+        val weekday: MutableList<T> = mutableListOf()
+    )
+
+    fun getAllDonation(startDate: LocalDate?, endDate: LocalDate?): Flow<DonationDetailDto> {
         return try {
             donationService.getDonationDetail()
                 .filter { donationDetail ->
-                    val isWithinStart = startDate?.let {
-                        donationDetail.donateDate.isEqual(it) || donationDetail.donateDate.isAfter(it)
+                    val isWithinStart = startDate?.let { start ->
+                        donationDetail.donateDate.isEqual(start) || donationDetail.donateDate.isAfter(start)
                     } ?: true
-                    val isWithinEnd = endDate?.let {
-                        donationDetail.donateDate.isEqual(it) || donationDetail.donateDate.isBefore(it)
+                    val isWithinEnd = endDate?.let { end ->
+                        donationDetail.donateDate.isEqual(end) || donationDetail.donateDate.isBefore(end)
                     } ?: true
-
-                    // Only return items within the specified range, or all if no range is provided
                     isWithinStart && isWithinEnd
                 }
-        }catch (e: Exception){
+        } catch (e: Exception) {
             throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.message)
         }
     }
 
     suspend fun staffAttendList(startMonth: YearMonth?, endMonth: YearMonth?): List<MonthlyEntry> = try {
-
         val staffAttendList: Flow<StaffAttendDto> = attendRepository.getAllStaffAttend()
-        val listAttend = mutableListOf<MonthlyEntry>()
-        val weekendEntries = mutableListOf<StaffAttendDto>()
-        val weekdayEntries = mutableListOf<StaffAttendDto>()
-        val morningEntries = mutableListOf<StaffAttendDto>()
-        val afternoonEntries = mutableListOf<StaffAttendDto>()
-        val eveningEntries = mutableListOf<StaffAttendDto>()
+        val categories = AttendanceCategories<StaffAttendDto>()
 
+        staffAttendList
+            .filter { isWithinDateRange(it.date, startMonth, endMonth) }
+            .collect { attend -> categorizeAttendance(attend, categories) }
 
-        staffAttendList.filter {
-            val entryMonth = YearMonth.from(it.date)
-            (startMonth == null || !entryMonth.isBefore(startMonth)) && (endMonth == null || !entryMonth.isAfter(endMonth))
-        }.collect { attend ->
-            // Categorize by weekends vs weekdays
-            when (attend.date.dayOfWeek) {
-                DayOfWeek.SATURDAY, DayOfWeek.SUNDAY -> weekendEntries.add(attend)
-                else -> weekdayEntries.add(attend)
-            }
-            // Categorize by time slots
-            when (attend.entryTimes) {
-                in SEVEN_AM..ELEVEN_AM -> morningEntries.add(attend)
-                in TWO_PM..FIVE_PM -> afternoonEntries.add(attend)
-                in FIVE_THIRTY_PM..SEVEN_THIRTY_PM -> eveningEntries.add(attend)
-            }
-        }
-
-        morningEntries.groupBy { YearMonth.from(it.date) }
-            .forEach { (month, entries) ->
-                val totalAttend = entries.size
-                val femaleAttend = entries.count { it.gender.equals("Female", ignoreCase = true) }
-
-                listAttend.add(
-                    MonthlyEntry(
-                        time = "Morning",
-                        month = month.toString(), // month as a string
-                        entry = mapOf("TotalAttend" to totalAttend, "FemaleAttend" to femaleAttend)
-                    )
-                )
-            }
-
-        afternoonEntries.groupBy { YearMonth.from(it.date) }
-            .forEach { (month, entries) ->
-                val totalAttend = entries.size
-                val femaleAttend = entries.count { it.gender.equals("Female", ignoreCase = true) }
-
-                listAttend.add(
-                    MonthlyEntry(
-                        time = "Afternoon",
-                        month = month.toString(), // month as a string
-                        entry = mapOf("TotalAttend" to totalAttend, "FemaleAttend" to femaleAttend)
-                    )
-                )
-            }
-
-        morningEntries.groupBy { YearMonth.from(it.date) }
-            .forEach { (month, entries) ->
-                val totalAttend = entries.size
-                val femaleAttend = entries.count { it.gender.equals("Female", ignoreCase = true) }
-
-                listAttend.add(
-                    MonthlyEntry(
-                        time = "Evening",
-                        month = month.toString(), // month as a string
-                        entry = mapOf("TotalAttend" to totalAttend, "FemaleAttend" to femaleAttend)
-                    )
-                )
-            }
-
-        weekendEntries.groupBy { YearMonth.from(it.date) }
-            .forEach { (month, entries) ->
-                val totalAttend = entries.size
-                val femaleAttend = entries.count { it.gender.equals("Female", ignoreCase = true) }
-
-                listAttend.add(
-                    MonthlyEntry(
-                        time = "Saturday & Sunday",
-                        month = month.toString(), // month as a string
-                        entry = mapOf("TotalAttend" to totalAttend, "FemaleAttend" to femaleAttend)
-                    )
-                )
-            }
-
-        listAttend
-    }catch (e: Exception){
+        buildMonthlyEntries(categories)
+    } catch (e: Exception) {
         throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.message)
     }
 
+    suspend fun studentAttendList(startMonth: YearMonth?, endMonth: YearMonth?): Flow<MonthlyEntry> = flow {
+        try {
+            val allStudentAttendList = withContext(Dispatchers.IO) {
+                attendRepository.getCustomAttendDetail(null, null)
+            }.asFlow()
 
-    fun studentAttendList(startMonth: YearMonth?, endMonth: YearMonth?): Flow<MonthlyEntry> = try {
-        val allStudentAttendList = runBlocking(Dispatchers.IO) {// Run in coroutines scope Input Output thread (non_blocking)
-            attendRepository.getCustomAttendDetail(null, null)
-        }.asFlow()
-        val listAttend = mutableListOf<MonthlyEntry>()
-        val weekendEntries = mutableListOf<StudentAttendDetail>()
-        val weekdayEntries = mutableListOf<StudentAttendDetail>()
-        val morningEntries = mutableListOf<StudentAttendDetail>()
-        val afternoonEntries = mutableListOf<StudentAttendDetail>()
-        val eveningEntries = mutableListOf<StudentAttendDetail>()
+            val categories = AttendanceCategories<StudentAttendDetail>()
 
-        runBlocking(Dispatchers.IO) {
-            allStudentAttendList.filter {
-                val entryMonth = YearMonth.from(it.date)
-                (startMonth == null || !entryMonth.isBefore(startMonth)) && (endMonth == null || !entryMonth.isAfter(endMonth))
-            }.collect { attend ->
-                // Categorize by weekends vs weekdays
-                when (attend.date.dayOfWeek) {
-                    DayOfWeek.SATURDAY, DayOfWeek.SUNDAY -> weekendEntries.add(attend)
-                    else -> weekdayEntries.add(attend)
-                }
-                // Categorize by time slots
-                when (attend.entryTimes) {
-                    in SEVEN_AM..ELEVEN_AM -> morningEntries.add(attend)
-                    in TWO_PM..FIVE_PM -> afternoonEntries.add(attend)
-                    in FIVE_THIRTY_PM..SEVEN_THIRTY_PM -> eveningEntries.add(attend)
-                }
+            withContext(Dispatchers.IO) {
+                allStudentAttendList
+                    .filter { isWithinDateRange(it.date, startMonth, endMonth) }
+                    .collect { attend -> categorizeAttendance(attend, categories) }
             }
 
-            morningEntries.groupBy { YearMonth.from(it.date) }
-                .forEach { (month, entries) ->
-                    val totalAttend = entries.size
-                    val femaleAttend = entries.count { it.gender.equals("Female", ignoreCase = true) }
-
-                    listAttend.add(
-                        MonthlyEntry(
-                            time = "Morning",
-                            month = month.toString(), // month as a string
-                            entry = mapOf("TotalAttend" to totalAttend, "FemaleAttend" to femaleAttend)
-                        )
-                    )
-                }
-
-            afternoonEntries.groupBy { YearMonth.from(it.date) }
-                .forEach { (month, entries) ->
-                    val totalAttend = entries.size
-                    val femaleAttend = entries.count { it.gender.equals("Female", ignoreCase = true) }
-
-                    listAttend.add(
-                        MonthlyEntry(
-                            time = "Afternoon",
-                            month = month.toString(), // month as a string
-                            entry = mapOf("TotalAttend" to totalAttend, "FemaleAttend" to femaleAttend)
-                        )
-                    )
-                }
-
-            morningEntries.groupBy { YearMonth.from(it.date) }
-                .forEach { (month, entries) ->
-                    val totalAttend = entries.size
-                    val femaleAttend = entries.count { it.gender.equals("Female", ignoreCase = true) }
-
-                    listAttend.add(
-                        MonthlyEntry(
-                            time = "Evening",
-                            month = month.toString(), // month as a string
-                            entry = mapOf("TotalAttend" to totalAttend, "FemaleAttend" to femaleAttend)
-                        )
-                    )
-                }
-
-            weekendEntries.groupBy { YearMonth.from(it.date) }
-                .forEach { (month, entries) ->
-                    val totalAttend = entries.size
-                    val femaleAttend = entries.count { it.gender.equals("Female", ignoreCase = true) }
-
-                    listAttend.add(
-                        MonthlyEntry(
-                            time = "Saturday & Sunday",
-                            month = month.toString(), // month as a string
-                            entry = mapOf("TotalAttend" to totalAttend, "FemaleAttend" to femaleAttend)
-                        )
-                    )
-                }
+            buildMonthlyEntries(categories).forEach { emit(it) }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR)
         }
-
-        listAttend.asFlow()
-    }catch (e: Exception){
-
-        throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR)
     }
 
+    /**
+     * Checks if a date falls within the specified month range
+     */
+    private fun isWithinDateRange(date: LocalDate, startMonth: YearMonth?, endMonth: YearMonth?): Boolean {
+        val entryMonth = YearMonth.from(date)
+        return (startMonth == null || !entryMonth.isBefore(startMonth)) &&
+                (endMonth == null || !entryMonth.isAfter(endMonth))
+    }
 
+    /**
+     * Categorizes attendance by weekend/weekday and time slots
+     */
+    private fun <T> categorizeAttendance(attend: T, categories: AttendanceCategories<T>) {
+        val (date, entryTime) = when (attend) {
+            is StaffAttendDto -> attend.date to attend.entryTimes
+            is StudentAttendDetail -> attend.date to attend.entryTimes
+            else -> return
+        }
+
+        // Categorize by weekend vs weekday
+        when (date.dayOfWeek) {
+            DayOfWeek.SATURDAY, DayOfWeek.SUNDAY -> categories.weekend.add(attend)
+            else -> categories.weekday.add(attend)
+        }
+
+        // Categorize by time slots
+        when (entryTime) {
+            in SEVEN_AM..ELEVEN_AM -> categories.morning.add(attend)
+            in TWO_PM..FIVE_PM -> categories.afternoon.add(attend)
+            in FIVE_THIRTY_PM..SEVEN_THIRTY_PM -> categories.evening.add(attend)
+        }
+    }
+
+    /**
+     * Builds monthly entries from categorized attendance data
+     */
+    private fun <T> buildMonthlyEntries(categories: AttendanceCategories<T>): List<MonthlyEntry> {
+        val listAttend = mutableListOf<MonthlyEntry>()
+
+        // Add morning entries
+        addMonthlyEntries(categories.morning, "Morning", listAttend)
+
+        // Add afternoon entries
+        addMonthlyEntries(categories.afternoon, "Afternoon", listAttend)
+
+        // Add evening entries
+        addMonthlyEntries(categories.evening, "Evening", listAttend)
+
+        // Add weekend entries
+        addMonthlyEntries(categories.weekend, "Saturday & Sunday", listAttend)
+
+        return listAttend
+    }
+
+    /**
+     * Helper function to add monthly entries for a specific time period
+     */
+    private fun <T> addMonthlyEntries(
+        entries: List<T>,
+        timePeriod: String,
+        resultList: MutableList<MonthlyEntry>
+    ) {
+        entries.groupBy { entry ->
+            val date = when (entry) {
+                is StaffAttendDto -> entry.date
+                is StudentAttendDetail -> entry.date
+                else -> return@groupBy null
+            }
+            YearMonth.from(date)
+        }.forEach { (month, monthEntries) ->
+            if (month != null) {
+                val totalAttend = monthEntries.size
+                val femaleAttend = monthEntries.count { entry ->
+                    when (entry) {
+                        is StaffAttendDto -> entry.gender.equals("Female", ignoreCase = true)
+                        is StudentAttendDetail -> entry.gender.equals("Female", ignoreCase = true)
+                        else -> false
+                    }
+                }
+
+                resultList.add(
+                    MonthlyEntry(
+                        time = timePeriod,
+                        month = month.toString(),
+                        entry = mapOf("TotalAttend" to totalAttend, "FemaleAttend" to femaleAttend)
+                    )
+                )
+            }
+        }
+    }
 }
+
 
 
 

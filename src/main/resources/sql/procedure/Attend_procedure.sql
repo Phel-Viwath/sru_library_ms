@@ -241,25 +241,24 @@ BEGIN
     END IF;
 END;
 
-
 # Get all attending with student info
 
 CREATE PROCEDURE GetCustomAttendDetail(
-    IN p_startDate DATE,
-    IN p_endDate DATE,
+    IN startDate DATE,
+    IN endDate DATE,
     IN p_visitor_type ENUM('STUDENT','SRU_STAFF')
 )
 BEGIN
     IF p_visitor_type = 'STUDENT' THEN
         SELECT *
         FROM vw_attend_student_detail
-        WHERE (p_startDate IS NULL OR attend_date >= p_startDate)
-          AND (p_endDate IS NULL OR attend_date <= p_endDate);
+        WHERE (startDate IS NULL OR attend_date >= startDate)
+          AND (endDate IS NULL OR attend_date <= endDate);
     ELSE
         SELECT *
         FROM vw_attend_staff_detail
-        WHERE (p_startDate IS NULL OR attend_date >= p_startDate)
-          AND (p_endDate IS NULL OR attend_date <= p_endDate);
+        WHERE (startDate IS NULL OR attend_date >= startDate)
+          AND (endDate IS NULL OR attend_date <= endDate);
     END IF;
 END;
 

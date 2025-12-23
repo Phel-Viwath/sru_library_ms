@@ -33,7 +33,7 @@ create procedure MoveToTrash(
     UPDATE books set isActive = false, inactiveDate = currentDate where book_id = bookId;
 end;
 
-# empty trash in 30 day
+# empty trash in 30 days
 Create Procedure EmptyTrash(IN deleteDate DATE)
 BEGIN
     DELETE From books where isActive = false and inactiveDate <= deleteDate - interval 30 day;

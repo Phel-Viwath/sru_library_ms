@@ -42,18 +42,6 @@ class DonationRouteConfig {
                  * Returns list of saved [sru.edu.sru_lib_management.core.domain.model.DonationDetail] entities.
                  * Requires the ADMIN or SUPER_ADMIN role.
                  *
-                 * Example request body:
-                 * ```json
-                 * [
-                 *   {
-                 *     "donorName": "John Doe Foundation",
-                 *     "bookTitle": "Introduction to Physics",
-                 *     "bookQuantity": 10,
-                 *     "donationDate": "2024-12-21"
-                 *   }
-                 * ]
-                 * ```
-                 *
                  * @see DonateHandler.saveDonation
                  * @see sru.edu.sru_lib_management.core.domain.service.DonationService.newDonation
                  * @see sru.edu.sru_lib_management.core.domain.model.DonationDetail
@@ -89,14 +77,6 @@ class DonationRouteConfig {
                  *
                  * Requires [sru.edu.sru_lib_management.core.domain.model.DonationDetail] in request body with donationId.
                  * Used to correct donation information or update notes.
-                 *
-                 * Updatable fields:
-                 * - donorName: Correct donor name spelling
-                 * - donorContact: Update contact information
-                 * - bookTitle: Fix book title
-                 * - bookQuantity: Adjust quantity if miscounted
-                 * - donationDate: Correct donation date
-                 * - notes: Add or update notes
                  *
                  * Process:
                  * 1. Validates donationId exists

@@ -19,6 +19,7 @@ import sru.edu.sru_lib_management.core.data.query.BookQuery.GET_ALL_DONATOR
 import sru.edu.sru_lib_management.core.data.query.BookQuery.GET_DONATOR
 import sru.edu.sru_lib_management.core.data.query.BookQuery.SAVE_DONATION
 import sru.edu.sru_lib_management.core.data.query.BookQuery.SAVE_DONATOR
+import sru.edu.sru_lib_management.core.data.query.BookQuery.UPDATE_DONATION_QUERY
 import sru.edu.sru_lib_management.core.data.query.BookQuery.UPDATE_DONATOR
 import sru.edu.sru_lib_management.core.domain.dto.CompareValue
 import sru.edu.sru_lib_management.core.domain.dto.DonationDetailDto
@@ -68,6 +69,16 @@ class DonationRepositoryImp(
             }
             .all()
             .asFlow()
+    }
+
+    override suspend fun updateDonation(donation: Donation): Donation {
+        val rowEffect = client.sql(UPDATE_DONATION_QUERY)
+            .bind("bookId", donation.bookId)
+            .bind("donatorId", donation.donatorId)
+            .bind("donateDate", donation.donateDate)
+            .fetch()
+            .awaitRowsUpdated()
+        return if (rowEffect > 0) donation else throw Exception("Donation not updated")
     }
 
 

@@ -38,7 +38,6 @@ create table if not exists language(
 );
 
 #========================================================
-#crate table guest
 create table if not exists donator(
   donator_id int primary key auto_increment,
   donator_name varchar(50) not null
@@ -46,8 +45,7 @@ create table if not exists donator(
 
 # =========================================== dependent tables ================================================
 #========================================================
-# crate table major
-#Drop tables if exists majors;
+
 create table if not exists majors(
     major_id varchar(10) primary key,
     major_name varchar(100) not null,

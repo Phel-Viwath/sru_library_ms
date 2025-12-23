@@ -73,5 +73,10 @@ object BookQuery {
     """
     const val DELETE_DONATION = "Delete from donation Where donator_id = :donatorId or bookId = :bookId"
 
+    const val UPDATE_DONATION_QUERY = """
+        UPDATE donation 
+        SET donate_date = :donateDate 
+        WHERE book_id = :bookId AND donator_id = :donatorId
+    """
 
 }

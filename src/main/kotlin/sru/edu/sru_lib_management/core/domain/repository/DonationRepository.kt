@@ -19,6 +19,6 @@ interface DonationRepository : ICrudRepository<Donator, Int>{
     suspend fun deleteDonation(donatorId: Int?, bookId: String?): Boolean
     fun getDonationDetail(): Flow<DonationDetailDto>
 
-
+    suspend fun updateDonation(donation: Donation): Donation
 
 }

@@ -41,14 +41,11 @@ class AnalyticHandler(
 
         val major = request.queryParamOrNull("major")
 
-
         val startMonth = YearMonth.from(startDate)
         val endMonth = YearMonth.from(endDate)
 
         logger.info("Start month is ${startMonth?.toString()}")
         logger.info("End month is ${endMonth?.toString()}")
-
-
 
         val bookEachCollege = analyticService.getBookEachCollege(startMonth, endMonth).toList()
         val totalBook = analyticService.getTotalBookEachLanguage()

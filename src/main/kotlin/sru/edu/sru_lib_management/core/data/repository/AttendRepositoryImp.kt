@@ -394,15 +394,15 @@ class AttendRepositoryImp(
     private fun Row.mapToStudentAttendDetail(): StudentAttendDetail = StudentAttendDetail(
         this.get("attend_id", Long::class.java)!!,
         this.get("visitor_id", Long::class.java)!!,
-        this.get("studentName", String::class.java)!!,
+        this.get("student_name", String::class.java)!!,
         this.get("gender", String::class.java)!!,
-        this.get("majorName", String::class.java)!!,
+        this.get("major_name", String::class.java)!!,
         this.get("degree_level", String::class.java)!!,
         this.get("generation", Int::class.java)!!,
-        this.get("entryTimes", LocalTime::class.java)!!,
-        this.get("exitingTime", LocalTime::class.java),
+        this.get("entry_time", LocalTime::class.java)!!,
+        this.get("exit_time", LocalTime::class.java),
         this.get("purpose", String::class.java)!!,
-        this.get("date", LocalDate::class.java)!!,
+        this.get("attend_date", LocalDate::class.java)!!,
         status = null
     )
 
