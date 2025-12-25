@@ -17,6 +17,7 @@ public class BlackListRouter {
                     builder.PUT("/{blacklistId}", blacklistHandler::updateBlackList);
                     builder.GET("/{blacklistId}", blacklistHandler::getById);
                     builder.DELETE("/{blacklistId}", blacklistHandler::delete);
+                    builder.GET("/search", blacklistHandler::search);
                 })
                 .build();
     }

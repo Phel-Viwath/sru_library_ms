@@ -29,6 +29,7 @@ public class BlackListRepositoryImp implements BlackListRepository {
     private static final String FIND_ALL_QR = "SELECT * FROM blacklist;";
     private static final String FIND_BY_ID_QR = "SELECT * FROM blacklist WHERE blacklist_id = :blacklistId;";
 
+
     @Override
     public Mono<BlackList> save(BlackList data) {
         return databaseClient.sql(SAVE_QR)
@@ -109,25 +110,38 @@ public class BlackListRepositoryImp implements BlackListRepository {
                 ).all();
     }
 
-    private static final String QR_Detail= """
-            SELECT
-                b.book_id,
-                b.book_title,
-                s.student_id,
-                s.student_name,
-                bb.give_back_date
-            FROM
-                blacklist bl
-                    JOIN
-                borrow_books bb ON bl.student_id = bb.student_id AND bl.book_id = bb.book_id
-                    JOIN
-                books b ON bb.book_id = b.book_id
-                    JOIN
-                students s ON bl.student_id = s.student_id
-            WHERE
-                bb.is_bring_back = 0;
-            
-            """;
+    @Override
+    public Flux<BlackList> search(String keyword) {
+        return databaseClient.sql(QR_Search)
+                .map(((row, rowMetadata) -> new BlackList(
+                            row.get("blacklist_id", Integer.class),
+                            row.get("student_id", Long.class),
+                            row.get("book_id", String.class)))
+                ).all();
+    }
 
+    private static final String QR_Detail= """
+        SELECT
+            b.book_id,
+            b.book_title,
+            s.student_id,
+            s.student_name,
+            bb.give_back_date
+        FROM
+            blacklist bl
+                JOIN
+            borrow_books bb ON bl.student_id = bb.student_id AND bl.book_id = bb.book_id
+                JOIN
+            books b ON bb.book_id = b.book_id
+                JOIN
+            students s ON bl.student_id = s.student_id
+        WHERE
+            bb.is_bring_back = 0;
+    """;
+    private static final String QR_Search = """ 
+        SELECT b.blacklist_id, b.student_id, b.book_id
+        FROM blacklist b  JOIN students s ON b.student_id = s.student_id
+        WHERE s.student_name LIKE :keyword OR b.book_id = :keyword
+    """;
 
 }

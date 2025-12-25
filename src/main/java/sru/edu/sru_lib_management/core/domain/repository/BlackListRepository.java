@@ -18,4 +18,6 @@ import java.util.List;
 public interface BlackListRepository extends RCrudRepository<BlackList, Integer> {
     Mono<List<BlackList>> findByStudentIdAndBookId(Long studentId, String bookId);
     Flux<BlackListDto> getAllBlackListDetail();
+
+    Flux<BlackList> search(String keyword);
 }

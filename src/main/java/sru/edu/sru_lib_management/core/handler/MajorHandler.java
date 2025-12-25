@@ -30,7 +30,7 @@ public class MajorHandler {
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     public Mono<ServerResponse> getMajorById(ServerRequest request){
         return majorService.findById(request.pathVariable("id"))
-                .flatMap(major -> ServerResponse.ok().bodyValue(this))
+                .flatMap(major -> ServerResponse.ok().bodyValue(major))
                 .onErrorResume(e -> {
                     if (e instanceof ResponseStatusException && ((ResponseStatusException) e).getStatusCode() == HttpStatus.BAD_REQUEST){
                         return ServerResponse.status(HttpStatus.NOT_FOUND).bodyValue("Not found");

@@ -38,7 +38,7 @@ public class DegreeLevelServiceImp implements DegreeLevelService {
 
     @Override
     public Mono<Object> update(DegreeLevel degreeLevel, String id) {
-        return degreeLevelRepository.findById(degreeLevel.getDegreeLevelId())
+        return degreeLevelRepository.findById(id)
                 .flatMap(exist ->
                         degreeLevelRepository.update(degreeLevel, id)
                                 .map(d -> (Object) d)

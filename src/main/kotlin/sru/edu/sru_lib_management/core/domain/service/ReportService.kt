@@ -71,7 +71,7 @@ class ReportService(
         val categories = AttendanceCategories<StaffAttendDto>()
 
         staffAttendList
-            .filter { isWithinDateRange(it.date, startMonth, endMonth) }
+            .filter { isWithinDateRange(it.attendDate, startMonth, endMonth) }
             .collect { attend -> categorizeAttendance(attend, categories) }
 
         buildMonthlyEntries(categories)
@@ -114,7 +114,7 @@ class ReportService(
      */
     private fun <T> categorizeAttendance(attend: T, categories: AttendanceCategories<T>) {
         val (date, entryTime) = when (attend) {
-            is StaffAttendDto -> attend.date to attend.entryTimes
+            is StaffAttendDto -> attend.attendDate to attend.entryTimes
             is StudentAttendDetail -> attend.date to attend.entryTimes
             else -> return
         }
@@ -164,7 +164,7 @@ class ReportService(
     ) {
         entries.groupBy { entry ->
             val date = when (entry) {
-                is StaffAttendDto -> entry.date
+                is StaffAttendDto -> entry.attendDate
                 is StudentAttendDetail -> entry.date
                 else -> return@groupBy null
             }

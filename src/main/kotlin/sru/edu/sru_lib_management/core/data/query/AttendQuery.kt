@@ -6,7 +6,7 @@ object AttendQuery {
             VALUES(:visitorId, :entryTimes, :exitTimes, :attendDate, :purpose);
         """
     const val UPDATE_ATTEND_QUERY = """
-            UPDATE attend set visitor_id = :visitorId, entry_time = :entryTimes,
+            UPDATE attend set entry_time = :entryTimes,
             exit_time = :exitTimes, attend_date = :attendDate, purpose = :purpose
             WHERE attend_id = :attendId;
         """
@@ -23,10 +23,10 @@ object AttendQuery {
                 sru_staff_id   AS staff_id,
                 sru_staff_name AS staff_name,
                 gender,
-                entry_time     AS entryTimes,
-                exit_time      AS exitingTimes,
+                entry_time,
+                exit_time,
                 purpose,
-                attend_date    AS date
+                attend_date
             FROM vw_attend_details
             WHERE visitor_type = 'SRU_STAFF'
         """

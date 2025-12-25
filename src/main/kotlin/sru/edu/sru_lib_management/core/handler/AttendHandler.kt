@@ -7,7 +7,9 @@ package sru.edu.sru_lib_management.core.handler
 
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.awaitFirst
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
@@ -17,18 +19,19 @@ import sru.edu.sru_lib_management.core.domain.dto.attend.AttendDetail
 import sru.edu.sru_lib_management.core.domain.model.Attend
 import sru.edu.sru_lib_management.core.domain.service.AttendService
 import sru.edu.sru_lib_management.utils.IndochinaDateTime.indoChinaDate
+import sru.edu.sru_lib_management.utils.ResponseStatus.ACCEPTED
 import sru.edu.sru_lib_management.utils.ResponseStatus.BAD_REQUEST
-import sru.edu.sru_lib_management.utils.ResponseStatus.CREATED
 import sru.edu.sru_lib_management.utils.ResponseStatus.INTERNAL_SERVER_ERROR
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.format.DateTimeParseException
 
 @Component
 class AttendHandler(
     private val attendService: AttendService,
 ) {
 
-    //private val logger = LoggerFactory.getLogger(AttendHandler::class.java)
+    private val logger = LoggerFactory.getLogger(this::class.java)
 
     /*
     * -> http://localhost:8090/api/v1/att
@@ -39,12 +42,12 @@ class AttendHandler(
         request: ServerRequest
     ): ServerResponse = coroutineScope {
 
-        val attId = request.queryParamOrNull("attId")?.toLong()
+        val attId = request.pathVariable("attId").toLong()
         val attend = request.bodyToMono<Attend>().awaitFirst()
 
         when(val result = attendService.updateAttend(attend.copy(attendId = attId))){
             is CoreResult.Success ->
-                ServerResponse.status(CREATED).bodyValueAndAwait(result.data)
+                ServerResponse.status(ACCEPTED).bodyValueAndAwait(result.data)
             is CoreResult.Failure ->
                 ServerResponse.status(INTERNAL_SERVER_ERROR).bodyValueAndAwait(result.errorMsg)
             is CoreResult.ClientError ->
@@ -60,7 +63,7 @@ class AttendHandler(
     suspend fun getAllAttend(): ServerResponse = coroutineScope {
         when(val result = attendService.getAllAttend()){
             is CoreResult.Success ->
-                ServerResponse.ok().bodyValueAndAwait(result.data)
+                ServerResponse.ok().bodyAndAwait(result.data)
             is CoreResult.Failure ->
                 ServerResponse.status(500).bodyValueAndAwait(result.errorMsg)
             is CoreResult.ClientError ->
@@ -101,9 +104,8 @@ class AttendHandler(
     suspend fun getCustomAttend(
         request: ServerRequest
     ): ServerResponse = coroutineScope{
-        val date = request.queryParam("date")
-            .map { LocalDate.parse(it) }
-            .orElse(null)
+        val date = "date".dateParamValidation(request) as LocalDate?
+            ?: return@coroutineScope ServerResponse.badRequest().bodyValueAndAwait("Date is required")
         val result: Flow<List<Attend>> = attendService.getCustomAttByDate(date)
         ServerResponse.status(HttpStatus.OK).bodyAndAwait(result)
     }
@@ -116,10 +118,16 @@ class AttendHandler(
     suspend fun countCustomAttend(
         request: ServerRequest
     ): ServerResponse = coroutineScope{
-        val date = request.queryParam("date")
-            .map { LocalDate.parse(it) }
-            .orElse(null)
-        val period = request.queryParamOrNull("period")?.toInt()
+
+        val date = try {
+            request.queryParam("date")
+                .map { LocalDate.parse(it) }
+                .orElse(null)
+                ?: return@coroutineScope ServerResponse.badRequest().bodyValueAndAwait("Date is required")
+        }catch (_: DateTimeParseException){
+            return@coroutineScope ServerResponse.badRequest().bodyValueAndAwait("Invalid endDate format. Expected YYYY-MM-DD (e.g., 2025-01-15)")
+        }
+        val period = request.queryParamOrNull("period")?.toIntOrNull()
             ?: return@coroutineScope ServerResponse.badRequest().buildAndAwait()
 
         when(val result = attendService.countAttendCustomTime(date, period)){
@@ -141,12 +149,11 @@ class AttendHandler(
         request: ServerRequest
     ): ServerResponse = coroutineScope {
 
-        val date = request.queryParam("date")
-            .map { LocalDate.parse(it) }
-            .orElse(null)
-        val period = request.queryParamOrNull("period")?.toInt()
-            ?: return@coroutineScope ServerResponse.badRequest().buildAndAwait()
+        val date = "date".dateParamValidation(request) as LocalDate?
+            ?: return@coroutineScope ServerResponse.badRequest().bodyValueAndAwait("Date is required")
 
+        val period = request.queryParamOrNull("period")?.toIntOrNull()
+            ?: return@coroutineScope ServerResponse.badRequest().bodyValueAndAwait("Period is required. Example: 1, 7, 30, 365")
 
         when(val result = attendService.analyticAttend(date, period)){
             is CoreResult.Success ->
@@ -187,6 +194,7 @@ class AttendHandler(
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     suspend fun getDurationSpent(): ServerResponse = coroutineScope{
         val durationSpentFlow = attendService.countDuration(null, null)
+        logger.info("Duration Spent: ${durationSpentFlow.toList().size}")
         ServerResponse.ok().bodyAndAwait(durationSpentFlow)
     }
 
@@ -195,15 +203,41 @@ class AttendHandler(
         request: ServerRequest
     ): ServerResponse = coroutineScope{
         val major = request.queryParamOrNull("major")
-        val startDate = request.queryParam("startDate")
-            .map { LocalDate.parse(it) }
-            .orElse(null)
-        val endDate = request.queryParam("endDate")
-            .map { LocalDate.parse(it) }
-            .orElse(null)
+        val startDate = try {
+            request.queryParam("startDate")
+                .map { LocalDate.parse(it) }
+                .orElse(null)
+                ?: return@coroutineScope ServerResponse.badRequest()
+                    .bodyValueAndAwait("startDate is required")
+        } catch (_: DateTimeParseException) {
+            return@coroutineScope ServerResponse.badRequest()
+                .bodyValueAndAwait("Invalid startDate format. Expected YYYY-MM-DD (e.g., 2025-01-15)")
+        }
+
+        val endDate = try {
+            request.queryParam("endDate")
+                .map { LocalDate.parse(it) }
+                .orElse(null)
+                ?: return@coroutineScope ServerResponse.badRequest()
+                    .bodyValueAndAwait("endDate is required")
+        } catch (_: DateTimeParseException) {
+            return@coroutineScope ServerResponse.badRequest()
+                .bodyValueAndAwait("Invalid endDate format. Expected YYYY-MM-DD (e.g., 2025-01-15)")
+        }
 
         val data = attendService.getPurposes(major, startDate, endDate)
         ServerResponse.ok().bodyValueAndAwait(data)
+    }
+
+    private fun String.dateParamValidation(request: ServerRequest): Any?{
+        return try {
+            request.queryParam(this)
+                .map { LocalDate.parse(it) }
+                .orElse(null)
+        }catch (e: DateTimeParseException){
+            e.printStackTrace()
+            e.message.toString()
+        }
     }
 
 }

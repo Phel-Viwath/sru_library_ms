@@ -6,11 +6,11 @@
 package sru.edu.sru_lib_management.core.handler;
 
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import org.springframework.web.server.ResponseStatusException;
@@ -23,6 +23,7 @@ import sru.edu.sru_lib_management.core.domain.service.LanguageService;
 public class LanguageHandler {
 
     private final LanguageService languageService;
+    private final Logger logger = LoggerFactory.getLogger(LanguageHandler.class);
 
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public Mono<ServerResponse> addLanguage(ServerRequest request){
@@ -55,7 +56,7 @@ public class LanguageHandler {
                 .flatMap(language -> ServerResponse.ok().bodyValue(language))
                 .onErrorResume(e -> {
                     if(e instanceof ResponseStatusException && ((ResponseStatusException) e).getStatusCode() == HttpStatus.BAD_REQUEST){
-                        return ServerResponse.status(HttpStatus.NOT_FOUND).bodyValue("Staff not found");
+                        return ServerResponse.status(HttpStatus.NOT_FOUND).bodyValue("Not found");
                     } else {
                         return ServerResponse.status(HttpStatus.INTERNAL_SERVER_ERROR).bodyValue(e.getMessage());
                     }

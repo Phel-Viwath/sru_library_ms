@@ -16,10 +16,10 @@ public class College {
     private String collegeId;
     private String collegeName;
 
-    public String getCollegeId() {
+    public String _getCollegeId() {
         return this.collegeId;
     }
-    public String getCollegeName(){
+    public String _getCollegeName(){
         return this.collegeName;
     }
 

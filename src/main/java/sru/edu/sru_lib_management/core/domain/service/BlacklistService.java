@@ -21,4 +21,5 @@ public interface BlacklistService {
     Mono<Boolean> exist(Long studentId, String bookId);
 
     Flux<BlackListDto> getBlackListDetail();
+    Flux<BlackList> search(String keyword);
 }

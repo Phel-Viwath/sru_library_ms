@@ -14,11 +14,11 @@ public class Language {
     private String languageId;
     private String languageName;
 
-    public String getLanguageId() {
+    public String _getLanguageId() {
         return languageId;
     }
 
-    public String getLanguageName() {
+    public String _getLanguageName() {
         return languageName;
     }
 }

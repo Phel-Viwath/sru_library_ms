@@ -13,6 +13,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import sru.edu.sru_lib_management.core.domain.model.Major;
 import sru.edu.sru_lib_management.core.domain.repository.MajorRepository;
+import sru.edu.sru_lib_management.core.domain.service.CollegeService;
 import sru.edu.sru_lib_management.core.domain.service.MajorService;
 
 @SuppressWarnings("CallToPrintStackTrace")
@@ -21,21 +22,34 @@ import sru.edu.sru_lib_management.core.domain.service.MajorService;
 public class MajorServiceImp implements MajorService {
 
     private final MajorRepository majorRepository;
+    private final CollegeService collegeService;
 
     @Override
     public Mono<Object> save(Major entity) {
-        boolean areFieldBlank = entity.getMajorId().isBlank() || entity.getMajorName().isBlank() || entity.getCollegeId().isBlank();
-        if (areFieldBlank){
-            return Mono.just("");
+        // Validate required fields
+        if (entity.getMajorId() == null || entity.getMajorId().isBlank() ||
+                entity.getMajorName() == null || entity.getMajorName().isBlank() ||
+                entity.getCollegeId() == null || entity.getCollegeId().isBlank()) {
+            return Mono.error(new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "majorId, majorName, and collegeId are required"
+            ));
         }
-        return majorRepository.findById(entity.getMajorId())
-                .flatMap(exist -> Mono.just((Object) "ID already in use."))
-                .switchIfEmpty(
-                        majorRepository.save(entity).map(result -> (Object) result)
-                ).onErrorResume(e -> {
-                    e.printStackTrace();
-                    return Mono.just(e.getMessage());
-                });
+
+        return collegeService.findById(entity.getCollegeId())
+            .switchIfEmpty(
+                Mono.error(new ResponseStatusException(HttpStatus.BAD_REQUEST, "College not found!"))
+            )
+            .then(
+                majorRepository.findById(entity.getMajorId())
+                    .flatMap(exist -> Mono.just((Object) "ID already in use."))
+                    .switchIfEmpty(
+                            majorRepository.save(entity).map(result -> (Object) result)
+                    ).onErrorResume(e -> {
+                        e.printStackTrace();
+                        return Mono.just(e.getMessage());
+                    })
+            );
 
     }
 

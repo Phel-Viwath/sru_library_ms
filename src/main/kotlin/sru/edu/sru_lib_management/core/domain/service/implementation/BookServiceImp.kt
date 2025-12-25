@@ -229,7 +229,7 @@ class BookServiceImp(
                 languageCountMap[languageId] = currentQuan + book.bookQuan
             }
             val languageNameMap = languageCountMap.mapKeys { (languageId, _) ->
-                languages.find { it.languageId == languageId }?.languageName ?: languageId
+                languages.find { it._getLanguageId() == languageId }?._getLanguageName() ?: languageId
             }
             val totalBook = allBook.toList().sumOf { it.bookQuan }
 
@@ -244,7 +244,7 @@ class BookServiceImp(
     ): List<BookEachCollege> {
         return try {
             val collegeNameList = collegeService.findAll().collectList().awaitSingle()
-            val collegeMap = collegeNameList.associate { it.collegeId to it.collegeName }
+            val collegeMap = collegeNameList.associate { it._getCollegeId() to it._getCollegeName() }
             val donation: List<DonationDetailDto> = donationRepository.getDonationDetail().toList()
 
             val donationMap = donation.associateBy { it.bookId }

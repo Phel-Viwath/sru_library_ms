@@ -7,6 +7,8 @@ package sru.edu.sru_lib_management.core.handler;
 
 
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Component;
@@ -18,17 +20,17 @@ import sru.edu.sru_lib_management.core.domain.model.College;
 import sru.edu.sru_lib_management.core.domain.service.CollegeService;
 
 import java.util.Objects;
-
 @RequiredArgsConstructor
 @Component
 public class CollegeHandler {
 
     private final CollegeService collegeService;
+    private final Logger logger = LoggerFactory.getLogger(CollegeHandler.class);
 
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
     public Mono<ServerResponse> addNewCollege(ServerRequest request){
         return request.bodyToMono(College.class).flatMap(college -> {
-            if (college.getCollegeId() == null || college.getCollegeName() == null)
+            if (college._getCollegeId() == null || college._getCollegeName() == null)
                 return ServerResponse.badRequest().build();
             return collegeService.save(college)
                     .flatMap(result ->
@@ -58,7 +60,8 @@ public class CollegeHandler {
     public Mono<ServerResponse> updateCollege(ServerRequest request){
         var id = request.pathVariable("id");
         return request.bodyToMono(College.class)
-                .flatMap(college -> collegeService.update(college, id)
+                .flatMap(college ->
+                        collegeService.update(college, id)
                 .flatMap(result ->
                         ServerResponse.ok().bodyValue(result)
                 )

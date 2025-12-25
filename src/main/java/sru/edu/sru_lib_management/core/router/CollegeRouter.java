@@ -23,7 +23,7 @@ public class CollegeRouter{
                     build.GET("", collegeHandler::getAllCollege);
                     build.GET("/{id}", collegeHandler::getById);
                     build.PUT("/{id}", collegeHandler::updateCollege);
-                    build.PUT("/{id}", collegeHandler::deleteCollege);
+                    build.DELETE("/{id}", collegeHandler::deleteCollege);
                 })
                 .build();
     }

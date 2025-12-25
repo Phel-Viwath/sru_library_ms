@@ -7,8 +7,10 @@ package sru.edu.sru_lib_management.core.data.repository;
 
 import io.r2dbc.spi.Row;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Component;
+import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import sru.edu.sru_lib_management.core.domain.model.College;
@@ -23,7 +25,7 @@ public class CollegeRepositoryImp implements CollegeRepository {
     private final DatabaseClient client;
 
     private static final String SAVE_QR = "INSERT INTO colleges(college_id, college_name) VALUES (:collegeId, :collegeName)";
-    private static final String UPDATE_QR = "Update colleges set college_id = :collegeId ,college_name = :collegeName WHERE college_id =:id;";
+    private static final String UPDATE_QR = "Update colleges set college_name = :collegeName WHERE college_id =:id;";
     private static final String DELETE_QR = "DELETE FROM colleges WHERE college_id = :id";
     private static final String FIND_ALL_QR = "SELECT * FROM colleges";
     private static final String FIND_BY_ID_QR = "SELECT * FROM colleges WHERE college_id = :id";
@@ -40,8 +42,17 @@ public class CollegeRepositoryImp implements CollegeRepository {
     public Mono<College> update(College entity, String id) {
         return client.sql(UPDATE_QR)
                 .bindValues(paramMapUpdate(entity, id))
-                .then()
-                .thenReturn(entity);
+                .fetch()
+                .rowsUpdated()
+                .flatMap(count -> {
+                    if(count > 0){
+                        return Mono.error(new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "College with id " + id + " not found"
+                        ));
+                    }
+                    return Mono.just(entity);
+                });
     }
 
     @Override
@@ -70,15 +81,15 @@ public class CollegeRepositoryImp implements CollegeRepository {
 
     private Map<String, Object> paramMap(College college){
         return Map.ofEntries(
-                Map.entry("collegeId", college.getCollegeId()),
-                Map.entry("collegeName", college.getCollegeName())
+                Map.entry("collegeId", college._getCollegeId()),
+                Map.entry("collegeName", college._getCollegeName())
         );
     }
 
     private Map<String, Object> paramMapUpdate(College college, String id){
         return Map.ofEntries(
-                Map.entry("collegeId", college.getCollegeId()),
-                Map.entry("collegeName", college.getCollegeName()),
+                Map.entry("collegeId", college._getCollegeId()),
+                Map.entry("collegeName", college._getCollegeName()),
                 Map.entry("id", id)
         );
     }

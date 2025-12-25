@@ -8,7 +8,7 @@ package sru.edu.sru_lib_management.core.domain.service.implementation
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactor.awaitSingleOrNull
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
@@ -159,6 +159,7 @@ class AttendServiceImp(
                 CoreResult.Success(att)
             },
             onFailure = {
+                it.printStackTrace()
                 CoreResult.Failure(it.message ?: "Unknown error occurred.")
             }
         )
@@ -442,11 +443,12 @@ class AttendServiceImp(
     override fun countDuration(
         startDate: LocalDate?, 
         endDate: LocalDate?
-    ): Flow<DurationSpent> {
+    ): Flow<DurationSpent> = flow{
         try {
-            val attendDetail = runBlocking(Dispatchers.IO){
+            val attendDetail = withContext(Dispatchers.IO){
                 attendRepository.getCustomAttendDetail(startDate, endDate)
             }
+            logger.info("Attend detail: ${attendDetail.size}")
             val filterAttendDetail = attendDetail.filter {
                 val exitingTime = it.exitingTimes ?: return@filter false
                 val inMorning = exitingTime !in (SEVEN_AM..ELEVEN_AM)
@@ -467,8 +469,11 @@ class AttendServiceImp(
                     val degree = attendances.first().degreeLevel
                     val gen = attendances.first().generation
                     DurationSpent(studentId, studentName, major, degree, gen, totalTimeSpent.toFloat())
-                }
-            return durationSpentList.sortedByDescending { it.totalTimeSpent }.asFlow()
+                }.sortedByDescending { it.totalTimeSpent }
+
+            durationSpentList.forEach { durationSpent ->
+                emit(durationSpent)
+            }
         }catch (e: Exception){
             e.printStackTrace()
             throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "${e.message}")

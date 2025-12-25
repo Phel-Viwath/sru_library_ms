@@ -32,7 +32,7 @@ public class DegreeLevelRepositoryImp implements DegreeLevelRepository {
     @Override
     public Mono<DegreeLevel> update(DegreeLevel entity, String id) {
         return client.sql("UPDATE degree_level set degree_level_id = :degreeLevelId, degree_level = :degreeLevel WHERE degree_level_id = :id;")
-                .bind("degreeLevelId", entity.getDegreeLevel())
+                .bind("degreeLevelId", entity.getDegreeLevelId())
                 .bind("degreeLevel", entity.getDegreeLevel())
                 .bind("id", id)
                 .then()

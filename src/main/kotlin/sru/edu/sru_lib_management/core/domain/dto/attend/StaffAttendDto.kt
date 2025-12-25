@@ -18,5 +18,5 @@ data class StaffAttendDto(
     @field:JsonFormat(pattern = "HH:mm:ss") val exitingTimes: LocalTime?,
     val purpose: String,
     @field:JsonFormat(pattern = "yyyy:MM:dd")
-    val date: LocalDate
+    val attendDate: LocalDate
 )

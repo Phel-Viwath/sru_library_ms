@@ -27,8 +27,10 @@ import java.time.temporal.ChronoUnit;
 @RequiredArgsConstructor
 public class BlacklistServiceImp implements BlacklistService {
 
+
+    private final Logger logger = LoggerFactory.getLogger(BlacklistServiceImp.class);
+
     private final BlackListRepository blackListRepository;
-    private static final Logger logger = LoggerFactory.getLogger(BlacklistServiceImp.class);
 
     @Override
     public Mono<BlackList> save(BlackList blackList) {
@@ -104,6 +106,16 @@ public class BlacklistServiceImp implements BlacklistService {
                     blackListDto.setMoney(money);
                     return blackListDto;
                 });
+    }
+
+    @Override
+    public Flux<BlackList> search(String keyword) {
+        try {
+            return blackListRepository.search(keyword);
+        }catch (Exception e){
+            logger.error("Error while searching BlackList {}", e.getMessage());
+            return Flux.empty();
+        }
     }
 
 }

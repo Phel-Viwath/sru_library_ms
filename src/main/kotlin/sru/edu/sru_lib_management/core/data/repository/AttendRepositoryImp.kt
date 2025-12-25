@@ -93,7 +93,7 @@ class AttendRepositoryImp(
 
     override suspend fun update(entity: Attend): Attend {
         client.sql(UPDATE_ATTEND_QUERY)
-            .bindValues(paramMap(entity))
+            .bindValues(paramMapUpdate(entity))
             .fetch()
             .awaitRowsUpdated()
         return entity
@@ -278,9 +278,9 @@ class AttendRepositoryImp(
         startDate: LocalDate?,
         endDate: LocalDate?,
     ): List<StudentAttendDetail> {
-        val map = mapOf( "sDate" to startDate, "eDate" to endDate, "p_visitor_type" to VisitorType.STUDENT.name)
+        val map = mapOf( "startDate" to startDate, "endDate" to endDate, "p_visitor_type" to VisitorType.STUDENT.name)
         var statement = client
-            .sql("CALL GetCustomAttendDetail(:sDate, :eDate, :p_visitor_type)")
+            .sql("CALL GetCustomAttendDetail(:startDate, :endDate, :p_visitor_type)")
         map.forEach { (k, v) ->
             statement = if (v != null){
                 statement.bind(k, v)
@@ -331,10 +331,10 @@ class AttendRepositoryImp(
                     staffId = row.get("staff_id", String::class.java)!!,
                     staffName = row.get("staff_name", String::class.java)!!,
                     gender = row.get("staff_name", String::class.java)!!,
-                    entryTimes = row.get("entry_times", LocalTime::class.java)!!,
-                    exitingTimes = row.get("exiting_times", LocalTime::class.java),
+                    entryTimes = row.get("entry_time", LocalTime::class.java)!!,
+                    exitingTimes = row.get("exit_time", LocalTime::class.java),
                     purpose = row.get("purpose", String::class.java)!!,
-                    date = row.get("date", LocalDate::class.java)!!
+                    attendDate = row.get("attend_date", LocalDate::class.java)!!
                 )
             }
             .flow()
@@ -364,7 +364,16 @@ class AttendRepositoryImp(
 
 
     private fun paramMap(attend: Attend): Map<String, Any?> = mapOf(
+
         "visitorId" to attend.visitorId,
+        "entryTimes" to attend.entryTimes,
+        "exitTimes" to attend.exitTimes,
+        "purpose" to attend.purpose,
+        "attendDate" to attend.attendDate
+    )
+
+    private fun paramMapUpdate(attend: Attend): Map<String, Any?> = mapOf(
+        "attendId" to attend.attendId,
         "entryTimes" to attend.entryTimes,
         "exitTimes" to attend.exitTimes,
         "purpose" to attend.purpose,

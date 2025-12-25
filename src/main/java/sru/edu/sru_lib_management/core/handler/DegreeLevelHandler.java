@@ -26,7 +26,7 @@ public class DegreeLevelHandler {
     private final DegreeLevelService degreeLevelService;
 
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
-    public Mono<ServerResponse> addNewCollege(ServerRequest request){
+    public Mono<ServerResponse> addDegreeLevel(ServerRequest request){
         return request.bodyToMono(DegreeLevel.class).flatMap(degreeLevel -> {
             if (degreeLevel.getDegreeLevelId().isBlank() || degreeLevel.getDegreeLevel().isBlank())
                 return ServerResponse.badRequest().build();
@@ -38,7 +38,7 @@ public class DegreeLevelHandler {
     }
 
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
-    public Mono<ServerResponse> getAllCollege(ServerRequest request){
+    public Mono<ServerResponse> getAllDegreeLevel(ServerRequest request){
         var allDegreeLevel =  degreeLevelService.findAll();
         return ServerResponse.ok().body(allDegreeLevel, College.class);
     }
@@ -58,7 +58,7 @@ public class DegreeLevelHandler {
     }
 
     @PreAuthorize("hasAnyRole('ADMIN', 'SUPER_ADMIN')")
-    public Mono<ServerResponse> updateCollege(ServerRequest request){
+    public Mono<ServerResponse> updateDegreeLevel(ServerRequest request){
         var id = request.pathVariable("id");
         return request.bodyToMono(DegreeLevel.class)
                 .flatMap(degreeLevel -> degreeLevelService.update(degreeLevel, id)
@@ -68,7 +68,7 @@ public class DegreeLevelHandler {
     }
 
     @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
-    public Mono<ServerResponse> deleteCollege(ServerRequest request) {
+    public Mono<ServerResponse> deleteDegreeLevel(ServerRequest request) {
         var id = request.pathVariable("id");
         return degreeLevelService.delete(id)
                 .flatMap(result -> result

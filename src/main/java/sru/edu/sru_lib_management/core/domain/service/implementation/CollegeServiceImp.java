@@ -27,10 +27,10 @@ public class CollegeServiceImp implements CollegeService {
 
     @Override
     public Mono<Object> save(College college) {
-        if (college.getCollegeId().isBlank() || college.getCollegeName().isBlank())
+        if (college._getCollegeId().isBlank() || college._getCollegeName().isBlank())
             return Mono.error(new ResponseStatusException(badRequest, "Field cannot be blank."));
 
-        return collegeRepository.findById(college.getCollegeId())
+        return collegeRepository.findById(college._getCollegeId())
                 .flatMap(exist ->
                         Mono.error(
                                 new ResponseStatusException(badRequest, "College ID already exist.")
@@ -94,4 +94,5 @@ public class CollegeServiceImp implements CollegeService {
                 .map(college -> (Object) college)
                 .onErrorResume(e -> Mono.error(new ResponseStatusException(internalServerError, e.getMessage())));
     }
+
 }

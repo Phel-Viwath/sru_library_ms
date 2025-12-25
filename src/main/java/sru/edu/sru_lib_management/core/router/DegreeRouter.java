@@ -18,15 +18,15 @@ public class DegreeRouter {
     @Bean
     public RouterFunction<ServerResponse> degreeRoute(){
         return RouterFunctions
-                .route()
-                .nest(RequestPredicates.path("/api/v1/degree-level"), builder -> {
-                    builder.GET("", degreeLevelHandler::getAllCollege);
-                    builder.POST("", degreeLevelHandler::addNewCollege);
-                    builder.GET("/{id}", degreeLevelHandler::getById);
-                    builder.PUT("/{id}", degreeLevelHandler::updateCollege);
-                    builder.DELETE("/{id}", degreeLevelHandler::deleteCollege);
-                })
-                .build();
+            .route()
+            .nest(RequestPredicates.path("/api/v1/degree-level"),builder -> {
+                builder.GET("", degreeLevelHandler::getAllDegreeLevel);
+                builder.POST("", degreeLevelHandler::addDegreeLevel);
+                builder.GET("/{id}", degreeLevelHandler::getById);
+                builder.PUT("/{id}", degreeLevelHandler::updateDegreeLevel);
+                builder.DELETE("/{id}", degreeLevelHandler::deleteDegreeLevel);
+            })
+            .build();
     }
 
 }

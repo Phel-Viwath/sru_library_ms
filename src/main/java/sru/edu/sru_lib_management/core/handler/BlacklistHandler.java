@@ -10,6 +10,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import sru.edu.sru_lib_management.core.domain.model.BlackList;
 import sru.edu.sru_lib_management.core.domain.model.BlackListDto;
@@ -23,7 +24,7 @@ public class BlacklistHandler {
 
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     public Mono<ServerResponse> allInBlackListDetail(ServerRequest request) {
-        var data =  blacklistService.getBlackListDetail();
+        var data = blacklistService.getBlackListDetail();
         return ServerResponse.ok().body(data, BlackListDto.class);
     }
 
@@ -92,6 +93,12 @@ public class BlacklistHandler {
                                 }
                             });
                 });
+    }
+
+    public Mono<ServerResponse> search(ServerRequest request){
+        String keyword = request.queryParam("keyword").orElse(null);
+        Flux<BlackList> blackLists = blacklistService.search(keyword);
+        return ServerResponse.ok().bodyValue(blackLists);
     }
 
 

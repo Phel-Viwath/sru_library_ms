@@ -70,8 +70,8 @@ public class LanguageRepositoryImp implements LanguageRepository {
 
     private Map<String, Object> paramMap(Language language){
         return Map.ofEntries(
-                Map.entry("language_id", language.getLanguageId()),
-                Map.entry("language_name", language.getLanguageName())
+                Map.entry("languageId", language.getLanguageId()),
+                Map.entry("languageName", language.getLanguageName())
         );
     }
 

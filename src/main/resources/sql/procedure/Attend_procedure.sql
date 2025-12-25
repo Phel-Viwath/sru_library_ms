@@ -324,3 +324,5 @@ BEGIN
       AND (p_visitor_type IS NULL OR visitorType = p_visitor_type)
     ORDER BY attendDate DESC, entryTimes;
 END;
+
+Call GetCustomAttendDetail(null,null,'STUDENT');
