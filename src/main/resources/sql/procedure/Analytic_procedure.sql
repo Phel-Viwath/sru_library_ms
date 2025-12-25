@@ -42,7 +42,7 @@ BEGIN
              major IS NULL
                  OR major = ''
                  OR m.major_name = major
-                 OR a.sru_staff_id IS NOT NULL  -- Include staff entries when major filter is applied
+                 OR a.sru_staff_id IS NOT NULL  -- Include libraryStaff entries when major filter is applied
              )
          GROUP BY
              purpose_category,

@@ -15,10 +15,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import sru.edu.sru_lib_management.core.domain.mapper.StaffMapper;
 import sru.edu.sru_lib_management.core.domain.mapper.dto.StaffDto;
-import sru.edu.sru_lib_management.core.domain.model.Staff;
+import sru.edu.sru_lib_management.core.domain.model.LibraryStaff;
 import sru.edu.sru_lib_management.core.domain.model.StaffMajor;
 import sru.edu.sru_lib_management.core.domain.repository.StaffMajorRepository;
-import sru.edu.sru_lib_management.core.domain.repository.StaffRepository;
+import sru.edu.sru_lib_management.core.domain.repository.LibraryStaffRepository;
 import sru.edu.sru_lib_management.core.domain.service.StaffService;
 
 import java.util.Arrays;
@@ -31,34 +31,34 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class StaffServiceImp implements StaffService {
 
-    private final StaffRepository staffRepository;
+    private final LibraryStaffRepository libraryStaffRepository;
     private final StaffMajorRepository staffMajorRepository;
 
     private final Logger logger = LoggerFactory.getLogger(StaffServiceImp.class);
 
     @Override
-    public Mono<Object> save(Staff staff) {
-        if (staff.getStaffName().isBlank() || staff.getGender().isBlank()){
+    public Mono<Object> save(LibraryStaff libraryStaff) {
+        if (libraryStaff.getStaffName().isBlank() || libraryStaff.getGender().isBlank()){
             return Mono.just("Invalid Input");
         }
-        String[] str = staff.getMajorId().split(", ");
+        String[] str = libraryStaff.getMajorId().split(", ");
 
-        Staff staffToSave = new Staff(
-                staff.getStaffId(),
-                staff.getStaffName(),
-                staff.getGender(),
-                staff.getPosition(),
-                staff.getDegreeLevel(),
+        LibraryStaff libraryStaffToSave = new LibraryStaff(
+                libraryStaff.getStaffId(),
+                libraryStaff.getStaffName(),
+                libraryStaff.getGender(),
+                libraryStaff.getPosition(),
+                libraryStaff.getDegreeLevel(),
                 str[0],
-                staff.getYear(),
-                staff.getShiftWork(),
-                staff.getIsActive()
+                libraryStaff.getYear(),
+                libraryStaff.getShiftWork(),
+                libraryStaff.getIsActive()
         );
 
-        return staffRepository.save(staffToSave)
+        return libraryStaffRepository.save(libraryStaffToSave)
                 .flatMap(saved ->{
                     logger.info("{}", saved);
-                    String[] majors = staff.getMajorId().split(", ");
+                    String[] majors = libraryStaff.getMajorId().split(", ");
                     List<Mono<StaffMajor>> saveStaffMajor= Arrays.stream(majors)
                             .map(majorId -> {
                                 StaffMajor staffMajor = new StaffMajor(saved.getStaffId(), majorId);
@@ -76,26 +76,26 @@ public class StaffServiceImp implements StaffService {
     }
 
     @Override
-    public Mono<Object> update(Staff staff) {
+    public Mono<Object> update(LibraryStaff libraryStaff) {
 
-        String[] newMajorId = staff.getMajorId().split(", ");
-        Staff staffUpdate = new Staff(
-                staff.getStaffId(),
-                staff.getStaffName(),
-                staff.getGender(),
-                staff.getPosition(),
-                staff.getDegreeLevel(),
+        String[] newMajorId = libraryStaff.getMajorId().split(", ");
+        LibraryStaff libraryStaffUpdate = new LibraryStaff(
+                libraryStaff.getStaffId(),
+                libraryStaff.getStaffName(),
+                libraryStaff.getGender(),
+                libraryStaff.getPosition(),
+                libraryStaff.getDegreeLevel(),
                 newMajorId[0],
-                staff.getYear(),
-                staff.getShiftWork(),
-                staff.getIsActive()
+                libraryStaff.getYear(),
+                libraryStaff.getShiftWork(),
+                libraryStaff.getIsActive()
         );
 
-        return staffRepository.findById(staff.getStaffId())
+        return libraryStaffRepository.findById(libraryStaff.getStaffId())
                 .flatMap(exist ->
-                     staffRepository.update(staffUpdate, null)
+                     libraryStaffRepository.update(libraryStaffUpdate, null)
                             .flatMap(updated ->
-                                    staffMajorRepository.findStaffMajorByStaffId(staff.getStaffId())
+                                    staffMajorRepository.findStaffMajorByStaffId(libraryStaff.getStaffId())
                                             .collectList()
                                             .flatMap(existingStaffMajors -> {
                                                 List<String> existingMajorIds  = existingStaffMajors.stream()
@@ -104,12 +104,12 @@ public class StaffServiceImp implements StaffService {
                                                 List<String> majorToDelete = existingMajorIds.stream()
                                                         .filter(majorId -> Arrays.asList(newMajorId).contains(majorId))
                                                         .collect(Collectors.toList());
-                                                Mono<Void> deleteOutdatedMajors = staffMajorRepository.deleteAllByStaffIdAndMajorIds(staff.getStaffId(), majorToDelete);
+                                                Mono<Void> deleteOutdatedMajors = staffMajorRepository.deleteAllByStaffIdAndMajorIds(libraryStaff.getStaffId(), majorToDelete);
 
                                                 List<Mono<StaffMajor>> saveNewMajors = Arrays.stream(newMajorId)
                                                         .filter(majorId -> !existingMajorIds.contains(majorId))
                                                         .map(majorId -> {
-                                                            StaffMajor staffMajor = new StaffMajor(staff.getStaffId(), majorId);
+                                                            StaffMajor staffMajor = new StaffMajor(libraryStaff.getStaffId(), majorId);
                                                             return staffMajorRepository.save(staffMajor);
                                                         })
                                                         .collect(Collectors.toList());
@@ -127,7 +127,7 @@ public class StaffServiceImp implements StaffService {
 
     @Override
     public Mono<Object> findById(Long staffId) {
-        return staffRepository.findById(staffId)
+        return libraryStaffRepository.findById(staffId)
                 .map(staff -> (Object) staff)
                 .switchIfEmpty(
                         Mono.error(
@@ -141,9 +141,9 @@ public class StaffServiceImp implements StaffService {
 
     @Override
     public Mono<Boolean> delete(Long staffId) {
-        return staffRepository.findById(staffId)
+        return libraryStaffRepository.findById(staffId)
                 .flatMap(staff ->
-                        staffRepository.delete(staffId)
+                        libraryStaffRepository.delete(staffId)
                                 .map(deletionResult ->  true)
                 )
                 .switchIfEmpty(Mono.just(false))
@@ -155,7 +155,7 @@ public class StaffServiceImp implements StaffService {
 
     @Override
     public Flux<StaffDto> findAll() {
-        return staffRepository
+        return libraryStaffRepository
                 .findAll()
                 .map(StaffMapper::toStaffDto)
                 .onErrorMap(e ->

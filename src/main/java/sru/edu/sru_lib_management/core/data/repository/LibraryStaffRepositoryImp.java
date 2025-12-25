@@ -11,20 +11,20 @@ import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import sru.edu.sru_lib_management.core.domain.model.Staff;
-import sru.edu.sru_lib_management.core.domain.repository.StaffRepository;
+import sru.edu.sru_lib_management.core.domain.model.LibraryStaff;
+import sru.edu.sru_lib_management.core.domain.repository.LibraryStaffRepository;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
-public class StaffRepositoryImp implements StaffRepository {
+public class LibraryStaffRepositoryImp implements LibraryStaffRepository {
 
     private final DatabaseClient client;
 
     @Override
-    public Mono<Staff> save(Staff entity) {
+    public Mono<LibraryStaff> save(LibraryStaff entity) {
         DatabaseClient.GenericExecuteSpec statement = client.sql(SAVE_STAFF)
                 .filter(s -> s.returnGeneratedValues("staff_id"));
         statement = bindParam(statement, paramStaffSave(entity));
@@ -36,14 +36,14 @@ public class StaffRepositoryImp implements StaffRepository {
     }
 
     @Override
-    public Mono<Staff> update(Staff entity, Long id) {
+    public Mono<LibraryStaff> update(LibraryStaff entity, Long id) {
         DatabaseClient.GenericExecuteSpec statement = client.sql(UPDATE_STAFF);
         statement = bindParam(statement, paramStaffUpdate(entity));
         return statement.then().thenReturn(entity);
     }
 
     @Override
-    public Mono<Staff> findById(Long id) {
+    public Mono<LibraryStaff> findById(Long id) {
         return client.sql(GET_STAFF)
                 .bind("staffId", id)
                 .map((row, rowMetadata) -> mapToStaff(row))
@@ -61,7 +61,7 @@ public class StaffRepositoryImp implements StaffRepository {
     }
 
     @Override
-    public Flux<Staff> findAll() {
+    public Flux<LibraryStaff> findAll() {
         return client.sql(GET_STAFFS)
                 .map((row, rowMetadata) -> mapToStaff(row))
                 .all();
@@ -93,35 +93,35 @@ public class StaffRepositoryImp implements StaffRepository {
         };
     }
 
-    private Map<String, Object> paramStaffUpdate(Staff staff){
+    private Map<String, Object> paramStaffUpdate(LibraryStaff libraryStaff){
         Map<String, Object> param = new HashMap<>();
-        param.put("staffId", staff.getStaffId());
-        param.put("staffName", staff.getStaffName());
-        param.put("gender", staff.getGender());
-        param.put("position", staff.getPosition());
-        param.put("degreeLevel", staff.getDegreeLevel());
-        param.put("year", staff.getYear());
-        param.put("shiftWork", staff.getShiftWork());
-        param.put("majorId", staff.getMajorId());
-        param.put("isActive", staff.getIsActive());
+        param.put("staffId", libraryStaff.getStaffId());
+        param.put("staffName", libraryStaff.getStaffName());
+        param.put("gender", libraryStaff.getGender());
+        param.put("position", libraryStaff.getPosition());
+        param.put("degreeLevel", libraryStaff.getDegreeLevel());
+        param.put("year", libraryStaff.getYear());
+        param.put("shiftWork", libraryStaff.getShiftWork());
+        param.put("majorId", libraryStaff.getMajorId());
+        param.put("isActive", libraryStaff.getIsActive());
         return param;
     }
 
-    private Map<String, Object> paramStaffSave(Staff staff){
+    private Map<String, Object> paramStaffSave(LibraryStaff libraryStaff){
         Map<String, Object> paramMap = new HashMap<>();
-        paramMap.put("staffName", staff.getStaffName());
-        paramMap.put("gender", staff.getGender());
-        paramMap.put("position", staff.getPosition());
-        paramMap.put("degreeLevel", staff.getDegreeLevel());
-        paramMap.put("year", staff.getYear());
-        paramMap.put("shiftWork", staff.getShiftWork());
-        paramMap.put("majorId", staff.getMajorId());
-        paramMap.put("isActive", staff.getIsActive());
+        paramMap.put("staffName", libraryStaff.getStaffName());
+        paramMap.put("gender", libraryStaff.getGender());
+        paramMap.put("position", libraryStaff.getPosition());
+        paramMap.put("degreeLevel", libraryStaff.getDegreeLevel());
+        paramMap.put("year", libraryStaff.getYear());
+        paramMap.put("shiftWork", libraryStaff.getShiftWork());
+        paramMap.put("majorId", libraryStaff.getMajorId());
+        paramMap.put("isActive", libraryStaff.getIsActive());
         return paramMap;
     }
 
-    private Staff mapToStaff(Row row){
-        return new Staff(
+    private LibraryStaff mapToStaff(Row row){
+        return new LibraryStaff(
                 row.get("staff_id", Long.class),
                 row.get("staff_name", String.class),
                 row.get("gender", String.class),

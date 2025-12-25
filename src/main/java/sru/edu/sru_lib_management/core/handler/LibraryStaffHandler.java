@@ -6,6 +6,8 @@
 package sru.edu.sru_lib_management.core.handler;
 
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Component;
@@ -14,7 +16,7 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 import org.springframework.web.server.ResponseStatusException;
 import reactor.core.publisher.Mono;
 import sru.edu.sru_lib_management.core.domain.mapper.dto.StaffDto;
-import sru.edu.sru_lib_management.core.domain.model.Staff;
+import sru.edu.sru_lib_management.core.domain.model.LibraryStaff;
 import sru.edu.sru_lib_management.core.domain.service.StaffService;
 
 import java.util.Arrays;
@@ -22,9 +24,10 @@ import java.util.stream.Collectors;
 
 @Component
 @RequiredArgsConstructor
-public class StaffHandler {
+public class LibraryStaffHandler {
 
     private final StaffService staffService;
+    private final Logger logger = LoggerFactory.getLogger(LibraryStaffHandler.class);
 
     @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
     public Mono<ServerResponse> addNewStaff(ServerRequest request){
@@ -32,9 +35,8 @@ public class StaffHandler {
                 .flatMap(staffDto -> {
                     if (staffDto.getStaffName()== null || staffDto.getGender() == null)
                         return ServerResponse.badRequest().build();
-                    String majorId = Arrays.stream(staffDto.getMajorId())
-                            .collect(Collectors.joining(", "));
-                    Staff staff = new Staff(
+                    String majorId = String.join(", ", staffDto.getMajorId());
+                    LibraryStaff libraryStaff = new LibraryStaff(
                             staffDto.getStaffId(),
                             staffDto.getStaffName(),
                             staffDto.getGender(),
@@ -45,7 +47,7 @@ public class StaffHandler {
                             staffDto.getShiftWork(),
                             staffDto.getIsActive()
                     );
-                    return staffService.save(staff)
+                    return staffService.save(libraryStaff)
                             .flatMap(result -> ServerResponse.ok().bodyValue(result))
                             .onErrorResume(e -> ServerResponse.status(500).bodyValue(e.getMessage()));
                 });
@@ -58,7 +60,10 @@ public class StaffHandler {
 
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
     public Mono<ServerResponse> getByStaffById(ServerRequest request){
+
         var id = Long.parseLong(request.pathVariable("id"));
+        logger.info("Get staff by id {}", id);
+
         return staffService.findById(id)
                 .flatMap(result -> ServerResponse.ok().bodyValue(result))
                 .onErrorResume(e -> {
@@ -78,7 +83,7 @@ public class StaffHandler {
                     String majorId = Arrays.stream(staffDto.getMajorId())
                             .collect(Collectors.joining(", "));
 
-                    Staff staff = new Staff(
+                    LibraryStaff libraryStaff = new LibraryStaff(
                             staffDto.getStaffId(),
                             staffDto.getStaffName(),
                             staffDto.getGender(),
@@ -89,7 +94,7 @@ public class StaffHandler {
                             staffDto.getShiftWork(),
                             staffDto.getIsActive()
                     );
-                    return staffService.update(staff)
+                    return staffService.update(libraryStaff)
                             .flatMap(s -> ServerResponse.ok().bodyValue(s))
                             .onErrorResume(e -> ServerResponse.status(500).bodyValue(e.getMessage()));
                 });

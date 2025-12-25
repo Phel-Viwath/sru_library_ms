@@ -57,7 +57,7 @@ class ReportHandler (
 
         val staffEntry = reportService.staffAttendList(startMonth, endMonth)
         val studentEntry = reportService.studentAttendList(startMonth, endMonth).toList()
-        val libraryStaffList = staffService.findAll().collectList().awaitSingle()?.filter { it.isActive } ?: emptyList()
+        val libraryStaffList = staffService.findAll().collectList().awaitSingle()?.filter { it._getIsActive() } ?: emptyList()
         val bookEachCollege = bookService.getBookDataForEachCollege(null, null)
         val donations = reportService.getAllDonation(startDate, endDate).toList()
 

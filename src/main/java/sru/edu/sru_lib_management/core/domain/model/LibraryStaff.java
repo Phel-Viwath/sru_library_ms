@@ -9,12 +9,10 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 
-import java.lang.reflect.Array;
-
 @Data
 @AllArgsConstructor
 @RequiredArgsConstructor
-public class Staff {
+public class LibraryStaff {
     private Long staffId;
     private String staffName;
     private String gender;

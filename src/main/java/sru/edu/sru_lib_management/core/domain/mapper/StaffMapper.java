@@ -6,21 +6,21 @@
 package sru.edu.sru_lib_management.core.domain.mapper;
 
 import sru.edu.sru_lib_management.core.domain.mapper.dto.StaffDto;
-import sru.edu.sru_lib_management.core.domain.model.Staff;
+import sru.edu.sru_lib_management.core.domain.model.LibraryStaff;
 
 public class StaffMapper {
-    public static StaffDto toStaffDto(Staff staff){
-        if (staff == null) return null;
+    public static StaffDto toStaffDto(LibraryStaff libraryStaff){
+        if (libraryStaff == null) return null;
         return new StaffDto(
-                staff.getStaffId(),
-                staff.getStaffName(),
-                staff.getGender(),
-                staff.getPosition(),
-                staff.getDegreeLevel(),
-                staff.getMajorId().split(", "),
-                staff.getYear(),
-                staff.getShiftWork(),
-                staff.getIsActive()
+                libraryStaff.getStaffId(),
+                libraryStaff.getStaffName(),
+                libraryStaff.getGender(),
+                libraryStaff.getPosition(),
+                libraryStaff.getDegreeLevel(),
+                libraryStaff.getMajorId().split(", "),
+                libraryStaff.getYear(),
+                libraryStaff.getShiftWork(),
+                libraryStaff.getIsActive()
         );
     }
 }

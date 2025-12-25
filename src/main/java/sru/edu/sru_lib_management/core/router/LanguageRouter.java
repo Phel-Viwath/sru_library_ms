@@ -12,6 +12,7 @@ import sru.edu.sru_lib_management.core.handler.LanguageHandler;
 @Configuration
 @RequiredArgsConstructor
 public class LanguageRouter {
+
     private final LanguageHandler languageHandler;
 
     @Bean

@@ -23,7 +23,7 @@ public class StaffDto {
     private String shiftWork;
     private Boolean isActive;
 
-    public boolean getIsActive(){
+    public boolean _getIsActive(){
         return isActive;
     }
 }
