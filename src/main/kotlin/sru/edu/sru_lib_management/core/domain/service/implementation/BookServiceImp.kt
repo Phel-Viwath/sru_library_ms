@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.awaitSingle
+import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
@@ -69,10 +70,18 @@ class BookServiceImp(
                 if (isHasID != null || areFieldsBlank){
                     return@mapNotNull null
                 }
+                languageService.findById(dto.languageId).awaitSingleOrNull()
+                    ?: return CoreResult.ClientError("Language ID not found.")
+
+                collegeService.findById(dto.collegeId).awaitSingleOrNull()
+                    ?: return CoreResult.ClientError("College ID not found.")
+
                 val checkId = bookRepository.getById(dto.bookId)
                 if (checkId != null){
                     return CoreResult.ClientError("ID already exist.")
                 }
+
+
                 val book = Books(
                     bookId = dto.bookId,
                     bookTitle = dto.bookTitle,

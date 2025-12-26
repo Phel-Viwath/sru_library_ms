@@ -78,13 +78,6 @@ public class LanguageServiceImp implements LanguageService {
         logger.info("Find by id: {}", id);
         return languageRepository.findById(id)
             .map(college -> (Object) college)
-            .switchIfEmpty(
-                Mono.error(
-                    new ResponseStatusException(
-                            HttpStatus.BAD_REQUEST,
-                            "College not found!"
-                    )
-                )
-            );
+            .switchIfEmpty(Mono.empty());
     }
 }

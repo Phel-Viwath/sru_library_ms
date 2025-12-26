@@ -83,16 +83,9 @@ public class CollegeServiceImp implements CollegeService {
     @Override
     public Mono<Object> findById(String id) {
         return collegeRepository.findById(id)
-                .switchIfEmpty(
-                        Mono.error(
-                                new ResponseStatusException(
-                                        notFound,
-                                        "College not found!"
-                                )
-                        )
-                )
                 .map(college -> (Object) college)
-                .onErrorResume(e -> Mono.error(new ResponseStatusException(internalServerError, e.getMessage())));
+                .switchIfEmpty(Mono.empty());
+
     }
 
 }
