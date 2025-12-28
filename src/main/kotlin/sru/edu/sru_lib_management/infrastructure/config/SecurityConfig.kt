@@ -41,6 +41,9 @@ class SecurityConfig (
     @param:Value("\${spring.mail.username}") val mailSenderUsername: String,
 ) {
 
+    private val dashboardAccessRole = listOf("ROLE_USER", "ROLE_ADMIN", "ROLE_SUPER_ADMIN")
+    private val notificationAccessRole = listOf("ROLE_SUPER_ADMIN", "ROLE_ADMIN")
+
     @Bean
     fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
@@ -78,13 +81,16 @@ class SecurityConfig (
             }
             .authorizeExchange { exchange ->
                 exchange
-                    .pathMatchers("/notifications").permitAll()
                     .pathMatchers("/api/v1/auth/**").permitAll()
                     .pathMatchers("/api/v1/auth/change-role").authenticated()
                     .pathMatchers("/api/v1/auth/users").authenticated()
                     .pathMatchers("/dashboard")
                     .access{ authentication, _ ->
-                        checkDashboardAccess(authentication)
+                        checkSocketAccess(authentication, dashboardAccessRole)
+                    }
+                    .pathMatchers("/notifications")
+                    .access { authentication, _ ->
+                        checkSocketAccess(authentication, notificationAccessRole)
                     }
                     .anyExchange().authenticated()
             }
@@ -128,13 +134,14 @@ class SecurityConfig (
         return mailSender
     }
 
-    private fun checkDashboardAccess(
-        authentication: Mono<Authentication>
+    private fun checkSocketAccess(
+        authentication: Mono<Authentication>,
+        roles: List<String>
     ): Mono<AuthorizationDecision>{
         return authentication
             .map { auth ->
                 val hasRole = auth.authorities.any { authority ->
-                    authority.authority in listOf("ROLE_USER", "ROLE_ADMIN", "ROLE_SUPER_ADMIN")
+                    authority.authority in roles
                 }
                 AuthorizationDecision(hasRole)
             }
