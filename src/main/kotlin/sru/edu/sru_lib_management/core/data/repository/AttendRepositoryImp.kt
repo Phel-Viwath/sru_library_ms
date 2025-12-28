@@ -238,9 +238,10 @@ class AttendRepositoryImp(
             .toList()
     }
 
-    override fun getAllAttendDetail(visitorType: VisitorType): Flow<StudentAttendDetail> {
-        return client.sql("CALL GetAllAttendDetail(:p_visitor_type)")
+    override fun getAllAttendDetail(visitorType: VisitorType, n: Int?): Flow<StudentAttendDetail> {
+        return client.sql("CALL GetAllAttendDetail(:p_visitor_type, :n)")
             .bind("p_visitor_type", visitorType.name)
+            .bindNull("n", Int::class.java)
             .map { row: Row, _ ->
                 row.mapToStudentAttendDetail()
             }

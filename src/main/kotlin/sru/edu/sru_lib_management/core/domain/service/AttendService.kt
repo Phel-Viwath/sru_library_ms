@@ -29,7 +29,7 @@ interface AttendService {
     fun getAllAttendByDate(date: LocalDate): Flow<VisitorDetail>
     fun getAttendDetails(date: LocalDate): Flow<AttendDetail>
 
-    fun getAllStudentAttendDetail(date: LocalDate): Flow<StudentAttendDetail>
+    fun getAllStudentAttendDetail(date: LocalDate, n: Int?): Flow<StudentAttendDetail>
     suspend fun saveAttend(attendDto: AttendDto): CoreResult<Attend>
     suspend fun updateAttend(attend: Attend): CoreResult<Attend>
     suspend fun deleteAttend(attendId: Long): CoreResult<Boolean>

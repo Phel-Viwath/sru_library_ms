@@ -38,7 +38,7 @@ interface AttendRepository : ICrudRepository<Attend, Long> {
     suspend fun countCurrentAndPreviousAttend(date: LocalDate, period: Int): CompareValue
     suspend fun totalMajorVisit(): List<TotalMajorVisitor>
 
-    fun getAllAttendDetail(visitorType: VisitorType = VisitorType.STUDENT): Flow<StudentAttendDetail>
+    fun getAllAttendDetail(visitorType: VisitorType = VisitorType.STUDENT, n: Int?): Flow<StudentAttendDetail>
     fun getAttendDetailByPeriod(date: LocalDate, entryTime: LocalTime, exitingTime: LocalTime): Flow<StudentAttendDetail>
     // get attend detail
     suspend fun getAttendDetailById(attendId: Long): StudentAttendDetail?

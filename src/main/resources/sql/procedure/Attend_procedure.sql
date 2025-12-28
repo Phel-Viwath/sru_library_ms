@@ -160,15 +160,38 @@ BEGIN
 END;
 
 # Get all attending with student info
-
 CREATE PROCEDURE GetAllAttendDetail(
-    IN p_visitor_type ENUM('STUDENT','SRU_STAFF')
+    IN p_visitor_type ENUM('STUDENT','SRU_STAFF'),
+    IN n INT
 )
 BEGIN
+    -- If n is NULL, select all records; otherwise select last n records
     IF p_visitor_type = 'STUDENT' THEN
-        SELECT * FROM vw_attend_student_detail;
+        IF n IS NULL THEN
+            -- Select all student attendance records ordered by date and time descending
+            SELECT *
+            FROM vw_attend_student_detail
+            ORDER BY attend_date DESC, entry_time DESC;
+        ELSE
+            -- Select last n student attendance records
+            SELECT *
+            FROM vw_attend_student_detail
+            ORDER BY attend_date DESC, entry_time DESC
+            LIMIT n;
+        END IF;
     ELSE
-        SELECT * FROM vw_attend_staff_detail;
+        IF n IS NULL THEN
+            -- Select all staff attendance records ordered by date and time descending
+            SELECT *
+            FROM vw_attend_staff_detail
+            ORDER BY attend_date DESC, entry_time DESC;
+        ELSE
+            -- Select last n staff attendance records
+            SELECT *
+            FROM vw_attend_staff_detail
+            ORDER BY attend_date DESC, entry_time DESC
+            LIMIT n;
+        END IF;
     END IF;
 END;
 

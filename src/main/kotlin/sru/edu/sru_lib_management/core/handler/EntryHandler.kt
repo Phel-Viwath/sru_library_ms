@@ -23,6 +23,7 @@ import sru.edu.sru_lib_management.core.domain.dto.entry.CardEntry
 import sru.edu.sru_lib_management.core.domain.dto.entry.Entry
 import sru.edu.sru_lib_management.core.domain.service.AttendService
 import sru.edu.sru_lib_management.core.domain.service.StudentService
+import sru.edu.sru_lib_management.infrastructure.websocket.DashboardNotificationService
 import sru.edu.sru_lib_management.utils.IndochinaDateTime.indoChinaDate
 import sru.edu.sru_lib_management.utils.IndochinaDateTime.indoChinaTime
 import sru.edu.sru_lib_management.utils.OpeningTime.ELEVEN_AM
@@ -42,6 +43,7 @@ import java.time.LocalTime
 class EntryHandler(
     private val studentService: StudentService,
     private val attendService: AttendService,
+    private val dashboardNotificationService: DashboardNotificationService
 ) {
     private val logger = LoggerFactory.getLogger(EntryHandler::class.java)
 
@@ -98,8 +100,10 @@ class EntryHandler(
                 )
             }
             when(val result = attendService.saveAttend(attend)){
-                is CoreResult.Success ->
+                is CoreResult.Success -> {
+                    dashboardNotificationService.notifyDashboardUpdate()
                     ServerResponse.status(CREATED).bodyValue(result.data).awaitSingle()
+                }
                 is CoreResult.Failure ->
                     ServerResponse.status(INTERNAL_SERVER_ERROR).bodyValue(result.errorMsg).awaitSingle()
                 is CoreResult.ClientError ->
@@ -123,8 +127,12 @@ class EntryHandler(
                 ServerResponse.status(BAD_REQUEST).bodyValue(result.clientErrMsg).awaitSingle()
             is CoreResult.Failure ->
                 ServerResponse.status(INTERNAL_SERVER_ERROR).bodyValue(result.errorMsg).awaitSingle()
-            is CoreResult.Success ->
+            is CoreResult.Success -> {
+                // Only refresh recent entries (lightweight update)
+                dashboardNotificationService.notifyDashboardUpdate()
+
                 ServerResponse.status(ACCEPTED).bodyValue(result.data).awaitSingle()
+            }
         }
     }
     ////
@@ -136,7 +144,7 @@ class EntryHandler(
         var totalExiting = 0
         var entry = 0
         val attendDetail = mutableListOf<StudentAttendDetail>()
-        val attendToday: Flow<StudentAttendDetail> = attendService.getAllStudentAttendDetail(indoChinaDate())
+        val attendToday: Flow<StudentAttendDetail> = attendService.getAllStudentAttendDetail(indoChinaDate(), null)
         attendToday.collect { attend ->
             if (attend.exitingTimes != null){
                 attend.status = "OUT"; totalExiting += 1

@@ -233,9 +233,9 @@ class AttendServiceImp(
         }
     }
 
-    override fun getAllStudentAttendDetail(date: LocalDate): Flow<StudentAttendDetail> {
+    override fun getAllStudentAttendDetail(date: LocalDate, n: Int?): Flow<StudentAttendDetail> {
         return try {
-            attendRepository.getAllAttendDetail()
+            attendRepository.getAllAttendDetail(n = n)
                 .filter { it.date.isEqual(date) }
                 .onEach {
                     it.status = if (it.exitingTimes == null) "IN" else "OUT"

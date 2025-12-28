@@ -17,11 +17,13 @@ import sru.edu.sru_lib_management.core.domain.dto.BorrowDetail
 import sru.edu.sru_lib_management.core.domain.dto.BorrowDto
 import sru.edu.sru_lib_management.core.domain.model.Borrow
 import sru.edu.sru_lib_management.core.domain.service.BorrowService
+import sru.edu.sru_lib_management.infrastructure.websocket.DashboardNotificationService
 import java.time.LocalDate
 
 @Component
 class BorrowHandler (
-    private val borrowService: BorrowService
+    private val borrowService: BorrowService,
+    private val dashboardNotificationService: DashboardNotificationService
 ){
 
     @PreAuthorize("hasAnyRole('USER', 'ADMIN', 'SUPER_ADMIN')")
@@ -42,8 +44,10 @@ class BorrowHandler (
         val borrowDto: BorrowDto = request.bodyToMono<BorrowDto>().awaitFirst()
 
         when(val result = borrowService.saveBorrow(borrowDto)){
-            is CoreResult.Success ->
+            is CoreResult.Success -> {
+                dashboardNotificationService.notifyDashboardUpdate()
                 ServerResponse.ok().bodyValueAndAwait(result.data)
+            }
             is CoreResult.Failure ->
                 ServerResponse.status(500).bodyValueAndAwait(result.errorMsg)
             is CoreResult.ClientError ->
@@ -79,8 +83,10 @@ class BorrowHandler (
                 ServerResponse.badRequest().bodyValueAndAwait(result.clientErrMsg)
             is CoreResult.Failure ->
                 ServerResponse.status(500).bodyValueAndAwait(result.errorMsg)
-            is CoreResult.Success ->
+            is CoreResult.Success -> {
+                dashboardNotificationService.notifyDashboardUpdate()
                 ServerResponse.ok().bodyValueAndAwait(result.data)
+            }
         }
     }
 

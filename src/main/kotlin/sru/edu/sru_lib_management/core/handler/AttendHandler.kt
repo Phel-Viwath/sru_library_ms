@@ -18,6 +18,7 @@ import sru.edu.sru_lib_management.common.CoreResult
 import sru.edu.sru_lib_management.core.domain.dto.attend.AttendDetail
 import sru.edu.sru_lib_management.core.domain.model.Attend
 import sru.edu.sru_lib_management.core.domain.service.AttendService
+import sru.edu.sru_lib_management.infrastructure.websocket.DashboardNotificationService
 import sru.edu.sru_lib_management.utils.IndochinaDateTime.indoChinaDate
 import sru.edu.sru_lib_management.utils.ResponseStatus.ACCEPTED
 import sru.edu.sru_lib_management.utils.ResponseStatus.BAD_REQUEST
@@ -29,6 +30,7 @@ import java.time.format.DateTimeParseException
 @Component
 class AttendHandler(
     private val attendService: AttendService,
+    private val dashboardNotificationService: DashboardNotificationService
 ) {
 
     private val logger = LoggerFactory.getLogger(this::class.java)

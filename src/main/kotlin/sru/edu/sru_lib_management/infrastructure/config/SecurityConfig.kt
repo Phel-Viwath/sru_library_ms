@@ -13,10 +13,12 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.JavaMailSenderImpl
+import org.springframework.security.authorization.AuthorizationDecision
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder
 import org.springframework.security.config.web.server.ServerHttpSecurity
+import org.springframework.security.core.Authentication
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -76,10 +78,14 @@ class SecurityConfig (
             }
             .authorizeExchange { exchange ->
                 exchange
-                    .pathMatchers("/ws/**", "/notifications").permitAll()
+                    .pathMatchers("/notifications").permitAll()
                     .pathMatchers("/api/v1/auth/**").permitAll()
                     .pathMatchers("/api/v1/auth/change-role").authenticated()
                     .pathMatchers("/api/v1/auth/users").authenticated()
+                    .pathMatchers("/dashboard")
+                    .access{ authentication, _ ->
+                        checkDashboardAccess(authentication)
+                    }
                     .anyExchange().authenticated()
             }
             .addFilterAt(filter, SecurityWebFiltersOrder.AUTHENTICATION)
@@ -120,6 +126,19 @@ class SecurityConfig (
         props["mail.debug"] = "true"
 
         return mailSender
+    }
+
+    private fun checkDashboardAccess(
+        authentication: Mono<Authentication>
+    ): Mono<AuthorizationDecision>{
+        return authentication
+            .map { auth ->
+                val hasRole = auth.authorities.any { authority ->
+                    authority.authority in listOf("ROLE_USER", "ROLE_ADMIN", "ROLE_SUPER_ADMIN")
+                }
+                AuthorizationDecision(hasRole)
+            }
+            .defaultIfEmpty(AuthorizationDecision(false))
     }
 
 }
