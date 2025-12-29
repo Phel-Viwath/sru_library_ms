@@ -7,34 +7,31 @@ package sru.edu.sru_lib_management.auth.controller
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.asFlow
 import kotlinx.coroutines.reactor.awaitSingle
 import kotlinx.coroutines.withContext
 import lombok.extern.slf4j.Slf4j
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Component
-import org.springframework.web.reactive.function.server.*
+import org.springframework.web.reactive.function.server.ServerRequest
+import org.springframework.web.reactive.function.server.ServerResponse
+import org.springframework.web.reactive.function.server.bodyToMono
+import org.springframework.web.reactive.function.server.bodyValueAndAwait
 import sru.edu.sru_lib_management.auth.domain.dto.AuthResponse
 import sru.edu.sru_lib_management.auth.domain.dto.LoginRequest
 import sru.edu.sru_lib_management.auth.domain.dto.RefreshTokenRequest
 import sru.edu.sru_lib_management.auth.domain.dto.RegisterRequest
-import sru.edu.sru_lib_management.auth.domain.model.Role
 import sru.edu.sru_lib_management.auth.domain.service.AuthService
 import sru.edu.sru_lib_management.auth.domain.service.HunterService
 import sru.edu.sru_lib_management.auth.domain.service.OtpService
 import sru.edu.sru_lib_management.common.AuthResult
 import sru.edu.sru_lib_management.core.domain.dto.auth.RequestOtp
 import sru.edu.sru_lib_management.core.domain.dto.auth.RequestOtpVerify
-import sru.edu.sru_lib_management.core.domain.dto.auth.RoleChangeRequest
-import sru.edu.sru_lib_management.utils.ResponseStatus.ACCEPTED
 import sru.edu.sru_lib_management.utils.ResponseStatus.BAD_REQUEST
 import sru.edu.sru_lib_management.utils.ResponseStatus.CREATED
 import sru.edu.sru_lib_management.utils.ResponseStatus.INTERNAL_SERVER_ERROR
 import sru.edu.sru_lib_management.utils.ResponseStatus.OK
-import java.util.*
 
 @Component
 @Slf4j
@@ -90,12 +87,12 @@ class AuthHandler(
         when ( val result = service.login(loginRequest)) {
             is AuthResult.Success -> {
                 val token = result.data
-               ServerResponse.status(OK).bodyValueAndAwait(AuthResponse(
-                   accessToken = token["accessToken"],
-                   refreshToken = token["refreshToken"],
-                   role = token["role"].toString().trim('[', ']').removePrefix("ROLE_"),
-                   userId = token["userId"]
-               ))
+                ServerResponse.status(OK).bodyValueAndAwait(AuthResponse(
+                    accessToken = token["accessToken"],
+                    refreshToken = token["refreshToken"],
+                    role = token["role"].toString().trim('[', ']').removePrefix("ROLE_"),
+                    userId = token["userId"]
+                ))
             }
             is AuthResult.InputError ->
                 ServerResponse.badRequest().bodyValueAndAwait(AuthResponse(message = result.inputErrMsg))
@@ -178,39 +175,5 @@ class AuthHandler(
         }
     }
 
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
-    suspend fun changeRole(
-        request: ServerRequest
-    ): ServerResponse{
-
-        val roleChangeRequest = request.bodyToMono<RoleChangeRequest>().awaitSingle()
-
-        val email: String = roleChangeRequest.email
-        val role = roleChangeRequest.role
-
-        if (email.isBlank() || role.isBlank())
-            return ServerResponse.badRequest().bodyValueAndAwait("Invalid email or role parameter")
-
-        val roles = try {
-            Role.valueOf(role.uppercase(Locale.getDefault()))
-        } catch (e: IllegalArgumentException) {
-            logger.info("${e.message}")
-            return ServerResponse.badRequest().bodyValueAndAwait("Invalid role parameter")
-        }
-        logger.info("$roles")
-        val roleUpdated = service.updateRole(roles, email)
-        logger.info("$roleUpdated")
-        return if (!roleUpdated)
-            ServerResponse.status(BAD_REQUEST).buildAndAwait()
-        else
-            ServerResponse.status(ACCEPTED).bodyValueAndAwait("Role has changed.")
-
-    }
-
-    @PreAuthorize("hasAnyRole('SUPER_ADMIN')")
-    suspend fun getAllUser(): ServerResponse{
-        val allUser =  service.getAllUser().asFlow()
-        return ServerResponse.status(OK).bodyAndAwait(allUser)
-    }
 
 }

@@ -5,8 +5,9 @@
 
 package sru.edu.sru_lib_management.utils.schedule
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
@@ -34,24 +35,26 @@ class ScheduleTask(
     @Scheduled(cron = "0 25 11 * * ?", zone = "Asia/Phnom_Penh")
     @Scheduled(cron = "0 25 17 * * ?", zone = "Asia/Phnom_Penh")
     @Scheduled(cron = "0 50 19 * * ?", zone = "Asia/Phnom_Penh")
-    fun autoUpdateExitingTimes() = runBlocking {
+    suspend fun autoUpdateExitingTimes() {
         val timeToAutoExit = listOf(
             LocalTime.parse("11:05:00"),
             LocalTime.parse("17:05:00"),
             LocalTime.parse("19:40:00")
         )
         try {
-            attendService.getAllAttendByDate(indoChinaDate()).onEach { visitorDetail ->
-                if (visitorDetail.exitTimes == null) {
-                    val newExitingTime = when (indoChinaTime()) {
-                        in SEVEN_AM..ELEVEN_AM -> timeToAutoExit[0]
-                        in TWO_PM..FIVE_PM -> timeToAutoExit[1]
-                        in FIVE_THIRTY_PM..SEVEN_THIRTY_PM -> timeToAutoExit[2]
-                        else -> indoChinaTime()
+            withContext(Dispatchers.IO){
+                attendService.getAllAttendByDate(indoChinaDate()).onEach { visitorDetail ->
+                    if (visitorDetail.exitTimes == null) {
+                        val newExitingTime = when (indoChinaTime()) {
+                            in SEVEN_AM..ELEVEN_AM -> timeToAutoExit[0]
+                            in TWO_PM..FIVE_PM -> timeToAutoExit[1]
+                            in FIVE_THIRTY_PM..SEVEN_THIRTY_PM -> timeToAutoExit[2]
+                            else -> indoChinaTime()
+                        }
+                        logger.info("Updating exiting time for student ${visitorDetail.visitorId} to $newExitingTime")
+                        if (visitorDetail.visitorId != null)
+                            attendService.updateExitingTime(visitorDetail.visitorId, indoChinaTime())
                     }
-                    logger.info("Updating exiting time for student ${visitorDetail.visitorId} to $newExitingTime")
-                    if (visitorDetail.visitorId != null)
-                        attendService.updateExitingTime(visitorDetail.visitorId, indoChinaTime())
                 }
             }
         } catch (e: Exception) {

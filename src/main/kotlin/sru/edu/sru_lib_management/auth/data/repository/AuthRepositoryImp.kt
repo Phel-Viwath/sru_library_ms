@@ -8,13 +8,14 @@ package sru.edu.sru_lib_management.auth.data.repository
 import io.r2dbc.spi.Row
 import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.r2dbc.core.*
+import org.springframework.stereotype.Component
 import org.springframework.stereotype.Repository
 import sru.edu.sru_lib_management.auth.domain.dto.UserDto
 import sru.edu.sru_lib_management.auth.domain.model.Role
 import sru.edu.sru_lib_management.auth.domain.model.User
 import sru.edu.sru_lib_management.auth.domain.repository.AuthRepository
 
-@Repository
+@Component
 class AuthRepositoryImp(
     private val client: DatabaseClient
 ) : AuthRepository<User> {

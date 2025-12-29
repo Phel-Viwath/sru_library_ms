@@ -21,6 +21,7 @@ import sru.edu.sru_lib_management.auth.domain.jwt.BearerToken
 import sru.edu.sru_lib_management.auth.domain.jwt.JwtToken
 import sru.edu.sru_lib_management.auth.domain.model.Role
 import sru.edu.sru_lib_management.auth.domain.model.User
+import sru.edu.sru_lib_management.auth.domain.repository.AuthRepository
 import sru.edu.sru_lib_management.common.AuthResult
 import java.util.*
 
@@ -28,7 +29,7 @@ import java.util.*
 @Service
 class AuthService(
     private val userDetailsService: ReactiveUserDetailsService,
-    private val authRepository: AuthRepositoryImp,
+    private val authRepository: AuthRepository<User>,
     private val jwtSupport: JwtToken,
     private val encoder: PasswordEncoder
 ){
@@ -135,21 +136,6 @@ class AuthService(
         }
     }
 
-    suspend fun updateRole(role: Role, email: String): Boolean {
-        return try {
-            val roleUpdated = authRepository.changeRole(email, role)
-            roleUpdated
-        }catch (e: Exception){
-            throw ResponseStatusException(HttpStatus.BAD_REQUEST, e.message)
-        }
-    }
-    suspend fun getAllUser(): List<UserDto>{
-        try {
-            return authRepository.getAll()
-        }catch (e: Exception){
-            throw ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.message)
-        }
-    }
 
     private fun authSuccess(userId: String, userDetails: UserDetails): AuthResult.Success<Map<String, String>>{
         val roles = userDetails.authorities.map { grantedAuthority -> grantedAuthority.authority }

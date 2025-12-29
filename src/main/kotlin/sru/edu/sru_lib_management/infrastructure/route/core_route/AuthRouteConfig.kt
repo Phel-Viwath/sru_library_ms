@@ -74,25 +74,6 @@ class AuthRouteConfig {
                      */
                     PUT("/change-password", authHandler::changePassword)
 
-                    /**
-                     * Updates user role (admin function).
-                     * Query params: email (required), role (required - must be valid [sru.edu.sru_lib_management.auth.domain.model.Role] enum).
-                     * Valid roles: ADMIN, SUPER_ADMIN.
-                     * Returns "Role has changed." on success.
-                     * @see AuthHandler.changeRole
-                     * @see sru.edu.sru_lib_management.auth.domain.model.Role
-                     * @see sru.edu.sru_lib_management.auth.domain.service.AuthService.updateRole
-                     */
-                    PUT("/change-role", authHandler::changeRole)
-
-                    /**
-                     * Gets all registered users.
-                     * Returns [kotlinx.coroutines.flow.Flow] of user data.
-                     * Admin/monitoring function.
-                     * @see AuthHandler.getAllUser
-                     * @see sru.edu.sru_lib_management.auth.domain.service.AuthService.getAllUser
-                     */
-                    GET("/users") { authHandler.getAllUser() }
                 }
             }
         }

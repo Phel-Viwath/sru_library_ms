@@ -82,8 +82,6 @@ class SecurityConfig (
             .authorizeExchange { exchange ->
                 exchange
                     .pathMatchers("/api/v1/auth/**").permitAll()
-                    .pathMatchers("/api/v1/auth/change-role").authenticated()
-                    .pathMatchers("/api/v1/auth/users").authenticated()
                     .pathMatchers("/dashboard")
                     .access{ authentication, _ ->
                         checkSocketAccess(authentication, dashboardAccessRole)

@@ -5,10 +5,12 @@
 
 package sru.edu.sru_lib_management.auth.domain.repository
 
+import org.springframework.stereotype.Repository
 import sru.edu.sru_lib_management.auth.domain.dto.UserDto
 import sru.edu.sru_lib_management.auth.domain.model.Role
 import sru.edu.sru_lib_management.auth.domain.model.User
 
+@Repository
 interface AuthRepository<T> {
     suspend fun save(entity: T)
     suspend fun update(entity: T): Boolean
