@@ -25,7 +25,7 @@ class JwtToken @Autowired constructor(
 
     private val key = apiKeyConfig.jwtToken.toByteArray()
     private val secretKey = Keys.hmacShaKeyFor(key)
-    private val phaser = Jwts.parserBuilder().setSigningKey(secretKey).build()
+    private val phaser = Jwts.parser().verifyWith(secretKey).build()
 
     fun generateAccessToken(userId: String, roles: List<String>): BearerToken{
         return createToken(userId, 15, roles)
@@ -36,12 +36,11 @@ class JwtToken @Autowired constructor(
     }
 
     fun createToken(userId: String, minute: Long, roles: List<String>): BearerToken {
-        val claim: Map<String, Any> = mapOf("roles" to roles)
         val token = Jwts.builder()
-            .setClaims(claim)
-            .setSubject(userId)
-            .setIssuedAt(Date.from(Instant.now()))
-            .setExpiration(Date.from(Instant.now().plus(minute, ChronoUnit.MINUTES)))
+            .claim("roles", roles)
+            .subject(userId)
+            .issuedAt(Date.from(Instant.now()))
+            .expiration(Date.from(Instant.now().plus(minute, ChronoUnit.MINUTES)))
             .signWith(secretKey)
             .compact()
         return BearerToken(token)
@@ -49,12 +48,13 @@ class JwtToken @Autowired constructor(
 
     fun extractUserId(token: BearerToken): String{
         return phaser
-            .parseClaimsJws(token.value)
-            .body.subject
+            .parseSignedClaims(token.value)
+            .payload
+            .subject
     }
 
     fun isValidToken(token: BearerToken, userDetails: UserDetails?): Boolean{
-        val claims = phaser.parseClaimsJws(token.value).body
+        val claims = phaser.parseSignedClaims(token.value).payload
         val unexpired = claims.expiration.after(Date.from(Instant.now()))
         val roles = claims["roles"] as List<*>?
         val userId = (userDetails as? CustomUserDetails)?.userId
@@ -67,7 +67,7 @@ class JwtToken @Autowired constructor(
     }
 
     fun isRefreshToken(token: BearerToken): Boolean = try {
-        val claims = phaser.parseClaimsJws(token.value).body
+        val claims = phaser.parseSignedClaims(token.value).payload
         val issueAt = claims.issuedAt.toInstant()
         val expiration = claims.expiration.toInstant()
         val duration = ChronoUnit.MINUTES.between(issueAt, expiration)

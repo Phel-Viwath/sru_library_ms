@@ -82,14 +82,7 @@ class SecurityConfig (
             .authorizeExchange { exchange ->
                 exchange
                     .pathMatchers("/api/v1/auth/**").permitAll()
-                    .pathMatchers("/dashboard")
-                    .access{ authentication, _ ->
-                        checkSocketAccess(authentication, dashboardAccessRole)
-                    }
-                    .pathMatchers("/notifications")
-                    .access { authentication, _ ->
-                        checkSocketAccess(authentication, notificationAccessRole)
-                    }
+                    .pathMatchers("/notifications", "/dashboard").permitAll()
                     .anyExchange().authenticated()
             }
             .addFilterAt(filter, SecurityWebFiltersOrder.AUTHENTICATION)

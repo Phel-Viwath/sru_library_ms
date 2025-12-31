@@ -44,7 +44,7 @@ class JwtAuthenticationManager(
         val userId = jwtToken.extractUserId(token)
         val user = authRepository.findByUserId(userId)
             ?: throw IllegalArgumentException("User ID not found.")
-        // ✅ Create CustomUserDetails manually
+        // Create CustomUserDetails manually
         val userDetails = CustomUserDetails(
             userId = user.userId,
             email = user.email,
