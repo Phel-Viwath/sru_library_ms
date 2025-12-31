@@ -7,16 +7,12 @@ package sru.edu.sru_lib_management.auth.domain.service
 
 import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.slf4j.LoggerFactory
-import org.springframework.http.HttpStatus
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
-import org.springframework.web.server.ResponseStatusException
-import sru.edu.sru_lib_management.auth.data.repository.AuthRepositoryImp
 import sru.edu.sru_lib_management.auth.domain.dto.LoginRequest
 import sru.edu.sru_lib_management.auth.domain.dto.RegisterRequest
-import sru.edu.sru_lib_management.auth.domain.dto.UserDto
 import sru.edu.sru_lib_management.auth.domain.jwt.BearerToken
 import sru.edu.sru_lib_management.auth.domain.jwt.JwtToken
 import sru.edu.sru_lib_management.auth.domain.model.Role

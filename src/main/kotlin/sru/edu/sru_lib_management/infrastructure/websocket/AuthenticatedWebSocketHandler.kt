@@ -9,6 +9,7 @@ import org.springframework.web.reactive.socket.WebSocketSession
 import reactor.core.publisher.Mono
 import sru.edu.sru_lib_management.auth.domain.jwt.BearerToken
 import sru.edu.sru_lib_management.auth.domain.jwt.JwtToken
+import sru.edu.sru_lib_management.auth.domain.model.Role
 import sru.edu.sru_lib_management.auth.domain.model.User
 import sru.edu.sru_lib_management.auth.domain.repository.AuthRepository
 import java.util.concurrent.ConcurrentHashMap
@@ -21,6 +22,8 @@ abstract class AuthenticatedWebSocketHandler(
 
     protected val logger = LoggerFactory.getLogger(this::class.java)!!
     protected val clientSession = ConcurrentHashMap<String, WebSocketSession>()
+
+    protected open fun getAllowedRoles(): List<String> = listOf(Role.SUPER_ADMIN.name, Role.ADMIN.name)
 
     override fun getSubProtocols(): List<String> =
         listOf("Bearer", "bearer")
@@ -46,8 +49,6 @@ abstract class AuthenticatedWebSocketHandler(
         val tokenString = extractToken(session)
             ?: return Mono.just(SocketAuthResult.Failure("No token provided"))
 
-        logger.info("Token: $tokenString")
-
         return try {
             val bearerToken = BearerToken(tokenString)
             val userId = jwtToken.extractUserId(bearerToken)
@@ -55,6 +56,14 @@ abstract class AuthenticatedWebSocketHandler(
 
             userMono.flatMap { user ->
                 val email = user.email
+                val userRole = user.roles.name
+                logger.info("User roles: $userRole")
+
+                if (userRole !in getAllowedRoles()) {
+                    logger.warn("Access denied for user $userId with role $userRole")
+                    return@flatMap Mono.just(SocketAuthResult.Failure("Insufficient permissions"))
+                }
+
                 reactiveUserDetailsService.findByUsername(email)
                     .map { userDetails ->
                         if (jwtToken.isValidToken(bearerToken, userDetails))
@@ -87,8 +96,6 @@ abstract class AuthenticatedWebSocketHandler(
         val header = session.handshakeInfo.headers
             .getFirst("Sec-WebSocket-Protocol")
             ?: return null
-
-        logger.info("Raw Sec-WebSocket-Protocol: $header")
 
         // Case 1: "Bearer <token>"
         if (header.startsWith("Bearer ", ignoreCase = true)) {

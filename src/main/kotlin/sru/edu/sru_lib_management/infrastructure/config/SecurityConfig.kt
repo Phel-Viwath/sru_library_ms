@@ -13,12 +13,10 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.JavaMailSenderImpl
-import org.springframework.security.authorization.AuthorizationDecision
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder
 import org.springframework.security.config.web.server.ServerHttpSecurity
-import org.springframework.security.core.Authentication
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
@@ -41,8 +39,8 @@ class SecurityConfig (
     @param:Value("\${spring.mail.username}") val mailSenderUsername: String,
 ) {
 
-    private val dashboardAccessRole = listOf("ROLE_USER", "ROLE_ADMIN", "ROLE_SUPER_ADMIN")
-    private val notificationAccessRole = listOf("ROLE_SUPER_ADMIN", "ROLE_ADMIN")
+//    private val dashboardAccessRole = listOf("ROLE_USER", "ROLE_ADMIN", "ROLE_SUPER_ADMIN")
+//    private val notificationAccessRole = listOf("ROLE_SUPER_ADMIN", "ROLE_ADMIN")
 
     @Bean
     fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
@@ -125,7 +123,7 @@ class SecurityConfig (
         return mailSender
     }
 
-    private fun checkSocketAccess(
+    /*private fun checkSocketAccess(
         authentication: Mono<Authentication>,
         roles: List<String>
     ): Mono<AuthorizationDecision>{
@@ -137,6 +135,6 @@ class SecurityConfig (
                 AuthorizationDecision(hasRole)
             }
             .defaultIfEmpty(AuthorizationDecision(false))
-    }
+    }*/
 
 }
