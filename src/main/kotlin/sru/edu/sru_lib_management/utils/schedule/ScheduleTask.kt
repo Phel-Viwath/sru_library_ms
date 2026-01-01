@@ -5,9 +5,10 @@
 
 package sru.edu.sru_lib_management.utils.schedule
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
@@ -32,18 +33,20 @@ class ScheduleTask(
 
     private val logger = LoggerFactory.getLogger(ScheduleTask::class.java)
 
+    private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
     @Scheduled(cron = "0 25 11 * * ?", zone = "Asia/Phnom_Penh")
     @Scheduled(cron = "0 25 17 * * ?", zone = "Asia/Phnom_Penh")
     @Scheduled(cron = "0 50 19 * * ?", zone = "Asia/Phnom_Penh")
-    suspend fun autoUpdateExitingTimes() {
+    fun autoUpdateExitingTimes() {
         val timeToAutoExit = listOf(
             LocalTime.parse("11:05:00"),
             LocalTime.parse("17:05:00"),
             LocalTime.parse("19:40:00")
         )
         try {
-            withContext(Dispatchers.IO){
-                attendService.getAllAttendByDate(indoChinaDate()).onEach { visitorDetail ->
+            serviceScope.launch{
+                attendService.getAllAttendByDate(indoChinaDate()).collect { visitorDetail ->
                     if (visitorDetail.exitTimes == null) {
                         val newExitingTime = when (indoChinaTime()) {
                             in SEVEN_AM..ELEVEN_AM -> timeToAutoExit[0]
@@ -65,8 +68,8 @@ class ScheduleTask(
     /// Delete all book that inactive in 30 days
     @Scheduled(cron = "0 0 * * * ?", zone = "Asia/Phnom_Penh")
     @Transactional
-    suspend fun deleteInactiveBook(){
-        bookService.emptyTrash()
+    fun deleteInactiveBook(){
+        serviceScope.launch { bookService.emptyTrash() }
     }
 
 

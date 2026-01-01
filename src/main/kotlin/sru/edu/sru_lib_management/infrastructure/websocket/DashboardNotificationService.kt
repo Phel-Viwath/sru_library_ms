@@ -1,7 +1,7 @@
 package sru.edu.sru_lib_management.infrastructure.websocket
 
 import org.springframework.stereotype.Service
-import sru.edu.sru_lib_management.core.handler.DashboardWebSocketHandler
+import sru.edu.sru_lib_management.infrastructure.websocket.DashboardWebSocketHandler
 
 /**
 * Service for triggering real-time dashboard updates via WebSocket.

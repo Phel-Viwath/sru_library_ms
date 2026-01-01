@@ -6,7 +6,7 @@ import org.springframework.web.reactive.handler.SimpleUrlHandlerMapping
 import org.springframework.web.reactive.socket.server.WebSocketService
 import org.springframework.web.reactive.socket.server.support.WebSocketHandlerAdapter
 import org.springframework.web.reactive.socket.server.upgrade.ReactorNettyRequestUpgradeStrategy
-import sru.edu.sru_lib_management.core.handler.DashboardWebSocketHandler
+import sru.edu.sru_lib_management.infrastructure.websocket.DashboardWebSocketHandler
 
 @Configuration
 class WebSocketConfiguration {

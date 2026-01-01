@@ -5,6 +5,10 @@
 
 package sru.edu.sru_lib_management.utils.schedule
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
@@ -18,17 +22,21 @@ class RecoverBookMessage (
     private val notificationService: NotificationService
 ) {
     private val logger = LoggerFactory.getLogger(RecoverBookMessage::class.java)
+
+    private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val mutableMapBook: MutableMap<String, String> = mutableMapOf()
 
     @Scheduled(cron = "0 00 00 * * ?", zone = "Asia/Phnom_Penh")
-    suspend fun alertRecoveryBook(){
-        val books = bookRepository.alertTrashMessage(indoChinaDate())
-        books.forEach { book ->
-            mutableMapBook[book.bookId] = book.bookTitle
-        }
-        logger.info("Websocket message: $mutableMapBook")
-        if (mutableMapBook.isNotEmpty()){
-            sentRecoverNotification(mutableMapBook)
+    fun alertRecoveryBook(){
+        serviceScope.launch {
+            val books = bookRepository.alertTrashMessage(indoChinaDate())
+            books.forEach { book ->
+                mutableMapBook[book.bookId] = book.bookTitle
+            }
+            logger.info("Websocket message: $mutableMapBook")
+            if (mutableMapBook.isNotEmpty()){
+                sentRecoverNotification(mutableMapBook)
+            }
         }
     }
 

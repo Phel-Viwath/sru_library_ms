@@ -1,4 +1,4 @@
-package sru.edu.sru_lib_management.core.handler
+package sru.edu.sru_lib_management.infrastructure.websocket
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import kotlinx.coroutines.CoroutineScope
@@ -14,7 +14,6 @@ import sru.edu.sru_lib_management.auth.domain.jwt.JwtToken
 import sru.edu.sru_lib_management.auth.domain.model.User
 import sru.edu.sru_lib_management.auth.domain.repository.AuthRepository
 import sru.edu.sru_lib_management.core.domain.service.DashboardService
-import sru.edu.sru_lib_management.infrastructure.websocket.AuthenticatedWebSocketHandler
 
 @Component
 class DashboardWebSocketHandler(
