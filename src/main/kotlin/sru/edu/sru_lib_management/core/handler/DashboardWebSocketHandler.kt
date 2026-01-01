@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.reactor.mono
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.socket.WebSocketSession
@@ -38,8 +39,16 @@ class DashboardWebSocketHandler(
         clientSession[userId] = session
         logger.info("New dashboard client connected: $userId")
 
+        // initial data (direct to Session)
+        val initData = mono {
+            val dashboardData = dashboardService.getDashboardData()
+            objectMapper.writeValueAsString(dashboardData)
+        }.flatMap { json ->
+            session.send(Mono.just(session.textMessage(json)))
+        }
+
         // Send initial dashboard data when the client connects
-        scope.launch{
+        /* scope.launch{
             try {
                 val dashboardData = dashboardService.getDashboardData()
                 val json = objectMapper.writeValueAsString(dashboardData)
@@ -47,7 +56,9 @@ class DashboardWebSocketHandler(
             } catch (e: Exception) {
                 println("Error fetching initial dashboard data: ${e.message}")
             }
-        }
+        }*/
+
+        // INPUT (CLIENT → SERVER)
         val input = session.receive()
             .map { it.payloadAsText }
             .doOnNext { message -> println("Received message from dashboard client: $message")
@@ -56,8 +67,21 @@ class DashboardWebSocketHandler(
                     "refresh" -> refreshDashboard()
                     "ping" -> sink.tryEmitNext("""{"type":"pong"}""") }
             }
-        val output = session.send( sink.asFlux().map(session::textMessage) )
-        return output.and(input)
+            .then()
+
+        // OUTPUT (BROADCAST UPDATES)
+        val output = session.send(
+            sink.asFlux().map(session::textMessage)
+        )
+
+        val cleanUp: Mono<Void> = Mono.fromRunnable {
+            clientSession.remove(userId)
+            logger.info("Dashboard client disconnected: $userId")
+        }
+
+        return initData
+            .thenMany(Mono.`when`(input, output))
+            .then(cleanUp)
     }
 
     /** * Triggers a full dashboard data refresh and broadcasts to all connected clients */

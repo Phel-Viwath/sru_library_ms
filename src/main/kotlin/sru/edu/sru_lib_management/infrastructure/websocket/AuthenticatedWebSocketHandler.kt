@@ -1,5 +1,6 @@
 package sru.edu.sru_lib_management.infrastructure.websocket
 
+import io.jsonwebtoken.JwtException
 import kotlinx.coroutines.reactor.mono
 import org.slf4j.LoggerFactory
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService
@@ -34,9 +35,15 @@ abstract class AuthenticatedWebSocketHandler(
             .flatMap { authResult ->
                 when (authResult) {
                     is SocketAuthResult.Success -> handleAuthenticatedSession(session, authResult.userId)
+                    is SocketAuthResult.Unauthorized -> {
+                        logger.warn("Authorization denied: ${authResult.reason}")
+                        // 1008 is the standard code for Policy Violation (RBAC/Auth failure)
+                        session.close(CloseStatus(1008, authResult.reason))
+                    }
                     is SocketAuthResult.Failure -> {
-                        logger.warn("Authentication failed: ${authResult.reason}")
-                        session.close(CloseStatus.NOT_ACCEPTABLE.withReason(authResult.reason))
+                        logger.warn("Authentication system failure: ${authResult.reason}")
+                        // 1011 is Internal Error or use 4000+ for custom app errors
+                        session.close(CloseStatus(1011, authResult.reason))
                     }
                 }
             }
@@ -61,7 +68,7 @@ abstract class AuthenticatedWebSocketHandler(
 
                 if (userRole !in getAllowedRoles()) {
                     logger.warn("Access denied for user $userId with role $userRole")
-                    return@flatMap Mono.just(SocketAuthResult.Failure("Insufficient permissions"))
+                    return@flatMap Mono.just(SocketAuthResult.Unauthorized("Insufficient permissions"))
                 }
 
                 reactiveUserDetailsService.findByUsername(email)
@@ -70,13 +77,13 @@ abstract class AuthenticatedWebSocketHandler(
                             SocketAuthResult.Success(userId)
                         else {
                             logger.warn("Token validation failed for user: $userId")
-                            SocketAuthResult.Failure("Token validation failed")
+                            SocketAuthResult.Unauthorized("Token validation failed")
                         }
                     }
             }
-        }catch (e: io.jsonwebtoken.JwtException) {
+        }catch (e: JwtException) {
             logger.error("JWT validation error: ${e.message}")
-            Mono.just(SocketAuthResult.Failure("Invalid token: ${e.message}"))
+            Mono.just(SocketAuthResult.Unauthorized("Invalid token."))
         } catch (e: Exception) {
             logger.error("Token validation error: ${e.message}", e)
             Mono.just(SocketAuthResult.Failure("Authentication failed"))
@@ -90,6 +97,7 @@ abstract class AuthenticatedWebSocketHandler(
     protected sealed class SocketAuthResult {
         data class Success(val userId: String) : SocketAuthResult()
         data class Failure(val reason: String) : SocketAuthResult()
+        data class Unauthorized(val reason: String) : SocketAuthResult()
     }
 
     private fun extractToken(session: WebSocketSession): String? {
