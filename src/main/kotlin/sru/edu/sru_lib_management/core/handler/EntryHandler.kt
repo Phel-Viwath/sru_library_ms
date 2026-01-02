@@ -23,7 +23,7 @@ import sru.edu.sru_lib_management.core.domain.dto.entry.CardEntry
 import sru.edu.sru_lib_management.core.domain.dto.entry.Entry
 import sru.edu.sru_lib_management.core.domain.service.AttendService
 import sru.edu.sru_lib_management.core.domain.service.StudentService
-import sru.edu.sru_lib_management.infrastructure.websocket.DashboardNotificationService
+import sru.edu.sru_lib_management.infrastructure.websocket.dashboard.DashboardNotificationService
 import sru.edu.sru_lib_management.utils.IndochinaDateTime.indoChinaDate
 import sru.edu.sru_lib_management.utils.IndochinaDateTime.indoChinaTime
 import sru.edu.sru_lib_management.utils.OpeningTime.ELEVEN_AM

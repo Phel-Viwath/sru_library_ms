@@ -1,4 +1,4 @@
-package sru.edu.sru_lib_management.infrastructure.websocket
+package sru.edu.sru_lib_management.infrastructure.websocket.notification
 
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.socket.WebSocketHandler

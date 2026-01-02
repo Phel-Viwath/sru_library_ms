@@ -56,7 +56,6 @@ create table if not exists majors(
 #4
 #========================================================
 # crate table students
-#Drop table if exists students;
 create table if not exists students(
     student_id bigint primary key,
     student_name varchar(60) not null,
@@ -77,19 +76,20 @@ create table if not exists students(
 
 #========================================================
 # crate table books
-#Drop table if exists books;
+#Drop table if exist books;
 create table if not exists books(
     book_id varchar(10) primary key,
-    book_title varchar(100) not null ,
+    book_title varchar(100) not null,
     bookQuan int not null,
-    language_id varchar(5) not null ,
-    college_id varchar(10) not null ,
-    author VARCHAR(100) ,
-    publication_year INT  ,
-    genre varchar(100) not null ,
-    received_date DATE null ,
+    language_id varchar(5) not null,
+    college_id varchar(10) not null,
+    author VARCHAR(100),
+    publication_year INT,
+    genre varchar(100) not null,
+    received_date DATE null,
     isActive boolean,
     inactiveDate DATE,
+    canBorrow boolean not null default true,
     foreign key (college_id) references colleges(college_id)
         on update cascade
         on delete cascade ,
@@ -97,7 +97,6 @@ create table if not exists books(
         on delete cascade
         on update cascade
 );
-
 
 #========================================================
 # crate table borrow books
@@ -147,8 +146,7 @@ Create table if not exists attend(
 
 #9
 #========================================================
-# crate table guest
-#Drop table if exists guests;
+# crate table staff
 create table if not exists sru_staff(
     sru_staff_id varchar(10) primary key,
     sru_staff_name varchar(60) not null,
@@ -201,6 +199,41 @@ CREATE TABLE if not exists visitors(
             ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS notifications (
+    notification_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    type ENUM('BOOK_TRASH_ALERT','BOOK_APPROVAL_REQUEST','CHAT') NOT NULL,
+    title VARCHAR(100) NOT NULL,
+    message TEXT NOT NULL,
+    -- who should receive
+    target_role ENUM('ADMIN', 'SUPER_ADMIN') NULL,
+    target_user_id VARCHAR(100) NULL,
+    -- reference data
+    reference_id VARCHAR(50) NULL, -- book_id
+    -- approval workflow
+    status ENUM('PENDING', 'APPROVED', 'REJECTED') NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_notification_user FOREIGN KEY (target_user_id)
+    REFERENCES users(userId) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS chat_messages (
+    message_id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    sender_id VARCHAR(100) NOT NULL,
+    receiver_id VARCHAR(100) NOT NULL,
+    message_type ENUM('TEXT', 'IMAGE') NOT NULL,
+    content TEXT NOT NULL, -- text or image URL
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_chat_sender
+     FOREIGN KEY (sender_id)
+         REFERENCES users(userId)
+         ON DELETE CASCADE,
+    CONSTRAINT fk_chat_receiver
+     FOREIGN KEY (receiver_id)
+         REFERENCES users(userId)
+         ON DELETE CASCADE
+);
 
 
 

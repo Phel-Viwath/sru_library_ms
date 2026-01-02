@@ -13,13 +13,13 @@ import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import sru.edu.sru_lib_management.core.domain.repository.BookRepository
-import sru.edu.sru_lib_management.infrastructure.websocket.NotificationService
+import sru.edu.sru_lib_management.infrastructure.websocket.notification.NotificationSocket
 import sru.edu.sru_lib_management.utils.IndochinaDateTime.indoChinaDate
 
 @Component
 class RecoverBookMessage (
     private val bookRepository: BookRepository,
-    private val notificationService: NotificationService
+    private val notificationSocket: NotificationSocket
 ) {
     private val logger = LoggerFactory.getLogger(RecoverBookMessage::class.java)
 
@@ -44,7 +44,7 @@ class RecoverBookMessage (
         val bookId = bookMap.keys
         val bookTitle = bookMap.values
         val msg = "Book will delete soon: $bookId: $bookTitle"
-        notificationService.notifyAllClients(msg)
+        notificationSocket.notifyAllClients(msg)
     }
 
 

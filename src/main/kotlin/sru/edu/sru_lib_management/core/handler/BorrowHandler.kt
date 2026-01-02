@@ -17,7 +17,7 @@ import sru.edu.sru_lib_management.core.domain.dto.BorrowDetail
 import sru.edu.sru_lib_management.core.domain.dto.BorrowDto
 import sru.edu.sru_lib_management.core.domain.model.Borrow
 import sru.edu.sru_lib_management.core.domain.service.BorrowService
-import sru.edu.sru_lib_management.infrastructure.websocket.DashboardNotificationService
+import sru.edu.sru_lib_management.infrastructure.websocket.dashboard.DashboardNotificationService
 import java.time.LocalDate
 
 @Component
