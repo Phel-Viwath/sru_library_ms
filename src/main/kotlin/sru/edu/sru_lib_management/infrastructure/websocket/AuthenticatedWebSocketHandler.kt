@@ -7,6 +7,7 @@ import org.springframework.security.core.userdetails.ReactiveUserDetailsService
 import org.springframework.web.reactive.socket.CloseStatus
 import org.springframework.web.reactive.socket.WebSocketHandler
 import org.springframework.web.reactive.socket.WebSocketSession
+import org.springframework.web.util.UriComponentsBuilder
 import reactor.core.publisher.Mono
 import sru.edu.sru_lib_management.auth.domain.jwt.BearerToken
 import sru.edu.sru_lib_management.auth.domain.jwt.JwtToken
@@ -100,6 +101,8 @@ abstract class AuthenticatedWebSocketHandler(
         data class Unauthorized(val reason: String) : SocketAuthResult()
     }
 
+    /*
+    // use sec-websocket-protocols
     private fun extractToken(session: WebSocketSession): String? {
         val header = session.handshakeInfo.headers
             .getFirst("Sec-WebSocket-Protocol")
@@ -117,5 +120,17 @@ abstract class AuthenticatedWebSocketHandler(
         }
 
         return null
+    }*/
+
+    // use query param
+    fun extractToken(session: WebSocketSession): String? {
+        return session.handshakeInfo.uri.query
+            ?.let {
+                UriComponentsBuilder
+                    .fromUri(session.handshakeInfo.uri)
+                    .build()
+                    .queryParams
+                    .getFirst("token")
+            }
     }
 }

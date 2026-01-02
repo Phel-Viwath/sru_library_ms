@@ -26,25 +26,10 @@ class WebSocketConfiguration {
         }
     }
 
-//    @Bean
-//    fun webSocketService(): WebSocketService {
-//        return HandshakeWebSocketService(
-//            ReactorNettyRequestUpgradeStrategy()
-//        )
-//    }
 
     @Bean
     fun handlerAdapter(): WebSocketHandlerAdapter {
-        return WebSocketHandlerAdapter(webSocketService())
-    }
-
-    @Suppress("DEPRECATION")
-    @Bean
-    fun webSocketService(): WebSocketService {
-        val strategy = ReactorNettyRequestUpgradeStrategy().apply {
-            maxFramePayloadLength = 10 * 1024 * 1024 // 10MB
-        }
-        return CustomHandshakeWebSocketService(strategy)
+        return WebSocketHandlerAdapter()
     }
 
 
