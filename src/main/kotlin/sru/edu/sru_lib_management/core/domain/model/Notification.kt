@@ -1,9 +1,13 @@
 package sru.edu.sru_lib_management.core.domain.model
 
+import org.springframework.data.annotation.Id
+import org.springframework.data.relational.core.mapping.Table
 import sru.edu.sru_lib_management.auth.domain.model.Role
 import java.time.LocalDateTime
 
+@Table("notifications")
 data class Notification(
+    @Id
     val notificationId: Long? = null,
 
     val type: NotificationType,

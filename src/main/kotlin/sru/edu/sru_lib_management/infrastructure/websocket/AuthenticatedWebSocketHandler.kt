@@ -2,7 +2,9 @@ package sru.edu.sru_lib_management.infrastructure.websocket
 
 import io.jsonwebtoken.JwtException
 import kotlinx.coroutines.reactor.mono
+import okhttp3.internal.userAgent
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService
 import org.springframework.web.reactive.socket.CloseStatus
 import org.springframework.web.reactive.socket.WebSocketHandler
@@ -14,6 +16,8 @@ import sru.edu.sru_lib_management.auth.domain.jwt.JwtToken
 import sru.edu.sru_lib_management.auth.domain.model.Role
 import sru.edu.sru_lib_management.auth.domain.model.User
 import sru.edu.sru_lib_management.auth.domain.repository.AuthRepository
+import sru.edu.sru_lib_management.infrastructure.websocket.helper.ConnectedClient
+import sru.edu.sru_lib_management.infrastructure.websocket.helper.WebSocketSessionRegistry
 import java.util.concurrent.ConcurrentHashMap
 
 abstract class AuthenticatedWebSocketHandler(
@@ -22,10 +26,14 @@ abstract class AuthenticatedWebSocketHandler(
     private val authRepository: AuthRepository<User>,
 ): WebSocketHandler {
 
+    @Autowired
+    private val sessionRegistry: WebSocketSessionRegistry = WebSocketSessionRegistry()
+
     protected val logger = LoggerFactory.getLogger(this::class.java)!!
     protected val clientSession = ConcurrentHashMap<String, WebSocketSession>()
-
     protected open fun getAllowedRoles(): List<String> = listOf(Role.SUPER_ADMIN.name, Role.ADMIN.name)
+
+   //protected var role: Role? = null
 
     override fun getSubProtocols(): List<String> =
         listOf("Bearer", "bearer")
@@ -35,7 +43,17 @@ abstract class AuthenticatedWebSocketHandler(
         return authenticateSession(session)
             .flatMap { authResult ->
                 when (authResult) {
-                    is SocketAuthResult.Success -> handleAuthenticatedSession(session, authResult.userId)
+                    is SocketAuthResult.Success -> {
+                        sessionRegistry.register(
+                            authResult.userId,
+                            authResult.role,
+                            session
+                        )
+                        handleAuthenticatedSession(session, authResult.userId)
+                            .doFinally {
+                                sessionRegistry.unregister(authResult.userId)
+                            }
+                    }
                     is SocketAuthResult.Unauthorized -> {
                         logger.warn("Authorization denied: ${authResult.reason}")
                         // 1008 is the standard code for Policy Violation (RBAC/Auth failure)
@@ -63,6 +81,7 @@ abstract class AuthenticatedWebSocketHandler(
             val userMono: Mono<User> = mono { authRepository.findByUserId(userId) }
 
             userMono.flatMap { user ->
+                //role = user.roles
                 val email = user.email
                 val userRole = user.roles.name
                 logger.info("User roles: $userRole")
@@ -75,7 +94,7 @@ abstract class AuthenticatedWebSocketHandler(
                 reactiveUserDetailsService.findByUsername(email)
                     .map { userDetails ->
                         if (jwtToken.isValidToken(bearerToken, userDetails))
-                            SocketAuthResult.Success(userId)
+                            SocketAuthResult.Success(userId, user.roles)
                         else {
                             logger.warn("Token validation failed for user: $userId")
                             SocketAuthResult.Unauthorized("Token validation failed")
@@ -96,7 +115,10 @@ abstract class AuthenticatedWebSocketHandler(
     ): Mono<Void>
 
     protected sealed class SocketAuthResult {
-        data class Success(val userId: String) : SocketAuthResult()
+        data class Success(
+            val userId: String,
+            val role: Role
+        ) : SocketAuthResult()
         data class Failure(val reason: String) : SocketAuthResult()
         data class Unauthorized(val reason: String) : SocketAuthResult()
     }

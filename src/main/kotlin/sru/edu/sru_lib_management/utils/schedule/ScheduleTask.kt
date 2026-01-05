@@ -12,7 +12,6 @@ import kotlinx.coroutines.launch
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
-import org.springframework.transaction.annotation.Transactional
 import sru.edu.sru_lib_management.core.domain.service.AttendService
 import sru.edu.sru_lib_management.core.domain.service.BookService
 import sru.edu.sru_lib_management.utils.IndochinaDateTime.indoChinaDate
@@ -67,7 +66,6 @@ class ScheduleTask(
 
     /// Delete all book that inactive in 30 days
     @Scheduled(cron = "0 0 * * * ?", zone = "Asia/Phnom_Penh")
-    @Transactional
     fun deleteInactiveBook(){
         serviceScope.launch { bookService.emptyTrash() }
     }
